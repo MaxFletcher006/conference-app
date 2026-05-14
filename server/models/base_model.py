@@ -1,16 +1,20 @@
 from pydantic import BaseModel, EmailStr
 
-class AttendeeModel(BaseModel):
+class UserModel(BaseModel):
+    title: str 
+    firstname: str 
+    lastname: str 
+    email: EmailStr
+    password: str 
+    role: str 
+
+class UserReturn(BaseModel):
+    id: int
     title: str 
     firstname: str 
     lastname: str 
     email: EmailStr
     role: str 
-
-class UserModel(BaseModel):
-    username: str 
-    password: str 
-    attendee_id: int 
 
 class EventModel(BaseModel):
     date: str 
@@ -21,3 +25,15 @@ class EventModel(BaseModel):
     location: str 
     building: str 
     room: str 
+
+class PostModel(BaseModel):
+    user_id: int
+    time: str  
+    header: str 
+    body: str
+
+class QuestionModel(BaseModel):
+    user_id: int 
+    speaker_id: int 
+    question: str 
+    time: str 

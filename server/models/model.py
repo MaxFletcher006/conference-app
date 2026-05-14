@@ -1,28 +1,24 @@
-from typing import Annotated
+from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import Field, Session, SQLModel, create_engine, select
+from uuid import uuid4
 
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
-DB_NAME = os.getenv('DATABASE_NAME')
-print(f'db name: {DB_NAME}')
-
-class Attendee(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    title: str = Field(index=True)
-    firstname: str = Field(index=True)
-    lastname: str = Field(index=True)
-    email: str = Field(index=True, unique=True)
-    role: str = Field(index=True)
+DB_URL = os.getenv('DATABASE_URL')
+#print(f'db name: {DB_URL}')
 
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    attendee_id: int | None = Field(default=None, foreign_key="attendee.id")
-    username: str = Field(unique=True)
+    title: str | None = Field(default=None, index=True)
+    firstname: str = Field(index=True)
+    lastname: str = Field(index=True)
+    email: str = Field(index=True, unique=True, exclude=True)
     password: str 
+    role: str = Field(index=True)
 
 class Event(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -30,17 +26,41 @@ class Event(SQLModel, table=True):
     start_time: str | None = Field(index=True)
     end_time: str | None = Field(index=True)
     topic: str | None=Field(index=True)
-    speaker: int | None = Field(index=True, foreign_key="attendee.id")
+    agenda: str | None=Field(default=None, index=True)
+    speaker: int | None = Field(index=True, foreign_key="user.id")
     location: str | None = Field(index=True)
     building: str | None = Field(index=True)
     room: str | None = Field(index=True)
 
-connect_args = {"check_same_thread": False}
-engine = create_engine(DB_NAME, connect_args=connect_args)
+class Post(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int | None = Field(default=None, foreign_key="user.id")
+    time: str = Field(index=True)
+    header: str
+    body: str 
+
+class Ticket(SQLModel, table=True):
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    user_id: int | None = Field(default=None, foreign_key="user.id", index=True)
+    name: str
+    day_length: int 
+    used_times: int 
+    is_used: bool = False
+
+class Question(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int | None = Field(default=None, foreign_key="user.id")
+    speaker_id: int | None = Field(default=None, foreign_key="user.id")
+    question: str = Field(index=True)
+    time: str = Field(index=True)
+
+engine = create_engine(DB_URL)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
+    print("Tables created")
 
 def get_session():
     with Session(engine) as session:
         yield session
+
