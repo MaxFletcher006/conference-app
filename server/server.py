@@ -72,6 +72,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ---- ROLE FUNCTION ---- # 
+
+def require_role(*allowed_roles: str):
+    def checker(user: dict = Depends(get_current_user)):
+        if user.get("role") not in allowed_roles:
+            raise HTTPException(
+                status_code=403, 
+                detail="Insufficient permissions"
+            )
+        return user
+    return checker
+
 @app.get("/")
 def greetings():
     return {"message": "Server started"}
@@ -79,11 +91,13 @@ def greetings():
 # ---- USER FUNCTIONS ---- #
 
 @app.get("/all-users", response_model=List[UserReturn])
-def get_all_users(session: SessionDep):
+def get_all_users(
+    session: SessionDep, 
+    current_user: dict = Depends(require_role("admin", "supervisor", "staff"))
+):
     try:
         users = session.exec(select(User)).all()
         return users
-
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
