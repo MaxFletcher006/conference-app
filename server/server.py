@@ -884,5 +884,5 @@ def generate_qr_buffer(data: str):
 # ---- TEST FUNCTIONS ---- #
 
 @app.get("/test-all-emails", response_model=List[EmailSchema])
-def get_mail_list(session: SessionDep):
+def get_mail_list(session: SessionDep, current_user: dict = Depends(require_role("admin"))):
     return session.exec(select(MailList)).all()
