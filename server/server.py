@@ -252,16 +252,16 @@ def delete_user(session: SessionDep, id: int):
     try:
         user = session.get(User, id)
 
-        if user.role == "admin":
-            raise HTTPException(
-                status_code=403,
-                detail="Forbidden action"
-            )
-
         if not user:
             raise HTTPException(
                 status_code=404,
                 detail="User not found"
+            )
+
+        if user.role == "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Forbidden action"
             )
 
         session.delete(user)

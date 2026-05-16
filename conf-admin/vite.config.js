@@ -9,7 +9,13 @@ export default defineConfig({
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
-      }
-    }
-  }
+      },
+    },
+    // Serve index.html for all routes so React Router / pathname routing works
+    historyApiFallback: true,
+  },
+  preview: {
+    // Same for `vite preview`
+    historyApiFallback: true,
+  },
 })
