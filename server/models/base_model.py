@@ -21,6 +21,7 @@ class EventModel(BaseModel):
     start_time: str 
     end_time: str 
     topic: str 
+    agenda: str
     speaker: int
     location: str 
     building: str 
@@ -37,3 +38,11 @@ class QuestionModel(BaseModel):
     speaker_id: int 
     question: str 
     time: str 
+
+class EmailSchema(BaseModel):
+    email: EmailStr
+
+class TicketPurchaseModel(BaseModel):
+    user_id: int 
+    day: int 
+    email: EmailStr

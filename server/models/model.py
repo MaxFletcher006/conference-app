@@ -8,7 +8,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-DB_URL = os.getenv('DATABASE_URL')
+DB_URL = os.getenv('TEST_URL')
 #print(f'db name: {DB_URL}')
 
 class User(SQLModel, table=True):
@@ -45,7 +45,7 @@ class Ticket(SQLModel, table=True):
     name: str
     day_length: int 
     used_times: int 
-    is_used: bool = False
+    qr_code_data: str = Field(unique=True)
 
 class Question(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -53,6 +53,11 @@ class Question(SQLModel, table=True):
     speaker_id: int | None = Field(default=None, foreign_key="user.id")
     question: str = Field(index=True)
     time: str = Field(index=True)
+
+class MailList(SQLModel, table=True):
+    mail_id: int | None = Field(default=None, primary_key=True)
+    user_id: int | None = Field(default=None, foreign_key="user.id")
+    email: str = Field(index=True)
 
 engine = create_engine(DB_URL)
 
