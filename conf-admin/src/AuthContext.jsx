@@ -7,15 +7,15 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
 
   async function login(email, password) {
-    const params = new URLSearchParams({ email, password })
-    const res = await api.post(`/login?${params}`)
-    const data = res.data
-    if (data.role !== 'admin' && data.role !== 'supervisor') {
-      await api.post('/logout')
-      throw new Error('Access denied: insufficient role')
-    }
-    setUser(data)
-    return data
+  const res = await api.post('/login', { email, password })
+  const data = res.data
+  
+  if (data.role !== 'admin' && data.role !== 'supervisor') {
+    await api.post('/logout')
+    throw new Error('Access denied: insufficient role')
+  }
+  setUser(data)
+  return data
   }
 
   async function logout() {
