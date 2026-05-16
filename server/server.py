@@ -58,6 +58,7 @@ app.add_middleware(
     allow_origins=[
         "http://127.0.0.1:3000",
         "https://conference-app-fawn.vercel.app/",
+        "http://localhost:5173",
     ],
 
     allow_credentials=True,
