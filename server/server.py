@@ -44,13 +44,6 @@ def get_current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return decode_session_cookie(token)
 
-def require_role(role: str):
-    def checker(user: dict = Depends(get_current_user)):
-        if user.get("role") != role:
-            raise HTTPException(status_code=403, detail="Insufficient permissions")
-        return user
-    return checker
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
@@ -104,7 +97,12 @@ def get_all_users(
 
 
 @app.get("/user/{id}", response_model=UserReturn)
-def get_user(session: SessionDep, id: int):
+def get_user(
+    session: SessionDep, 
+    id: int,
+    current_user: dict = Depends(require_role("admin", "supervisor"))
+    ):
+
     try:
         user = session.get(User, id)
 
@@ -194,7 +192,8 @@ def login_user(response: Response, session: SessionDep, login_data: LoginModel):
             key=SESSION_COOKIE,
             value=token,
             httponly=True,
-            samesite="lax",
+            samesite="none",
+            secure=True,
             max_age=SESSION_MAX_AGE
         )
 
@@ -217,7 +216,7 @@ def logout(response: Response):
 
 
 @app.put("/user/{id}", response_model=UserReturn)
-def update_user(session: SessionDep, id: int, current_user: UserModel):
+def update_user(session: SessionDep, id: int, current_user: UserModel, user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
 
     try:
         user = session.get(User, id)
@@ -260,7 +259,7 @@ def update_user(session: SessionDep, id: int, current_user: UserModel):
 
 
 @app.delete("/user/{id}")
-def delete_user(session: SessionDep, id: int):
+def delete_user(session: SessionDep, id: int, current_user: dict = Depends(require_role("admin", "supervisor"))):
 
     try:
         user = session.get(User, id)
@@ -297,7 +296,7 @@ def delete_user(session: SessionDep, id: int):
 # ---- EVENT FUNCTIONS ---- #
 
 @app.get("/all-events", response_model=List[Event])
-def get_events(session: SessionDep):
+def get_events(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
     try:
         return session.exec(select(Event)).all()
     except Exception as e:
@@ -305,7 +304,7 @@ def get_events(session: SessionDep):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/event/{id}", response_model=Event)
-def get_event(session: SessionDep, id: int):
+def get_event(session: SessionDep, id: int, current_user: dict = Depends(require_role("admin", "supervisor"))):
     try:
         db_event = session.get(Event, id)
     except Exception as e:
@@ -317,7 +316,7 @@ def get_event(session: SessionDep, id: int):
     return db_event
 
 @app.post("/add-event", response_model=Event)
-async def create_event(event: EventModel, session: SessionDep):
+async def create_event(event: EventModel, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
     db_event = Event.model_validate(event)
     try:
         session.add(db_event)
@@ -334,7 +333,7 @@ async def create_event(event: EventModel, session: SessionDep):
         raise HTTPException(status_code=400, detail="Event creation failed.")
 
 @app.put("/event/{event_id}", response_model=Event)
-async def update_event(event_id: int, event_data: EventModel, session: SessionDep):
+async def update_event(event_id: int, event_data: EventModel, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
     try:
         db_event = session.get(Event, event_id)
         if not db_event:
@@ -362,7 +361,7 @@ async def update_event(event_id: int, event_data: EventModel, session: SessionDe
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.delete("/event/{event_id}")
-async def delete_event(event_id: int, session: SessionDep):
+async def delete_event(event_id: int, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
     try: 
         db_event = session.get(Event, event_id)
         if not db_event:
@@ -384,7 +383,9 @@ async def delete_event(event_id: int, session: SessionDep):
 # ---- TICKET FUNCTIONS ---- #
 
 @app.post("/purchase_ticket")
-async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep):
+async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
+
+    FRONT_URL = os.getenv("FRONT_URL")
 
     user = get_user(session=session, id=data.user_id)
 
@@ -405,7 +406,7 @@ async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep):
     session.commit()
     session.refresh(new_ticket)
 
-    qr_buffer = generate_qr_buffer(f'http://127.0.0.1:8000/validate/{new_ticket.qr_code_data}')
+    qr_buffer = generate_qr_buffer(f'{FRONT_URL}/validate/{new_ticket.qr_code_data}')
 
     file_name = f"ticket_{ticket_uuid}.png"
     file_path = os.path.join(UPLOAD_DIR, file_name)
@@ -414,7 +415,7 @@ async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep):
         f.write(qr_buffer.getvalue())
 
     message = MessageSchema(
-        subject="CERN Mongolia 2026 | Ticket",
+        subject="CERN LHCb - Mongolia 2026 | Ticket",
         recipients=[data.email],
         subtype=MessageType.html,
         body=f"""
@@ -508,7 +509,7 @@ async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep):
     return {"status": "purchased", "ticket_id": new_ticket.id}
 
 @app.get("/validate/{ticket_uuid}")
-def validate_ticket(session: SessionDep, ticket_uuid: str, current_user: dict = Depends(require_role("staff"))):
+def validate_ticket(session: SessionDep, ticket_uuid: str, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
     try:
         db_ticket = session.exec(select(Ticket).where(Ticket.qr_code_data == ticket_uuid)).first()
 
@@ -541,6 +542,7 @@ def validate_ticket(session: SessionDep, ticket_uuid: str, current_user: dict = 
     
 # ---- POST FUNCTIONS ---- #
 
+'''
 @app.get("/all-posts", response_model=List[PostModel])
 def get_all_post(session: SessionDep):
     try:
@@ -618,11 +620,13 @@ async def cancel_post(post_id: int, session: SessionDep):
         session.rollback()
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+'''
     
 # ---- QUESTION FUNCTIONS ---- #
 
 @app.get("/all-questions", response_model=List[QuestionModel])
-def get_all_questions(session: SessionDep):
+def get_all_questions(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "staff"))):
     try:
         return session.exec(select(Question)).all()
     except Exception as e:
@@ -630,7 +634,7 @@ def get_all_questions(session: SessionDep):
         raise HTTPException(status_code=500, detail="Internal server error")
     
 @app.post("/add-question", response_model=QuestionModel)
-def add_question(session: SessionDep, new_question: QuestionModel):
+def add_question(session: SessionDep, new_question: QuestionModel, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
     user_question = Question.model_validate(new_question)
     try: 
         session.add(user_question)
@@ -642,7 +646,7 @@ def add_question(session: SessionDep, new_question: QuestionModel):
         raise HTTPException(status_code=500, detail="Internal server error")
     
 @app.get("/question/{speaker_id}", response_model=List[QuestionModel])
-def get_speaker_question(session: SessionDep, speaker_id: int):
+def get_speaker_question(session: SessionDep, speaker_id: int, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
     try:
         questions = session.exec(select(Question).where(Question.speaker_id == speaker_id)).all()
         return questions 
