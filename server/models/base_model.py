@@ -46,3 +46,7 @@ class TicketPurchaseModel(BaseModel):
     user_id: int 
     day: int 
     email: EmailStr
+
+class LoginModel(BaseModel):
+    email: EmailStr
+    password: str
