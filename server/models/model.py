@@ -1,15 +1,13 @@
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlmodel import Field, Session, SQLModel, create_engine
 from uuid import uuid4
 
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
-DB_URL = os.getenv('TEST_URL')
-#print(f'db name: {DB_URL}')
+DB_URL = os.getenv('DATABASE_URL')
 
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
