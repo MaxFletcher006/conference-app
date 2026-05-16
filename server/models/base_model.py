@@ -33,7 +33,7 @@ class PostModel(BaseModel):
 
 class QuestionModel(BaseModel):
     user_id: int 
-    speaker_id: int 
+    event_id: int 
     question: str 
     time: str 
 
