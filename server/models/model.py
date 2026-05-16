@@ -47,7 +47,7 @@ class Ticket(SQLModel, table=True):
 class Question(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: int | None = Field(default=None, foreign_key="user.id")
-    speaker_id: int | None = Field(default=None, foreign_key="user.id")
+    event_id: int | None = Field(default=None, foreign_key="event.id")
     question: str = Field(index=True)
     time: str = Field(index=True)
 
