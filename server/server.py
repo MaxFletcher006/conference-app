@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
 from models.model import User, Event, Post, Ticket, MailList, Question, create_db_and_tables, get_session
-from models.base_model import UserModel, EventModel, PostModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel
+from models.base_model import UserModel, EventModel, PostModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel
 from mailer import conf 
 from uuid import uuid4
 
@@ -152,10 +152,10 @@ def create_user(session: SessionDep, new_user: UserModel):
 
 
 @app.post("/login", response_model=UserReturn)
-def login_user(response: Response, session: SessionDep, email: str, password: str):
+def login_user(response: Response, session: SessionDep, login_data: LoginModel):
     try:
         db_user = session.exec(
-            select(User).where(User.email == email)
+            select(User).where(User.email == login_data.email)
         ).first()
 
         if not db_user:
@@ -165,7 +165,7 @@ def login_user(response: Response, session: SessionDep, email: str, password: st
             )
 
         password_match = bcrypt.checkpw(
-            password.encode("utf-8"),
+            login_data.password.encode("utf-8"),
             db_user.password.encode("utf-8")
         )
 
@@ -188,10 +188,8 @@ def login_user(response: Response, session: SessionDep, email: str, password: st
 
     except HTTPException:
         raise
-
     except Exception as e:
         print(f"Error: {e}")
-
         raise HTTPException(
             status_code=500,
             detail="Internal server error"
