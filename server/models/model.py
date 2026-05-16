@@ -11,7 +11,6 @@ DB_URL = os.getenv('DATABASE_URL')
 
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    title: str | None = Field(default=None, index=True)
     firstname: str = Field(index=True)
     lastname: str = Field(index=True)
     email: str = Field(index=True, unique=True, exclude=True)

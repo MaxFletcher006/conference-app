@@ -448,7 +448,7 @@ async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep, curren
                                 <td style="padding:40px;color:#374151;">
 
                                     <h2 style="margin-top:0;">
-                                        Dear {user.title}.{user.firstname} {user.lastname},
+                                        Dear {user.firstname} {user.lastname},
                                     </h2>
 
                                     <p style="font-size:16px;line-height:1.6;">

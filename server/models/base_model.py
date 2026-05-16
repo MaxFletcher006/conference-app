@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
 class UserModel(BaseModel):
-    title: str 
     firstname: str 
     lastname: str 
     email: EmailStr
@@ -10,7 +9,6 @@ class UserModel(BaseModel):
 
 class UserReturn(BaseModel):
     id: int
-    title: str 
     firstname: str 
     lastname: str 
     email: EmailStr
