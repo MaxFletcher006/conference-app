@@ -14,26 +14,31 @@ export default function ValidatePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (authLoading) return
-    if (!user) {
-      navigate(`/login?redirect=/validate/${ticket_uuid}`, { replace: true })
-      return
-    }
-    if (!isDashboardRole(user.role)) {
-      setError('Only staff can validate tickets.')
-      setLoading(false)
-      return
-    }
-    if (!ticket_uuid) {
-      setError('No ticket UUID provided.')
-      setLoading(false)
-      return
-    }
+  if (authLoading) return
+  if (!user) {
+    navigate(`/login?redirect=/validate/${ticket_uuid}`, { replace: true })
+    return
+  }
+  if (!isDashboardRole(user.role)) {
+    setError('Only staff can validate tickets.')
+    setLoading(false)
+    return
+  }
+  if (!ticket_uuid) {
+    setError('No ticket UUID provided.')
+    setLoading(false)
+    return
+  }
+
+  const timer = setTimeout(() => {
     validateTicket(ticket_uuid)
       .then(data => setResult(data))
-      .catch(err => setError(err?.response?.data?.detail || 'Validation failed. Ticket may not exist.'))
+      .catch(err => setError(err?.response?.data?.detail || 'Validation failed.'))
       .finally(() => setLoading(false))
-  }, [authLoading, user, ticket_uuid])
+  }, 500) 
+
+  return () => clearTimeout(timer)
+}, [authLoading, user, ticket_uuid])
 
   const isValid = result?.status === 'valid'
 

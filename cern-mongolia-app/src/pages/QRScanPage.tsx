@@ -15,39 +15,51 @@ export default function QRScanPage() {
   useEffect(() => {
     if (authLoading) return
     if (!user || !isDashboardRole(user.role)) {
-      navigate('/login')
-      return
+        navigate('/login')
+        return
     }
 
     const scanner = new Html5Qrcode('qr-reader')
     scannerRef.current = scanner
 
     scanner.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      (decodedText) => {
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
         if (scannedRef.current) return
         scannedRef.current = true
 
         const uuid = decodedText.split('/validate/')[1]
-        if (uuid) {
-          scanner.stop()
-            .catch(() => {})
-            .finally(() => navigate(`/validate/${uuid}`))
-        } else {
-          scannedRef.current = false
-          setError('Invalid QR code. Not a valid ticket.')
+        if (!uuid) {
+            scannedRef.current = false
+            setError('Invalid QR code.')
+            return
         }
-      },
-      () => {}
+
+        // Stop scanner, release camera, THEN navigate
+        scanner.stop()
+            .catch(() => {})
+            .finally(() => {
+            // Force release all media tracks before navigating
+            navigator.mediaDevices?.getUserMedia({ video: true })
+                .then(stream => stream.getTracks().forEach(t => t.stop()))
+                .catch(() => {})
+                .finally(() => {
+                setTimeout(() => navigate(`/validate/${uuid}`), 300) // small delay for cleanup
+                })
+            })
+        },
+        () => {}
     )
-      .then(() => setStarted(true))
-      .catch(() => setError('Camera access denied. Please allow camera permission and try again.'))
+        .then(() => setStarted(true))
+        .catch(() => setError('Camera access denied.'))
 
     return () => {
-      scanner.stop().catch(() => {})
+        if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {})
+        }
     }
-  }, [authLoading, user])
+    }, [authLoading, user])
 
   if (authLoading) return (
     <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
