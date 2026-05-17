@@ -49,6 +49,9 @@ class LoginModel(BaseModel):
     email: EmailStr
     password: str
 
+class ForgetEmail(BaseModel):
+    email: str
+
 class PasswordReset(BaseModel):
     token: str 
     new_password: str 

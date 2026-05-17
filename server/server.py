@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
 from models.model import User, Event, Post, Ticket, MailList, Question, create_db_and_tables, get_session
-from models.base_model import UserModel, EventModel, PostModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset
+from models.base_model import UserModel, EventModel, PostModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail
 from mailer import conf 
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
@@ -214,7 +214,7 @@ def login_user(response: Response, session: SessionDep, login_data: LoginModel):
         )
     
 @app.post("/forgot")
-def password_forgot(session: SessionDep, data: PasswordReset, background_tasks: BackgroundTasks):
+def password_forgot(session: SessionDep, data: ForgetEmail, background_tasks: BackgroundTasks):
     try:
         db_user = session.exec(
             select(User).where(User.email == data.email)
