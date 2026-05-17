@@ -484,6 +484,22 @@ function EventRow({ event: e, variant }: { event: Event; variant: 'today' | 'upc
               {e.agenda}
             </div>
           )}
+
+          {/* ← Speaker */}
+          {e.speaker && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              marginBottom: 8,
+              background: 'var(--bg-3)', border: '1px solid var(--border)',
+              borderRadius: 6, padding: '3px 10px',
+            }}>
+              <span style={{ fontSize: 13 }}>🎤</span>
+              <span style={{ fontSize: 14, color: accentColor, fontFamily: 'var(--font-mono)' }}>
+                {e.speaker}
+              </span>
+            </div>
+          )}
+
           <div style={{ fontSize: 16, color: '#ffffff', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <span>📍 {e.location}</span>
             <span>🏛 {e.building}, Room {e.room}</span>
