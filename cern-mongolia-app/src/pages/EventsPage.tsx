@@ -20,6 +20,10 @@ export default function EventsPage() {
   const [form, setForm] = useState<EventPayload>(emptyForm())
   const [saving, setSaving] = useState(false)
 
+  // DELETE CONFIRM STATE
+  const [deleteTarget, setDeleteTarget] = useState<Event | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
   const canEdit = user?.role === 'admin' || user?.role === 'supervisor'
 
   const load = async () => {
@@ -34,13 +38,13 @@ export default function EventsPage() {
   useEffect(() => { load() }, [])
 
   useEffect(() => {
-    if (showModal) {
+    if (showModal || deleteTarget) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
     }
     return () => { document.body.style.overflow = '' }
-  }, [showModal])
+  }, [showModal, deleteTarget])
 
   const set = (k: string, v: string | number) => setForm(f => ({ ...f, [k]: v }))
 
@@ -75,51 +79,46 @@ export default function EventsPage() {
     setSaving(false)
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Delete this event?')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
     try {
-      await deleteEvent(id)
-      setEvents(ev => ev.filter(x => x.id !== id))
+      await deleteEvent(deleteTarget.id)
+      setEvents(ev => ev.filter(x => x.id !== deleteTarget.id))
       toast('Event deleted')
-    } catch { toast('Delete failed', 'err') }
+      setDeleteTarget(null)
+    } catch {
+      toast('Delete failed', 'err')
+    }
+    setDeleting(false)
   }
 
   const sortedEvents = [...events].sort((a, b) => a.date.localeCompare(b.date))
   const todayStr = new Date().toISOString().split('T')[0]
 
+  // EVENT FORM MODAL
   const modal = showModal ? createPortal(
     <div
       className="modal-overlay"
       style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
         background: 'rgba(5, 5, 10, 0.75)',
         backdropFilter: 'blur(4px)',
         zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        boxSizing: 'border-box',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px', boxSizing: 'border-box',
       }}
-      onMouseDown={e => {
-        if (e.target === e.currentTarget) setShowModal(false)
-      }}
+      onMouseDown={e => { if (e.target === e.currentTarget) setShowModal(false) }}
     >
       <div
         className="modal-inner fade-up"
         style={{
-          width: '100%',
-          maxWidth: 540,
+          width: '100%', maxWidth: 540,
           background: 'var(--bg-2)',
           border: '1px solid var(--border-2)',
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-lg)',
-          padding: 24,
-          boxSizing: 'border-box',
+          padding: 24, boxSizing: 'border-box',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -129,17 +128,10 @@ export default function EventsPage() {
           <button
             onClick={() => setShowModal(false)}
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#ffffff',
-              fontSize: 22,
-              cursor: 'pointer',
-              lineHeight: 1,
-              padding: '0 4px',
+              background: 'none', border: 'none', color: '#ffffff',
+              fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: '0 4px',
             }}
-          >
-            ×
-          </button>
+          >×</button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -158,18 +150,91 @@ export default function EventsPage() {
             <Input label="Room" value={form.room} onChange={e => set('room', e.target.value)} required />
           </div>
 
-          <Input
-            label="Speaker"
-            value={form.speaker}
-            onChange={e => set('speaker', e.target.value)}
-            required
-          />
+          <Input label="Speaker" value={form.speaker} onChange={e => set('speaker', e.target.value)} required />
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
             <Btn variant="ghost" type="button" onClick={() => setShowModal(false)}>Cancel</Btn>
             <Btn type="submit" loading={saving}>{editing ? 'Update' : 'Create'}</Btn>
           </div>
         </form>
+      </div>
+    </div>,
+    document.body
+  ) : null
+
+  // DELETE CONFIRM MODAL
+  const deleteModal = deleteTarget ? createPortal(
+    <div
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(5, 5, 10, 0.80)',
+        backdropFilter: 'blur(4px)',
+        zIndex: 9999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px', boxSizing: 'border-box',
+      }}
+      onMouseDown={e => { if (e.target === e.currentTarget) setDeleteTarget(null) }}
+    >
+      <div
+        className="fade-up"
+        style={{
+          width: '100%', maxWidth: 440,
+          background: 'var(--bg-2)',
+          border: '1px solid rgba(220,38,38,0.25)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-lg)',
+          padding: 28, boxSizing: 'border-box',
+        }}
+      >
+        {/* Icon */}
+        <div style={{
+          width: 48, height: 48, borderRadius: '50%',
+          background: 'rgba(220,38,38,0.1)',
+          border: '1px solid rgba(220,38,38,0.25)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 22, marginBottom: 16,
+        }}>🗑️</div>
+
+        <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#ffffff' }}>
+          Delete Event
+        </h3>
+
+        <p style={{ margin: '0 0 6px', fontSize: 15, color: '#94a3b8', lineHeight: 1.6 }}>
+          You are about to permanently delete:
+        </p>
+
+        {/* Event summary */}
+        <div style={{
+          background: 'rgba(220,38,38,0.05)',
+          border: '1px solid rgba(220,38,38,0.15)',
+          borderRadius: 10,
+          padding: '14px 16px',
+          marginBottom: 20,
+        }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', marginBottom: 6 }}>
+            {deleteTarget.topic}
+          </div>
+          <div style={{ fontSize: 13, color: '#94a3b8', fontFamily: 'var(--font-mono)', display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <span>📅 {deleteTarget.date}</span>
+            <span>🕒 {deleteTarget.start_time} – {deleteTarget.end_time}</span>
+            <span>🎤 {deleteTarget.speaker}</span>
+            <span>📍 {deleteTarget.location} · {deleteTarget.building}, Room {deleteTarget.room}</span>
+          </div>
+        </div>
+
+        <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.6 }}>
+          This action cannot be undone. A cancellation email will be
+          sent to all registered attendees.
+        </p>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <Btn variant="ghost" onClick={() => setDeleteTarget(null)}>
+            Cancel
+          </Btn>
+          <Btn variant="danger" loading={deleting} onClick={handleDelete}>
+            Delete Event
+          </Btn>
+        </div>
       </div>
     </div>,
     document.body
@@ -217,8 +282,12 @@ export default function EventsPage() {
                   <span style={{ color: '#ffffff', fontSize: 16 }}>{e.building}/{e.room}</span>,
                   ...(canEdit ? [
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <Btn variant="outline" onClick={() => openEdit(e)} style={{ padding: '6px 12px', fontSize: 16 }}>Edit</Btn>
-                      <Btn variant="danger" onClick={() => handleDelete(e.id)} style={{ padding: '6px 12px', fontSize: 16 }}>Delete</Btn>
+                      <Btn variant="outline" onClick={() => openEdit(e)} style={{ padding: '6px 12px', fontSize: 16 }}>
+                        Edit
+                      </Btn>
+                      <Btn variant="danger" onClick={() => setDeleteTarget(e)} style={{ padding: '6px 12px', fontSize: 16 }}>
+                        Delete
+                      </Btn>
                     </div>
                   ] : [])
                 ]
@@ -229,6 +298,7 @@ export default function EventsPage() {
       </Card>
 
       {modal}
+      {deleteModal}
     </Page>
   )
 }

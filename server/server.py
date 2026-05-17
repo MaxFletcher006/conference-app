@@ -928,268 +928,338 @@ def get_all_questions_with_users(
 
 # ---- MAIL FUNCTIONS ---- #
 
-async def mail_service(type: str, header: str, body: str, time: str, email: List[EmailSchema]):
+async def mail_service(type: str, db_event: Event, email: List[EmailSchema]):
 
     status = type.upper()
 
-    if status == "UPDATED":
+    if status == "CREATED":
+        banner_color = "#16a34a"
+        status_emoji = "🟢"
+        status_text = "New Event Announced"
+        intro_text = f"We are excited to announce a new session has been added to the CERN LHCb Mongolia 2026 conference programme. Mark your calendar and don't miss this opportunity to engage with world leading physicists."
+    elif status == "UPDATED":
         banner_color = "#2563eb"
         status_emoji = "🔵"
         status_text = "Event Updated"
+        intro_text = f"An event in the CERN LHCb Mongolia 2026 conference programme has been updated. Please review the latest details below and update your schedule accordingly."
     elif status == "CANCELLED":
         banner_color = "#dc2626"
         status_emoji = "🔴"
         status_text = "Event Cancelled"
+        intro_text = f"We regret to inform you that the following session has been cancelled from the CERN LHCb Mongolia 2026 conference programme. We apologize for any inconvenience this may cause."
+    else:
+        banner_color = "#38bdf8"
+        status_emoji = "📢"
+        status_text = "Event Announcement"
+        intro_text = "Please see the latest update regarding the CERN LHCb Mongolia 2026 conference programme below."
 
     html_body = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="margin:0;padding:0;background-color:#060911;font-family:'Segoe UI',Arial,sans-serif;">
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin:0;padding:0;background-color:#060911;font-family:'Segoe UI',Arial,sans-serif;">
 
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#060911;padding:40px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#060911;padding:40px 0;">
+        <tr>
+        <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;">
+
+            <!-- TOP BADGE -->
             <tr>
-            <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;">
+                <td align="center" style="padding-bottom:24px;">
+                <span style="
+                    display:inline-block;
+                    font-family:'Courier New',monospace;
+                    font-size:13px;
+                    letter-spacing:0.15em;
+                    color:#38bdf8;
+                    border:1px solid rgba(56,189,248,0.3);
+                    background:rgba(56,189,248,0.07);
+                    padding:6px 16px;
+                    border-radius:4px;
+                ">CERN LHCb — MONGOLIA 2026</span>
+                </td>
+            </tr>
 
-                <!-- TOP BADGE -->
-                <tr>
-                    <td align="center" style="padding-bottom:24px;">
-                    <span style="
-                        display:inline-block;
-                        font-family:'Courier New',monospace;
-                        font-size:13px;
-                        letter-spacing:0.15em;
-                        color:#38bdf8;
-                        border:1px solid rgba(56,189,248,0.3);
-                        background:rgba(56,189,248,0.07);
-                        padding:6px 16px;
-                        border-radius:4px;
-                    ">CERN LHCb — MONGOLIA 2026</span>
-                    </td>
-                </tr>
+            <!-- MAIN CARD -->
+            <tr>
+                <td style="
+                background:rgba(6,10,22,0.95);
+                border:1px solid rgba(56,189,248,0.16);
+                border-radius:16px;
+                overflow:hidden;
+                ">
 
-                <!-- MAIN CARD -->
-                <tr>
+                <!-- HEADER -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
                     <td style="
-                    background:rgba(6,10,22,0.95);
-                    border:1px solid rgba(56,189,248,0.16);
-                    border-radius:16px;
-                    overflow:hidden;
+                        background:linear-gradient(135deg,#0f172a 0%,#0c1a3a 50%,#0f172a 100%);
+                        padding:40px 40px 36px;
+                        border-bottom:1px solid {banner_color}33;
+                        text-align:center;
                     ">
+                        <div style="
+                        width:12px;height:12px;border-radius:50%;
+                        background:{banner_color};
+                        box-shadow:0 0 20px 6px {banner_color}99;
+                        margin:0 auto 20px;
+                        display:block;
+                        "></div>
 
-                    <!-- HEADER -->
-                    <table width="100%" cellpadding="0" cellspacing="0">
+                        <h1 style="
+                        margin:0 0 10px;
+                        font-size:26px;
+                        font-weight:700;
+                        color:#ffffff;
+                        letter-spacing:-0.02em;
+                        line-height:1.2;
+                        ">{status_emoji} {status_text}</h1>
+
+                        <p style="
+                        margin:0;
+                        font-size:13px;
+                        color:#94a3b8;
+                        font-family:'Courier New',monospace;
+                        letter-spacing:0.08em;
+                        ">HIGH ENERGY PHYSICS CONFERENCE · ULAANBAATAR</p>
+                    </td>
+                    </tr>
+                </table>
+
+                <!-- BODY -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                    <td style="padding:36px 40px;">
+
+                        <p style="
+                        margin:0 0 8px;
+                        font-size:13px;
+                        font-family:'Courier New',monospace;
+                        color:{banner_color};
+                        letter-spacing:0.12em;
+                        ">SESSION DETAILS</p>
+
+                        <h2 style="
+                        margin:0 0 16px;
+                        font-size:22px;
+                        font-weight:700;
+                        color:#ffffff;
+                        line-height:1.4;
+                        ">{db_event.topic}</h2>
+
+                        <!-- Intro text -->
+                        <p style="
+                        margin:0 0 28px;
+                        font-size:15px;
+                        color:#94a3b8;
+                        line-height:1.7;
+                        ">{intro_text}</p>
+
+                        <!-- INFO CARDS ROW 1: Date / Time -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
                         <tr>
-                        <td style="
-                            background:linear-gradient(135deg,#0f172a 0%,#0c1a3a 50%,#0f172a 100%);
-                            padding:40px 40px 36px;
-                            border-bottom:1px solid {banner_color}33;
-                            text-align:center;
-                        ">
-                            <!-- Status glow dot -->
+                            <td width="50%" style="padding-right:6px;">
                             <div style="
-                            width:12px;height:12px;border-radius:50%;
-                            background:{banner_color};
-                            box-shadow:0 0 20px 6px {banner_color}99;
-                            margin:0 auto 20px;
-                            display:block;
-                            "></div>
-
-                            <h1 style="
-                            margin:0 0 10px;
-                            font-size:26px;
-                            font-weight:700;
-                            color:#ffffff;
-                            letter-spacing:-0.02em;
-                            line-height:1.2;
-                            ">{status_emoji} {status_text}</h1>
-
-                            <p style="
-                            margin:0;
-                            font-size:13px;
-                            color:#94a3b8;
-                            font-family:'Courier New',monospace;
-                            letter-spacing:0.08em;
-                            ">HIGH ENERGY PHYSICS CONFERENCE · ULAANBAATAR</p>
-                        </td>
+                                background:rgba(56,189,248,0.05);
+                                border:1px solid rgba(56,189,248,0.14);
+                                border-radius:10px;
+                                padding:16px 18px;
+                            ">
+                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">📅 DATE</div>
+                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.date}</div>
+                            </div>
+                            </td>
+                            <td width="50%" style="padding-left:6px;">
+                            <div style="
+                                background:rgba(56,189,248,0.05);
+                                border:1px solid rgba(56,189,248,0.14);
+                                border-radius:10px;
+                                padding:16px 18px;
+                            ">
+                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">🕒 TIME</div>
+                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.start_time} – {db_event.end_time}</div>
+                            </div>
+                            </td>
                         </tr>
-                    </table>
+                        </table>
 
-                    <!-- BODY -->
-                    <table width="100%" cellpadding="0" cellspacing="0">
+                        <!-- INFO CARDS ROW 2: Speaker / Location -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
                         <tr>
-                        <td style="padding:36px 40px;">
+                            <td width="50%" style="padding-right:6px;">
+                            <div style="
+                                background:rgba(167,139,250,0.05);
+                                border:1px solid rgba(167,139,250,0.14);
+                                border-radius:10px;
+                                padding:16px 18px;
+                            ">
+                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">🎤 SPEAKER</div>
+                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.speaker}</div>
+                            </div>
+                            </td>
+                            <td width="50%" style="padding-left:6px;">
+                            <div style="
+                                background:rgba(52,211,153,0.05);
+                                border:1px solid rgba(52,211,153,0.14);
+                                border-radius:10px;
+                                padding:16px 18px;
+                            ">
+                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">📍 LOCATION</div>
+                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.location}</div>
+                            </div>
+                            </td>
+                        </tr>
+                        </table>
 
-                            <!-- Label + topic -->
-                            <p style="
-                            margin:0 0 8px;
+                        <!-- INFO CARDS ROW 3: Building / Room -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                        <tr>
+                            <td width="50%" style="padding-right:6px;">
+                            <div style="
+                                background:rgba(251,191,36,0.05);
+                                border:1px solid rgba(251,191,36,0.14);
+                                border-radius:10px;
+                                padding:16px 18px;
+                            ">
+                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">🏛 BUILDING</div>
+                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.building}</div>
+                            </div>
+                            </td>
+                            <td width="50%" style="padding-left:6px;">
+                            <div style="
+                                background:rgba(251,191,36,0.05);
+                                border:1px solid rgba(251,191,36,0.14);
+                                border-radius:10px;
+                                padding:16px 18px;
+                            ">
+                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">🚪 ROOM</div>
+                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.room}</div>
+                            </div>
+                            </td>
+                        </tr>
+                        </table>
+
+                        <!-- AGENDA -->
+                        <p style="
+                        margin:0 0 8px;
+                        font-size:13px;
+                        font-family:'Courier New',monospace;
+                        color:#38bdf8;
+                        letter-spacing:0.12em;
+                        ">SESSION AGENDA</p>
+                        <div style="
+                        background:rgba(255,255,255,0.02);
+                        border:1px solid rgba(255,255,255,0.07);
+                        border-radius:10px;
+                        padding:20px 22px;
+                        margin-bottom:24px;
+                        font-size:15px;
+                        color:#94a3b8;
+                        line-height:1.8;
+                        white-space:pre-line;
+                        ">{db_event.agenda}</div>
+
+                        <!-- NOTICE -->
+                        <div style="
+                        background:rgba(56,189,248,0.05);
+                        border:1px solid rgba(56,189,248,0.18);
+                        border-left:3px solid {banner_color};
+                        border-radius:0 10px 10px 0;
+                        padding:16px 20px;
+                        margin-bottom:28px;
+                        ">
+                        <p style="
+                            margin:0 0 6px;
                             font-size:13px;
                             font-family:'Courier New',monospace;
                             color:{banner_color};
-                            letter-spacing:0.12em;
-                            ">ANNOUNCEMENT</p>
+                            letter-spacing:0.08em;
+                        ">📌 STAY UPDATED</p>
+                        <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6;">
+                            Please stay updated through official CERN Mongolia 2026
+                            announcements and check the conference portal regularly
+                            for the latest programme changes.
+                        </p>
+                        </div>
 
-                            <h2 style="
-                            margin:0 0 24px;
-                            font-size:20px;
-                            font-weight:700;
-                            color:#ffffff;
-                            line-height:1.4;
-                            ">{header}</h2>
-
-                            <!-- Event details box -->
-                            <div style="
-                            background:rgba(255,255,255,0.02);
-                            border:1px solid rgba(255,255,255,0.07);
-                            border-radius:10px;
-                            padding:22px 24px;
-                            margin-bottom:20px;
-                            font-size:15px;
-                            color:#94a3b8;
-                            line-height:1.8;
-                            white-space:pre-line;
-                            ">{body}</div>
-
-                            <!-- TIME ROW -->
-                            <div style="
-                            background:rgba(56,189,248,0.04);
-                            border:1px solid rgba(56,189,248,0.14);
-                            border-radius:10px;
-                            padding:16px 20px;
-                            margin-bottom:20px;
-                            display:flex;
-                            align-items:center;
-                            ">
-                            <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6;">
-                                <span style="
-                                font-family:'Courier New',monospace;
-                                font-size:12px;
-                                color:#38bdf8;
-                                letter-spacing:0.08em;
-                                display:block;
-                                margin-bottom:4px;
-                                ">🕒 EVENT TIME</span>
-                                <strong style="color:#ffffff;font-size:15px;">{time}</strong>
-                            </p>
-                            </div>
-
-                            <!-- NOTICE -->
-                            <div style="
-                            background:rgba(56,189,248,0.05);
-                            border:1px solid rgba(56,189,248,0.18);
-                            border-left:3px solid {banner_color};
-                            border-radius:0 10px 10px 0;
-                            padding:16px 20px;
-                            margin-bottom:28px;
-                            ">
-                            <p style="
-                                margin:0 0 6px;
-                                font-size:13px;
-                                font-family:'Courier New',monospace;
-                                color:{banner_color};
-                                letter-spacing:0.08em;
-                            ">📌 STAY UPDATED</p>
-                            <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6;">
-                                Please stay updated through official
-                                CERN Mongolia 2026 announcements and
-                                check the conference portal regularly.
-                            </p>
-                            </div>
-
-                            <!-- SIGN OFF -->
-                            <p style="margin:0;font-size:14px;color:#64748b;line-height:1.7;">
-                            Thank you,<br>
-                            <span style="color:#94a3b8;font-weight:600;">CERN LHCb — Mongolia 2026 Event Team</span>
-                            </p>
-
-                        </td>
-                        </tr>
-                    </table>
-
-                    <!-- ENERGY BAR -->
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                        <td style="padding:0 40px;">
-                            <div style="
-                            height:2px;
-                            border-radius:2px;
-                            background:linear-gradient(90deg,#38bdf8,#f472b6,#34d399);
-                            opacity:0.3;
-                            "></div>
-                        </td>
-                        </tr>
-                    </table>
-
-                    <!-- FOOTER -->
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                        <td style="padding:24px 40px;text-align:center;">
-                            <p style="
-                            margin:0;
-                            font-size:12px;
-                            font-family:'Courier New',monospace;
-                            color:#334155;
-                            letter-spacing:0.06em;
-                            ">
-                            AUTOMATED NOTIFICATION — DO NOT REPLY<br>
-                            © 2026 CERN LHCb MONGOLIA CONFERENCE
-                            </p>
-                        </td>
-                        </tr>
-                    </table>
+                        <!-- SIGN OFF -->
+                        <p style="margin:0;font-size:14px;color:#64748b;line-height:1.7;">
+                        Thank you,<br>
+                        <span style="color:#94a3b8;font-weight:600;">CERN LHCb — Mongolia 2026 Event Team</span>
+                        </p>
 
                     </td>
-                </tr>
-
+                    </tr>
                 </table>
-            </td>
-            </tr>
-        </table>
 
-        </body>
-        </html>
-        """
+                <!-- ENERGY BAR -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                    <td style="padding:0 40px;">
+                        <div style="
+                        height:2px;
+                        border-radius:2px;
+                        background:linear-gradient(90deg,#38bdf8,#f472b6,#34d399);
+                        opacity:0.3;
+                        "></div>
+                    </td>
+                    </tr>
+                </table>
+
+                <!-- FOOTER -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                    <td style="padding:24px 40px;text-align:center;">
+                        <p style="
+                        margin:0;
+                        font-size:12px;
+                        font-family:'Courier New',monospace;
+                        color:#334155;
+                        letter-spacing:0.06em;
+                        ">
+                        AUTOMATED NOTIFICATION — DO NOT REPLY<br>
+                        © 2026 CERN LHCb MONGOLIA CONFERENCE
+                        </p>
+                    </td>
+                    </tr>
+                </table>
+
+                </td>
+            </tr>
+
+            </table>
+        </td>
+        </tr>
+    </table>
+
+    </body>
+    </html>
+    """
 
     recipients = [entry.email for entry in email]
     await send_email(
         to=recipients,
-        subject=f"{status} | CERN Mongolia 2026",
+        subject=f"{status_emoji} {status_text} | CERN Mongolia 2026",
         html_body=html_body
     )
 
 # ---- MISC FUNCTIONS ---- #
 
-# async def publish_post(type: str, db_post: Post, email_list: List[EmailSchema]):
-#     if not db_post:
-#         raise HTTPException(status_code=404, detail="Post not found")
-    
-#     match type:
-#         case "created":
-#             await mail_service(type=type, header=db_post.header, body=db_post.body, time=db_post.time, email=email_list) 
-#         case "updated":
-#             await mail_service(type=type, header=db_post.header, body=db_post.body, time=db_post.time, email=email_list) 
-#         case "cancelled":
-#             await mail_service(type=type, header=db_post.header, body=db_post.body, time=db_post.time, email=email_list)
-
 async def publish_event(type: str, db_event: Event, email_list: List[EmailSchema]):
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    event_body = f"📍 {db_event.location} — {db_event.building}, {db_event.room}"
-    event_time = f"{db_event.date} | {db_event.start_time} – {db_event.end_time}"
-
     match type:
         case "created":
-            await mail_service(type=type, header=db_event.topic, body=event_body, time=event_time, email=email_list)
+            await mail_service(type=type, db_event=db_event, email=email_list)
         case "updated":
-            await mail_service(type=type, header=db_event.topic, body=event_body, time=event_time, email=email_list)
+            await mail_service(type=type, db_event=db_event, email=email_list)
         case "cancelled":
-            await mail_service(type=type, header=db_event.topic, body=event_body, time=event_time, email=email_list)
-
+            await mail_service(type=type, db_event=db_event, email=email_list)
 
 def generate_qr_buffer(data: str):
     qr = qrcode.QRCode(
