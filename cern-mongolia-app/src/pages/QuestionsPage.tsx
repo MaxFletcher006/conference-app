@@ -46,7 +46,7 @@ export default function QuestionsPage() {
                   {getEventLabel(q.event_id)}
                 </span>,
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
-                  #{q.fullname}
+                  {q.fullname}
                 </span>,
                 <span style={{ color: '#ffffff', fontSize: 16 }}>{q.question}</span>,
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
