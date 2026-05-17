@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, Request, Response
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import select, Session
 from typing import Annotated, List
@@ -10,14 +10,18 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
 from models.model import User, Event, Post, Ticket, MailList, Question, create_db_and_tables, get_session
-from models.base_model import UserModel, EventModel, PostModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel
+from models.base_model import UserModel, EventModel, PostModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset
 from mailer import conf 
 from uuid import uuid4
+from datetime import datetime, timedelta, timezone
 
 import bcrypt, io, os
 import qrcode
+import jwt
 
 load_dotenv()
+
+# --- SESSION CONTROL ---- #
 
 SESSION_SECRET = os.getenv("SESSION_SECRET")
 if not SESSION_SECRET:
@@ -208,7 +212,65 @@ def login_user(response: Response, session: SessionDep, login_data: LoginModel):
             status_code=500,
             detail="Internal server error"
         )
+    
+@app.post("/forgot")
+def password_forgot(session: SessionDep, data: PasswordReset, background_tasks: BackgroundTasks):
+    try:
+        db_user = session.exec(
+            select(User).where(User.email == data.email)
+        ).first()
 
+        if db_user:
+            token = create_reset_token(db_user.email)
+            background_tasks.add_task(send_reset_email, db_user.email, token)
+        
+        return {"message": "Reset password link has sent to email"}
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Internal server error"
+        )
+
+@app.post("/reset-password")
+def password_reset(session: SessionDep, data: PasswordReset):
+
+    RESET_SECRET_KEY = os.getenv("RESET_SECRET_KEY")
+    RESET_ALGORITHM = os.getenv("RESET_ALGORITHM")
+
+    print(RESET_SECRET_KEY)
+    print(RESET_ALGORITHM)
+
+    try:
+        payload = jwt.decode(data.token, RESET_SECRET_KEY, algorithms=[RESET_ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=400, detail="Invalid token structure")
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="Reset token has expired")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+    
+    db_user = session.exec(select(User).where(User.email == email)).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    hashed_password = bcrypt.hashpw(
+        data.new_password.encode("utf-8"),
+        bcrypt.gensalt()
+    )
+    db_user.password = hashed_password.decode("utf-8")
+
+    try:
+        session.add(db_user)
+        session.commit()
+        return {"message": "Password successfully updated"}
+    except Exception as e:
+        session.rollback()
+        print(f"Error resetting password: {e}")
+        raise HTTPException(status_code=500, detail="Error updating database")
 
 @app.post("/logout")
 def logout(response: Response):
@@ -217,7 +279,7 @@ def logout(response: Response):
 
 
 @app.put("/user/{id}", response_model=UserReturn)
-def update_user(session: SessionDep, id: int, current_user: UserModel, user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
+def update_user(session: SessionDep, id: int, current_user: UserModel, user_info: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
 
     try:
         user = session.get(User, id)
@@ -885,6 +947,200 @@ def generate_qr_buffer(data: str):
     buffer.seek(0)
 
     return buffer
+
+def create_reset_token(email: str) -> str:
+
+    RESET_SECRET_KEY = os.getenv("RESET_SECRET_KEY")
+    RESET_ALGORITHM = os.getenv("RESET_ALGORITHM")
+
+    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode = {"exp": expire, "sub": email}
+    return jwt.encode(to_encode, RESET_SECRET_KEY, algorithm=RESET_ALGORITHM)
+
+async def send_reset_email(email: str, token: str):
+    FRONT_URL = os.getenv("FRONT_URL")
+    print(FRONT_URL)
+
+    reset_link = f"{FRONT_URL}/reset-password/{token}"
+
+    message = MessageSchema(
+        subject="Reset Your Password | CERN LHCb - Mongolia 2026",
+        recipients=[email],
+        subtype=MessageType.html,
+        body=f"""
+        <html>
+        <body style="
+            margin:0;
+            padding:0;
+            background-color:#f3f4f6;
+            font-family:Arial,sans-serif;
+        ">
+
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td align="center" style="padding:40px 20px;">
+
+                        <table width="600" cellpadding="0" cellspacing="0"
+                            style="
+                                background:white;
+                                border-radius:18px;
+                                overflow:hidden;
+                                box-shadow:0 6px 20px rgba(0,0,0,0.08);
+                            ">
+
+                            <!-- HEADER -->
+                            <tr>
+                                <td align="center"
+                                    style="
+                                        background:#2563eb;
+                                        padding:35px 30px;
+                                        color:white;
+                                    ">
+
+                                    <h1 style="
+                                        margin:0;
+                                        font-size:30px;
+                                        font-weight:bold;
+                                    ">
+                                        Password Reset Request
+                                    </h1>
+
+                                    <p style="
+                                        margin-top:12px;
+                                        font-size:15px;
+                                        color:#e5e7eb;
+                                    ">
+                                        CERN Mongolia 2026
+                                    </p>
+
+                                </td>
+                            </tr>
+
+                            <!-- BODY -->
+                            <tr>
+                                <td style="
+                                    padding:40px;
+                                    color:#374151;
+                                ">
+
+                                    <h2 style="
+                                        margin-top:0;
+                                        font-size:26px;
+                                        color:#111827;
+                                    ">
+                                        Reset Your Password
+                                    </h2>
+
+                                    <div style="
+                                        margin-top:25px;
+                                        padding:24px;
+                                        background:#f9fafb;
+                                        border-radius:12px;
+                                        border:1px solid #e5e7eb;
+                                        line-height:1.8;
+                                        font-size:16px;
+                                        color:#374151;
+                                    ">
+                                        We received a request to reset your account password.
+                                        Click the button below to create a new password.
+                                    </div>
+
+                                    <!-- BUTTON -->
+                                    <div style="margin-top:35px; text-align:center;">
+
+                                        <a href="{reset_link}"
+                                            style="
+                                                display:inline-block;
+                                                background:#2563eb;
+                                                color:white;
+                                                text-decoration:none;
+                                                padding:16px 34px;
+                                                border-radius:12px;
+                                                font-size:16px;
+                                                font-weight:bold;
+                                            ">
+                                            Reset Password
+                                        </a>
+
+                                    </div>
+
+                                    <!-- LINK -->
+                                    <div style="
+                                        margin-top:30px;
+                                        padding:18px;
+                                        background:#f3f4f6;
+                                        border-radius:10px;
+                                        font-size:14px;
+                                        color:#4b5563;
+                                        word-break:break-all;
+                                    ">
+                                        If the button does not work, copy and paste this link into your browser:
+                                        <br><br>
+                                        <a href="{reset_link}" style="color:#2563eb;">
+                                            {reset_link}
+                                        </a>
+                                    </div>
+
+                                    <!-- NOTICE -->
+                                    <div style="
+                                        margin-top:30px;
+                                        padding:18px;
+                                        background:#eff6ff;
+                                        border-left:4px solid #2563eb;
+                                        border-radius:10px;
+                                    ">
+                                        <p style="
+                                            margin:0;
+                                            font-size:15px;
+                                            color:#1f2937;
+                                        ">
+                                            This password reset link will expire soon for security reasons.
+                                            If you did not request a password reset, you can safely ignore this email.
+                                        </p>
+                                    </div>
+
+                                    <p style="
+                                        margin-top:40px;
+                                        font-size:16px;
+                                        line-height:1.7;
+                                    ">
+                                        Thank you,<br>
+                                        <strong>CERN Mongolia 2026 Event Team</strong>
+                                    </p>
+
+                                </td>
+                            </tr>
+
+                            <!-- FOOTER -->
+                            <tr>
+                                <td align="center"
+                                    style="
+                                        background:#f9fafb;
+                                        padding:22px;
+                                        font-size:13px;
+                                        color:#6b7280;
+                                    ">
+
+                                    This is an automated email notification.<br>
+                                    Please do not reply to this email.
+
+                                </td>
+                            </tr>
+
+                        </table>
+
+                    </td>
+                </tr>
+            </table>
+
+        </body>
+        </html>
+        """,
+    )
+
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
 
 # ---- TEST FUNCTIONS ---- #
 

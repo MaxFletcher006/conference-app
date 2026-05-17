@@ -48,3 +48,8 @@ class TicketPurchaseModel(BaseModel):
 class LoginModel(BaseModel):
     email: EmailStr
     password: str
+
+class PasswordReset(BaseModel):
+    token: str 
+    new_password: str 
+
