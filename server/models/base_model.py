@@ -4,6 +4,7 @@ class UserModel(BaseModel):
     firstname: str 
     lastname: str 
     email: EmailStr
+    phone_number: str 
     password: str 
     role: str 
 
@@ -12,6 +13,7 @@ class UserReturn(BaseModel):
     firstname: str 
     lastname: str 
     email: EmailStr
+    phone_number: str
     role: str 
 
 class EventModel(BaseModel):
@@ -20,16 +22,18 @@ class EventModel(BaseModel):
     end_time: str 
     topic: str 
     agenda: str
-    speaker: int
+    speaker: str
     location: str 
     building: str 
     room: str 
 
+'''
 class PostModel(BaseModel):
     user_id: int
     time: str  
     header: str 
     body: str
+'''
 
 class QuestionModel(BaseModel):
     user_id: int 

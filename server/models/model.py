@@ -14,6 +14,7 @@ class User(SQLModel, table=True):
     firstname: str = Field(index=True)
     lastname: str = Field(index=True)
     email: str = Field(index=True, unique=True, exclude=True)
+    phone_number: str = Field(index=True)
     password: str 
     role: str = Field(index=True)
 
@@ -24,17 +25,19 @@ class Event(SQLModel, table=True):
     end_time: str | None = Field(index=True)
     topic: str | None=Field(index=True)
     agenda: str | None=Field(default=None, index=True)
-    speaker: int | None = Field(index=True, foreign_key="user.id")
+    speaker: str | None = Field(index=True)
     location: str | None = Field(index=True)
     building: str | None = Field(index=True)
     room: str | None = Field(index=True)
 
+'''
 class Post(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: int | None = Field(default=None, foreign_key="user.id")
     time: str = Field(index=True)
     header: str
     body: str 
+'''
 
 class Ticket(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)

@@ -9,8 +9,8 @@ from starlette.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
-from models.model import User, Event, Post, Ticket, MailList, Question, create_db_and_tables, get_session
-from models.base_model import UserModel, EventModel, PostModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, UserQuestion
+from models.model import User, Event, Ticket, MailList, Question, create_db_and_tables, get_session
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, UserQuestion
 from mailer import conf 
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
@@ -904,17 +904,17 @@ async def mail_service(type: str, header: str, body: str, time: str, email: List
 
 # ---- MISC FUNCTIONS ---- #
 
-async def publish_post(type: str, db_post: Post, email_list: List[EmailSchema]):
-    if not db_post:
-        raise HTTPException(status_code=404, detail="Post not found")
+# async def publish_post(type: str, db_post: Post, email_list: List[EmailSchema]):
+#     if not db_post:
+#         raise HTTPException(status_code=404, detail="Post not found")
     
-    match type:
-        case "created":
-            await mail_service(type=type, header=db_post.header, body=db_post.body, time=db_post.time, email=email_list) 
-        case "updated":
-            await mail_service(type=type, header=db_post.header, body=db_post.body, time=db_post.time, email=email_list) 
-        case "cancelled":
-            await mail_service(type=type, header=db_post.header, body=db_post.body, time=db_post.time, email=email_list)
+#     match type:
+#         case "created":
+#             await mail_service(type=type, header=db_post.header, body=db_post.body, time=db_post.time, email=email_list) 
+#         case "updated":
+#             await mail_service(type=type, header=db_post.header, body=db_post.body, time=db_post.time, email=email_list) 
+#         case "cancelled":
+#             await mail_service(type=type, header=db_post.header, body=db_post.body, time=db_post.time, email=email_list)
 
 async def publish_event(type: str, db_event: Event, email_list: List[EmailSchema]):
     if not db_event:
