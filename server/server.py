@@ -198,8 +198,8 @@ def login_user(response: Response, session: SessionDep, login_data: LoginModel):
             key=SESSION_COOKIE,
             value=token,
             httponly=True,
-            samesite="none",
-            secure=True,
+            samesite="lax",
+            secure=False,
             max_age=SESSION_MAX_AGE
         )
 
