@@ -63,6 +63,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "https://conference-app-fawn.vercel.app/",
         "http://localhost:5173",
+        "https://conference-app-jade.vercel.app/",
     ],
 
     allow_credentials=True,
