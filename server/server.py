@@ -5,7 +5,7 @@ from typing import Annotated, List
 from contextlib import asynccontextmanager
 from sqlalchemy.exc import IntegrityError
 #from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-#from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
