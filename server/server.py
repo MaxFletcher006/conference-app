@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
 from models.model import User, Event, Post, Ticket, MailList, Question, create_db_and_tables, get_session
-from models.base_model import UserModel, EventModel, PostModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail
+from models.base_model import UserModel, EventModel, PostModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, UserQuestion
 from mailer import conf 
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
@@ -707,15 +707,19 @@ def add_question(session: SessionDep, new_question: QuestionModel, current_user:
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")
     
-@app.get("/question/{speaker_id}", response_model=List[QuestionModel])
-def get_speaker_question(session: SessionDep, speaker_id: int, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
+@app.get("/question/{user_id}", response_model=List[QuestionModel])
+def get_speaker_question(session: SessionDep, user_id: int, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
     try:
-        questions = session.exec(select(Question).where(Question.speaker_id == speaker_id)).all()
+        questions = session.exec(select(Question).where(Question.user_id == user_id)).all()
+
+        if not questions:
+            raise HTTPException(status_code=404, detail="No questions found")
+
         return questions 
     except Exception as e:
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")
-    
+
 # ---- MAIL FUNCTIONS ---- #
 
 async def mail_service(type: str, header: str, body: str, time: str, email: List[EmailSchema]):

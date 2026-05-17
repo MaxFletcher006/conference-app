@@ -37,6 +37,9 @@ class QuestionModel(BaseModel):
     question: str 
     time: str 
 
+class UserQuestion(BaseModel):
+    user_id: int 
+
 class EmailSchema(BaseModel):
     email: EmailStr
 
