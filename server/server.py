@@ -387,7 +387,6 @@ async def create_event(event: EventModel, session: SessionDep, current_user: dic
         session.refresh(db_event)
 
         email_list = get_mail_list(session=session)
-        await publish_event(type="created", db_event=db_event, email_list=email_list)
 
         return db_event
     except Exception as e:
