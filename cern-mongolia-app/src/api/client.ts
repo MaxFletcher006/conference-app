@@ -62,12 +62,6 @@ export interface TicketPurchaseResult {
   ticket_id: string
 }
 
-export interface TicketValidationResult {
-  status: 'valid' | 'expired'
-  detail: string
-  remaining_entries?: number
-}
-
 export interface UserCreatePayload {
   firstname: string
   lastname: string
@@ -114,6 +108,12 @@ export interface ResetPasswordPayload {
   new_password: string
 }
 
+export interface TicketVerification {
+  ticket_uuid: string
+  username: string
+  day_left: number
+}
+
 // ─── API FUNCTIONS ────────────────────────────────────────────────────────────
 
 export const serverTest = () => client.get<{ message: string }>('/').then(r => r.data)
@@ -142,7 +142,7 @@ export const updateEvent = (id: number, payload: Partial<EventPayload>) => clien
 export const deleteEvent = (id: number) => client.delete<{ status: boolean; message: string }>(`/event/${id}`).then(r => r.data)
 
 export const purchaseTicket = (payload: TicketPurchasePayload) => client.post<TicketPurchaseResult>('/purchase_ticket', payload).then(r => r.data)
-export const validateTicket = (ticketUuid: string) => client.get<TicketValidationResult>(`/validate/${ticketUuid}`).then(r => r.data)
+export const validateTicket = (ticketUuid: string) => client.get<TicketVerification>(`/validate/${ticketUuid}`).then(r => r.data)
 
 export const getAllQuestions = () => client.get<Question[]>('/all-questions').then(r => r.data)
 export const addQuestion = (payload: QuestionPayload) => client.post<Question>('/add-question', payload).then(r => r.data)

@@ -71,3 +71,8 @@ class PasswordReset(BaseModel):
     token: str 
     new_password: str 
 
+class TicketVerification(BaseModel):
+    ticket_uuid: str 
+    username: str 
+    day_left: int 
+

@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
 from models.model import User, Event, Ticket, MailList, Question, create_db_and_tables, get_session
-from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification
 from mailer import conf 
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
@@ -465,7 +465,7 @@ async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep, curren
 
     qr_buffer = generate_qr_buffer(f'{FRONT_URL}/validate/{new_ticket.qr_code_data}')
 
-    file_name = f"ticket_{ticket_uuid}.png"
+    file_name = f"ticket_{user.firstname}.png"
     file_path = os.path.join(UPLOAD_DIR, file_name)
 
     with open(file_path, "wb") as f:
@@ -565,7 +565,7 @@ async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep, curren
 
     return {"status": "purchased", "ticket_id": new_ticket.id}
 
-@app.get("/validate/{ticket_uuid}")
+@app.get("/validate/{ticket_uuid}", response_model=TicketVerification)
 def validate_ticket(session: SessionDep, ticket_uuid: str, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
     try:
         db_ticket = session.exec(select(Ticket).where(Ticket.qr_code_data == ticket_uuid)).first()
@@ -583,13 +583,24 @@ def validate_ticket(session: SessionDep, ticket_uuid: str, current_user: dict = 
         session.commit()
         session.refresh(db_ticket)
 
-        return {
-                "status": "valid",
-                "detail": "Ticket validated",
-                "remaining_entries":
-                    db_ticket.day_length - db_ticket.used_times
-            }    
+        attendee = session.get(User, db_ticket.user_id)
+
+        ticket_response = TicketVerification(
+            ticket_uuid=db_ticket.qr_code_data, 
+            username=f'{attendee.firstname} {attendee.lastname}',
+            day_left=db_ticket.day_length - db_ticket.used_times,
+
+        )
+
+        # return {
+        #         "status": "valid",
+        #         "detail": "Ticket validated",
+        #         "remaining_entries":
+        #             db_ticket.day_length - db_ticket.used_times
+        #     }    
     
+        return ticket_response
+
     except HTTPException:
         raise
 
