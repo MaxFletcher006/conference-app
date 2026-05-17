@@ -15,19 +15,44 @@ export default function Register() {
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      await register({ ...form, role: 'attendee' })
-      toast('Account created — please sign in')
-      navigate('/login')
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Registration failed')
-    } finally {
-      setLoading(false)
-    }
+  e.preventDefault()
+  setError('')
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(form.email.trim())) {
+    setError('Please enter a valid email address.')
+    return
   }
+
+  // Phone validation (exactly 8 digits)
+  const phoneRegex = /^\d{8}$/
+  if (!phoneRegex.test(form.phone_number.trim())) {
+    setError('Phone number must be exactly 8 digits.')
+    return
+  }
+
+  // Password validation (min 8 chars, uppercase + lowercase)
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{8,}$/
+  if (!passwordRegex.test(form.password)) {
+    setError(
+      'Password must be at least 8 characters long and include uppercase and lowercase letters.'
+    )
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    await register({ ...form, role: 'attendee' })
+    toast('Account created — please sign in')
+    navigate('/login')
+  } catch (err: any) {
+    setError(err?.response?.data?.detail || 'Registration failed')
+  } finally {
+    setLoading(false)
+  }
+}
 
   return (
     <div style={{
@@ -36,18 +61,23 @@ export default function Register() {
     }}>
       <ColliderBackground />
 
-      <div style={{
+      <div className="auth-divider" style={{
         position: 'absolute', left: '60%', top: 0, bottom: 0, width: 1, zIndex: 5,
         background: 'linear-gradient(180deg,transparent 0%,rgba(56,189,248,.22) 30%,rgba(56,189,248,.32) 50%,rgba(56,189,248,.22) 70%,transparent 100%)',
       }} />
 
-      <LeftPanel />
+      <div className="auth-left-panel" style={{ display: 'contents' }}>
+        <LeftPanel />
+      </div>
 
       {/* Right — form */}
-      <div style={{
-        width: '40%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '40px 52px', position: 'relative', zIndex: 10,
-      }}>
+      <div
+        className="auth-right-panel"
+        style={{
+          width: '40%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '40px 52px', position: 'relative', zIndex: 10,
+        }}
+      >
         <div style={{
           width: '100%', maxWidth: 420,
           background: 'rgba(6,10,22,.78)',
@@ -64,7 +94,7 @@ export default function Register() {
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="name-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Input label="First name" value={form.firstname}
                 onChange={e => set('firstname', e.target.value)} required />
               <Input label="Last name" value={form.lastname}
@@ -72,10 +102,14 @@ export default function Register() {
             </div>
             <Input label="Email" type="email" value={form.email}
               onChange={e => set('email', e.target.value)} placeholder="you@example.com" required />
-            <Input label="Phone Number" type="phone_number" value={form.phone_number}
-              onChange={e => set('email', e.target.value)} placeholder="you@example.com" required />
+            <Input label="Phone Number" type="tel" value={form.phone_number}
+              onChange={e => set('phone_number', e.target.value)} placeholder="99112233" required />
             <Input label="Password" type="password" value={form.password}
               onChange={e => set('password', e.target.value)} placeholder="••••••••" required />
+
+            <p style={{ fontSize: 13, color: '#94a3b8', marginTop: '-8px' }}>
+              Password must contain at least 8 characters, at least one uppercase letter, and atleast one lowercase letter.
+            </p>
 
             {error && (
               <div style={{ fontSize: 16, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>
@@ -83,7 +117,7 @@ export default function Register() {
               </div>
             )}
 
-            <Btn type="submit" loading={loading} style={{ width: '100%', justifyContent: 'center', marginTop: 6 }}>
+            <Btn type="submit" loading={loading} style={{ width: '100%', justifyContent: 'center', marginTop: 6, fontSize: 16 }}>
               Create account →
             </Btn>
           </form>

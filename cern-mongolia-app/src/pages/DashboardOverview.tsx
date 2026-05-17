@@ -34,15 +34,15 @@ export default function DashboardOverview() {
   return (
     <Page>
       {/* Greeting */}
-      <div style={{ marginBottom: 40 }}>
+      <div className="dashboard-greeting" style={{ marginBottom: 40 }}>
         <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 25,
+          fontFamily: 'var(--font-mono)', fontSize: 16,
           color: 'var(--blue)', marginBottom: 8,
           letterSpacing: '0.12em', opacity: 0.8,
         }}>
-        CONFERENCE DASHBOARD
+          CONFERENCE DASHBOARD
         </div>
-        <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4, color: '#ffffff' }}>
           Good {getTimeOfDay()},{' '}
           <span style={{
             background: 'linear-gradient(135deg, var(--blue), var(--purple))',
@@ -51,13 +51,13 @@ export default function DashboardOverview() {
             {user?.firstname}
           </span>
         </h1>
-        <p style={{ color: '#FFFFFF', fontSize: 20 }}>
+        <p style={{ color: '#ffffff', fontSize: 16 }}>
           {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
 
       {loading ? (
-        <div style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
+        <div style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
           Loading...
         </div>
       ) : (
@@ -66,7 +66,7 @@ export default function DashboardOverview() {
           {(user?.role === 'admin' || user?.role === 'supervisor') && (
             <>
               <SectionHeader title="Users" />
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 36 }}>
+              <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 36 }}>
                 <StatCard label="Total users" value={users.length} />
                 <StatCard label="Attendees" value={roleCount('attendee')} />
                 <StatCard label="Staff" value={roleCount('staff')} accent="var(--blue)" />
@@ -77,7 +77,7 @@ export default function DashboardOverview() {
 
           {/* Event stats */}
           <SectionHeader title="Events" />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 36 }}>
+          <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 36 }}>
             <StatCard label="Total events" value={events.length} />
             <StatCard label="Today" value={todayEvents.length} accent="var(--yellow)" />
             <StatCard label="Upcoming" value={upcomingEvents.length} accent="var(--blue)" />
@@ -94,16 +94,17 @@ export default function DashboardOverview() {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
                     borderColor: 'var(--border-2)',
                     background: 'linear-gradient(135deg, var(--bg-2), var(--bg-3))',
+                    flexWrap: 'wrap', gap: 10,
                   }}>
                     <div>
-                      <div style={{ fontWeight: 600, marginBottom: 5, fontSize: 15 }}>{e.topic}</div>
-                      <div style={{ fontSize: 13, color: 'var(--text-3)' }}>
+                      <div style={{ fontWeight: 600, marginBottom: 5, fontSize: 16, color: '#ffffff' }}>{e.topic}</div>
+                      <div style={{ fontSize: 16, color: 'var(--text-3)' }}>
                         {e.location} · {e.building}, Room {e.room}
                       </div>
                     </div>
                     <div style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 13,
-                      color: 'var(--yellow)', whiteSpace: 'nowrap', marginLeft: 20,
+                      fontFamily: 'var(--font-mono)', fontSize: 16,
+                      color: 'var(--yellow)', whiteSpace: 'nowrap',
                       fontWeight: 600,
                     }}>
                       {e.start_time} – {e.end_time}
@@ -119,15 +120,17 @@ export default function DashboardOverview() {
             <>
               <SectionHeader title="Recent users" />
               <Card style={{ padding: 0, overflow: 'hidden' }}>
-                <Table
-                  headers={['Name', 'Email', 'Phone Number', 'Role']}
-                  rows={users.slice(0, 8).map(u => [
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>{u.firstname} {u.lastname}</span>,
-                    <span style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>{u.email}</span>,
-                      <span style={{ color: 'var(--text-3)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>{u.phone_number}</span>,
-                    <Badge label={u.role} />,
-                  ])}
-                />
+                <div className="table-wrapper">
+                  <Table
+                    headers={['Name', 'Email', 'Phone Number', 'Role']}
+                    rows={users.slice(0, 8).map(u => [
+                      <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>{u.firstname} {u.lastname}</span>,
+                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>{u.email}</span>,
+                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>{u.phone_number}</span>,
+                      <Badge label={u.role} />,
+                    ])}
+                  />
+                </div>
               </Card>
             </>
           )}

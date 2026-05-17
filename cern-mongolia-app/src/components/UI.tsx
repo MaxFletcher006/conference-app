@@ -218,16 +218,32 @@ export function ToastContainer() {
   _setToasts = setToasts
   return (
     <div style={{
-      position: 'fixed', bottom: 20, right: 20, zIndex: 2000,
-      display: 'flex', flexDirection: 'column', gap: 8,
+      position: 'fixed',
+      top: 'max(16px, env(safe-area-inset-top))',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 9999,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 8,
+      pointerEvents: 'none',
+      width: 'max-content',
+      maxWidth: 'calc(100vw - 32px)',
     }}>
       {toasts.map(t => (
         <div key={t.id} style={{
-          background: 'var(--bg-3)', border: `1px solid ${t.type === 'ok' ? 'var(--green-dim)' : 'var(--red-dim)'}`,
+          pointerEvents: 'auto',
+          background: 'var(--bg-3)',
+          border: `1px solid ${t.type === 'ok' ? 'var(--green-dim)' : 'var(--red-dim)'}`,
           color: t.type === 'ok' ? 'var(--green)' : 'var(--red)',
-          padding: '10px 16px', borderRadius: 'var(--radius)',
-          fontSize: 13, animation: 'fadeUp 0.2s ease',
+          padding: '10px 16px',
+          borderRadius: 'var(--radius)',
+          fontSize: 13,
+          animation: 'fadeUp 0.2s ease',
           fontFamily: 'var(--font-mono)',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
         }}>
           {t.type === 'ok' ? '✓ ' : '✗ '}{t.msg}
         </div>

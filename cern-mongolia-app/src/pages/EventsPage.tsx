@@ -33,7 +33,6 @@ export default function EventsPage() {
 
   useEffect(() => { load() }, [])
 
-  // Lock body scroll when modal is open
   useEffect(() => {
     if (showModal) {
       document.body.style.overflow = 'hidden'
@@ -90,6 +89,7 @@ export default function EventsPage() {
 
   const modal = showModal ? createPortal(
     <div
+      className="modal-overlay"
       style={{
         position: 'fixed',
         top: 0,
@@ -110,7 +110,7 @@ export default function EventsPage() {
       }}
     >
       <div
-        className="fade-up"
+        className="modal-inner fade-up"
         style={{
           width: '100%',
           maxWidth: 540,
@@ -123,7 +123,7 @@ export default function EventsPage() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: 'var(--text)' }}>
+          <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: '#ffffff' }}>
             {editing ? 'Edit event' : 'New event'}
           </h3>
           <button
@@ -131,8 +131,8 @@ export default function EventsPage() {
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--text-3)',
-              fontSize: 20,
+              color: '#ffffff',
+              fontSize: 22,
               cursor: 'pointer',
               lineHeight: 1,
               padding: '0 4px',
@@ -146,13 +146,13 @@ export default function EventsPage() {
           <Input label="Topic" value={form.topic} onChange={e => set('topic', e.target.value)} required />
           <Input label="Agenda" value={form.agenda} onChange={e => set('agenda', e.target.value)} />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+          <div className="event-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             <Input label="Date" type="date" value={form.date} onChange={e => set('date', e.target.value)} required />
             <Input label="Start" type="time" value={form.start_time} onChange={e => set('start_time', e.target.value)} required />
             <Input label="End" type="time" value={form.end_time} onChange={e => set('end_time', e.target.value)} required />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+          <div className="event-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             <Input label="Location" value={form.location} onChange={e => set('location', e.target.value)} required />
             <Input label="Building" value={form.building} onChange={e => set('building', e.target.value)} required />
             <Input label="Room" value={form.room} onChange={e => set('room', e.target.value)} required />
@@ -187,7 +187,7 @@ export default function EventsPage() {
         title="Events"
         action={
           canEdit && (
-            <Btn onClick={openCreate} style={{ fontSize: 13, padding: '7px 16px' }}>
+            <Btn onClick={openCreate} style={{ fontSize: 16, padding: '7px 16px' }}>
               + New event
             </Btn>
           )
@@ -196,39 +196,41 @@ export default function EventsPage() {
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
-          <div style={{ padding: 24, color: 'var(--text-3)', fontSize: 13 }}>Loading...</div>
+          <div style={{ padding: 24, color: 'var(--text-3)', fontSize: 16 }}>Loading...</div>
         ) : events.length === 0 ? (
-          <div style={{ padding: 32, color: 'var(--text-3)', fontSize: 14, textAlign: 'center' }}>
+          <div style={{ padding: 32, color: 'var(--text-3)', fontSize: 16, textAlign: 'center' }}>
             No events yet
           </div>
         ) : (
-          <Table
-            headers={['Date', 'Topic', 'Time', 'Location', 'Room', ...(canEdit ? [''] : [])]}
-            rows={sortedEvents.map(e => {
-              const isPast = e.date < todayStr
-              const isToday = e.date === todayStr
-              return [
-                <span style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 13,
-                  color: isToday ? 'var(--yellow)' : isPast ? 'var(--text-3)' : 'var(--text)',
-                }}>
-                  {e.date}{isToday ? ' · today' : ''}
-                </span>,
-                <span style={{ fontWeight: 600, fontSize: 14 }}>{e.topic}</span>,
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>
-                  {e.start_time}–{e.end_time}
-                </span>,
-                <span style={{ color: 'var(--text-3)', fontSize: 13 }}>{e.location}</span>,
-                <span style={{ color: 'var(--text-3)', fontSize: 13 }}>{e.building}/{e.room}</span>,
-                ...(canEdit ? [
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <Btn variant="outline" onClick={() => openEdit(e)} style={{ padding: '4px 12px', fontSize: 12 }}>Edit</Btn>
-                    <Btn variant="danger" onClick={() => handleDelete(e.id)} style={{ padding: '4px 12px', fontSize: 12 }}>Delete</Btn>
-                  </div>
-                ] : [])
-              ]
-            })}
-          />
+          <div className="table-wrapper">
+            <Table
+              headers={['Date', 'Topic', 'Time', 'Location', 'Room', ...(canEdit ? [''] : [])]}
+              rows={sortedEvents.map(e => {
+                const isPast = e.date < todayStr
+                const isToday = e.date === todayStr
+                return [
+                  <span style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 16,
+                    color: isToday ? 'var(--yellow)' : isPast ? 'var(--text-3)' : '#ffffff',
+                  }}>
+                    {e.date}{isToday ? ' · today' : ''}
+                  </span>,
+                  <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>{e.topic}</span>,
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff', whiteSpace: 'nowrap' }}>
+                    {e.start_time}–{e.end_time}
+                  </span>,
+                  <span style={{ color: '#ffffff', fontSize: 16 }}>{e.location}</span>,
+                  <span style={{ color: '#ffffff', fontSize: 16 }}>{e.building}/{e.room}</span>,
+                  ...(canEdit ? [
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <Btn variant="outline" onClick={() => openEdit(e)} style={{ padding: '6px 12px', fontSize: 16 }}>Edit</Btn>
+                      <Btn variant="danger" onClick={() => handleDelete(e.id)} style={{ padding: '6px 12px', fontSize: 16 }}>Delete</Btn>
+                    </div>
+                  ] : [])
+                ]
+              })}
+            />
+          </div>
         )}
       </Card>
 

@@ -94,19 +94,25 @@ export default function Login() {
     }}>
       <ColliderBackground />
 
-      {/* Divider */}
-      <div style={{
+      {/* Divider — hidden on mobile via CSS class */}
+      <div className="auth-divider" style={{
         position: 'absolute', left: '60%', top: 0, bottom: 0, width: 1, zIndex: 5,
         background: 'linear-gradient(180deg,transparent 0%,rgba(56,189,248,.22) 30%,rgba(56,189,248,.32) 50%,rgba(56,189,248,.22) 70%,transparent 100%)',
       }} />
 
-      <LeftPanel />
+      {/* Left panel — hidden on mobile */}
+      <div className="auth-left-panel" style={{ display: 'contents' }}>
+        <LeftPanel />
+      </div>
 
       {/* Right — form */}
-      <div style={{
-        width: '40%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '40px 52px', position: 'relative', zIndex: 10,
-      }}>
+      <div
+        className="auth-right-panel"
+        style={{
+          width: '40%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '40px 52px', position: 'relative', zIndex: 10,
+        }}
+      >
         <div style={{
           width: '100%', maxWidth: 420,
           background: 'rgba(6,10,22,.78)',
@@ -144,7 +150,7 @@ export default function Login() {
                     ✗ {error}
                   </div>
                 )}
-                <Btn type="submit" loading={loading} style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>
+                <Btn type="submit" loading={loading} style={{ width: '100%', justifyContent: 'center', marginTop: 4, fontSize: 16 }}>
                   Sign in →
                 </Btn>
               </form>

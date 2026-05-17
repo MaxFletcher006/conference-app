@@ -24,7 +24,7 @@ export default function QuestionsPage() {
       <SectionHeader
         title="Questions"
         action={
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-3)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
             {questions.length} total
           </span>
         }
@@ -32,27 +32,29 @@ export default function QuestionsPage() {
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
-          <div style={{ padding: 24, color: 'var(--text-3)', fontSize: 13 }}>Loading...</div>
+          <div style={{ padding: 24, color: 'var(--text-3)', fontSize: 16 }}>Loading...</div>
         ) : questions.length === 0 ? (
-          <div style={{ padding: 32, color: 'var(--text-3)', fontSize: 14, textAlign: 'center' }}>
+          <div style={{ padding: 32, color: 'var(--text-3)', fontSize: 16, textAlign: 'center' }}>
             No questions submitted yet
           </div>
         ) : (
-          <Table
-            headers={['Event', 'User ID', 'Question', 'Time']}
-            rows={questions.map(q => [
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--blue)' }}>
-                {getEventLabel(q.event_id)}
-              </span>,
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)' }}>
-                #{q.user_id}
-              </span>,
-              <span style={{ color: 'var(--text)', fontSize: 14 }}>{q.question}</span>,
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-3)' }}>
-                {q.time}
-              </span>,
-            ])}
-          />
+          <div className="table-wrapper">
+            <Table
+              headers={['Event', 'User ID', 'Question', 'Time']}
+              rows={questions.map(q => [
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--blue)' }}>
+                  {getEventLabel(q.event_id)}
+                </span>,
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
+                  #{q.user_id}
+                </span>,
+                <span style={{ color: '#ffffff', fontSize: 16 }}>{q.question}</span>,
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
+                  {q.time}
+                </span>,
+              ])}
+            />
+          </div>
         )}
       </Card>
     </Page>

@@ -64,9 +64,9 @@ export interface UserCreatePayload {
   firstname: string
   lastname: string
   email: string
-  phone_number: string
   password: string
   role: string
+  phone_number: string
 }
 
 export interface EventPayload {

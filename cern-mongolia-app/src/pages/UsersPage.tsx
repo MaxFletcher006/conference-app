@@ -35,11 +35,8 @@ export default function UsersPage() {
     setLoading(false)
   }
 
-  useEffect(() => {
-    load()
-  }, [])
+  useEffect(() => { load() }, [])
 
-  // Lock body scroll when modal is open
   useEffect(() => {
     if (showAddModal) {
       document.body.style.overflow = 'hidden'
@@ -52,7 +49,6 @@ export default function UsersPage() {
   const handleDelete = async (id: number, role: string) => {
     if (role === 'admin') return toast('Cannot delete admin', 'err')
     if (!confirm('Delete this user?')) return
-
     try {
       await deleteUser(id)
       toast('User deleted')
@@ -65,7 +61,6 @@ export default function UsersPage() {
   const handleAddStaff = async (e: FormEvent) => {
     e.preventDefault()
     setAddingStaff(true)
-
     try {
       const created = await register(staffForm)
       setUsers(u => [...u, created])
@@ -75,7 +70,6 @@ export default function UsersPage() {
     } catch (err: any) {
       toast(err?.response?.data?.detail || 'Failed to create staff', 'err')
     }
-
     setAddingStaff(false)
   }
 
@@ -95,7 +89,7 @@ export default function UsersPage() {
 
   const modal = showAddModal ? createPortal(
     <div
-      className="fade-in"
+      className="modal-overlay fade-in"
       style={{
         position: 'fixed',
         top: 0,
@@ -111,7 +105,6 @@ export default function UsersPage() {
         padding: '20px',
         boxSizing: 'border-box',
       }}
-      // Close on backdrop click
       onMouseDown={e => {
         if (e.target === e.currentTarget) {
           setShowAddModal(false)
@@ -120,7 +113,7 @@ export default function UsersPage() {
       }}
     >
       <div
-        className="fade-up"
+        className="modal-inner fade-up"
         style={{
           width: '100%',
           maxWidth: 460,
@@ -134,113 +127,46 @@ export default function UsersPage() {
       >
         <form
           onSubmit={handleAddStaff}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-            width: '100%',
-          }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}
         >
           <div>
-            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 6px 0', color: 'var(--text)' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 6px 0', color: '#ffffff' }}>
               Add Staff Member
             </h3>
-            <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0, lineHeight: 1.4 }}>
+            <p style={{ fontSize: 16, color: '#ffffff', margin: 0, lineHeight: 1.4 }}>
               Create a new staff account. The user can log in immediately.
             </p>
           </div>
 
-          {/* NAME ROW */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 12,
-              width: '100%',
-            }}
-          >
-            <Input
-              label="First name"
-              value={staffForm.firstname}
-              onChange={e => setField('firstname', e.target.value)}
-              required
-            />
-            <Input
-              label="Last name"
-              value={staffForm.lastname}
-              onChange={e => setField('lastname', e.target.value)}
-              required
-            />
+          <div className="name-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%' }}>
+            <Input label="First name" value={staffForm.firstname} onChange={e => setField('firstname', e.target.value)} required />
+            <Input label="Last name" value={staffForm.lastname} onChange={e => setField('lastname', e.target.value)} required />
           </div>
 
-          {/* EMAIL */}
-          <Input
-            label="Email"
-            type="email"
-            value={staffForm.email}
-            onChange={e => setField('email', e.target.value)}
-            required
-          />
+          <Input label="Email" type="email" value={staffForm.email} onChange={e => setField('email', e.target.value)} required />
+          <Input label="Phone Number" type="tel" value={staffForm.phone_number} onChange={e => setField('phone_number', e.target.value)} required />
+          <Input label="Password" type="password" value={staffForm.password} onChange={e => setField('password', e.target.value)} required />
 
-          {/* PHONE NUMBER */}
-          <Input
-            label="Phone Number"
-            type="phone_number"
-            value={staffForm.phone_number}
-            onChange={e => setField('phone_number', e.target.value)}
-            required
-          />
-
-          {/* PASSWORD */}
-          <Input
-            label="Password"
-            type="password"
-            value={staffForm.password}
-            onChange={e => setField('password', e.target.value)}
-            required
-          />
-
-          {/* ROLE */}
           <Select
             label="Role"
             value={staffForm.role}
             onChange={e => setField('role', e.target.value)}
             options={[
               { value: 'staff', label: 'Staff' },
-              ...(me?.role === 'admin'
-                ? [{ value: 'supervisor', label: 'Supervisor' }]
-                : []),
+              ...(me?.role === 'admin' ? [{ value: 'supervisor', label: 'Supervisor' }] : []),
             ]}
           />
 
-          {/* FOOTER ACTIONS */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: 12,
-              marginTop: 8,
-            }}
-          >
-            <Btn
-              variant="ghost"
-              type="button"
-              onClick={() => {
-                setShowAddModal(false)
-                setStaffForm(emptyStaffForm())
-              }}
-            >
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
+            <Btn variant="ghost" type="button" onClick={() => { setShowAddModal(false); setStaffForm(emptyStaffForm()) }}>
               Cancel
             </Btn>
-
-            <Btn type="submit" loading={addingStaff}>
-              Create account
-            </Btn>
+            <Btn type="submit" loading={addingStaff}>Create account</Btn>
           </div>
         </form>
       </div>
     </div>,
-    document.body  // ← renders OUTSIDE <Page>, bypasses any overflow/clip
+    document.body
   ) : null
 
   return (
@@ -249,15 +175,11 @@ export default function UsersPage() {
         title="Users"
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-3)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
               {users.length} total
             </span>
-
             {canManage && (
-              <Btn
-                onClick={() => setShowAddModal(true)}
-                style={{ fontSize: 13, padding: '7px 16px' }}
-              >
+              <Btn onClick={() => setShowAddModal(true)} style={{ fontSize: 16, padding: '7px 16px' }}>
                 + Add staff
               </Btn>
             )}
@@ -266,19 +188,19 @@ export default function UsersPage() {
       />
 
       {/* FILTERS */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, flexWrap: 'wrap' }}>
         {roleFilters.map(f => (
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
             style={{
-              padding: '6px 14px',
+              padding: '8px 14px',
               borderRadius: 'var(--radius)',
               border: '1px solid',
               borderColor: filter === f.value ? 'var(--border-3)' : 'transparent',
               background: filter === f.value ? 'var(--bg-3)' : 'transparent',
-              color: filter === f.value ? 'var(--text)' : 'var(--text-3)',
-              fontSize: 13,
+              color: filter === f.value ? '#ffffff' : 'var(--text-3)',
+              fontSize: 16,
               cursor: 'pointer',
             }}
           >
@@ -289,50 +211,31 @@ export default function UsersPage() {
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
-          <div style={{ padding: 24, fontSize: 13, color: 'var(--text-3)' }}>
-            Loading...
-          </div>
+          <div style={{ padding: 24, fontSize: 16, color: 'var(--text-3)' }}>Loading...</div>
         ) : (
-          <Table
-            headers={[
-              '#',
-              'Name',
-              'Email',
-              'Phone Number',
-              'Role',
-              'Action'
-            ]}
-            rows={filtered.map(u => [
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)' }}>
-                {u.id}
-              </span>,
-              <span style={{ fontWeight: 600 }}>
-                {u.firstname} {u.lastname}
-              </span>,
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-3)' }}>
-                {u.email}
-              </span>,
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-3)' }}>
-                {u.phone_number}
-              </span>,
-              <Badge label={u.role} />,
-              ...(me?.role === 'admin'
-                ? [
-                    u.role !== 'admin' ? (
-                      <Btn
-                        variant="danger"
-                        onClick={() => handleDelete(u.id, u.role)}
-                        style={{ padding: '4px 12px', fontSize: 12 }}
-                      >
-                        Delete
-                      </Btn>
-                    ) : (
-                      <span style={{ color: 'var(--text-3)' }}>—</span>
-                    ),
-                  ]
-                : []),
-            ])}
-          />
+          <div className="table-wrapper">
+            <Table
+              headers={['#', 'Name', 'Email', 'Phone Number', 'Role', 'Action']}
+              rows={filtered.map(u => [
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>{u.id}</span>,
+                <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>{u.firstname} {u.lastname}</span>,
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>{u.email}</span>,
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>{u.phone_number}</span>,
+                <Badge label={u.role} />,
+                ...(me?.role === 'admin'
+                  ? [
+                      u.role !== 'admin' ? (
+                        <Btn variant="danger" onClick={() => handleDelete(u.id, u.role)} style={{ padding: '6px 12px', fontSize: 16 }}>
+                          Delete
+                        </Btn>
+                      ) : (
+                        <span style={{ color: 'var(--text-3)' }}>—</span>
+                      ),
+                    ]
+                  : []),
+              ])}
+            />
+          </div>
         )}
       </Card>
 
