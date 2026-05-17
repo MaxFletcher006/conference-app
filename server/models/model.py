@@ -56,8 +56,6 @@ class Question(SQLModel, table=True):
 
 class MailList(SQLModel, table=True):
     mail_id: int | None = Field(default=None, primary_key=True)
-
-    # Added ondelete="CASCADE"
     user_id: int | None = Field(
         default=None, 
         foreign_key="user.id", 
