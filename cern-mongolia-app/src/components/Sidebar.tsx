@@ -8,16 +8,19 @@ const navItems = {
     { to: '/dashboard/users', label: 'Users' },
     { to: '/dashboard/events', label: 'Events' },
     { to: '/dashboard/questions', label: 'Questions' },
+    { to: '/scan', label: 'Scan Ticket' },  
   ],
   supervisor: [
     { to: '/dashboard', label: 'Overview' },
     { to: '/dashboard/users', label: 'Users' },
     { to: '/dashboard/events', label: 'Events' },
     { to: '/dashboard/questions', label: 'Questions' },
+    { to: '/scan', label: 'Scan Ticket' },  
   ],
   staff: [
     { to: '/dashboard', label: 'Overview' },
     { to: '/dashboard/questions', label: 'Questions' },
+    { to: '/scan', label: 'Scan Ticket' },   
   ],
 }
 

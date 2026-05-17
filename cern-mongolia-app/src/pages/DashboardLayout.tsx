@@ -66,6 +66,10 @@ export default function DashboardLayout() {
           <span className="nav-icon">💬</span>
           Questions
         </NavLink>
+        <NavLink to="/scan" className={({ isActive }) => isActive ? 'active' : ''}>
+          <span className="nav-icon">📷</span>
+          Scan
+        </NavLink>
         <button onClick={handleLogout}>
           <span className="nav-icon">🚪</span>
           Sign out

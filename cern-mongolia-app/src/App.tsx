@@ -11,6 +11,7 @@ import EventsPage from './pages/EventsPage'
 import QuestionsPage from './pages/QuestionsPage'
 import AttendeePage from './pages/AttendeePage'
 import ValidatePage from './pages/ValidatePage'
+import QRScanPage from './pages/QRScanPage'
 
 // Guard: redirect based on auth state + role
 function RootRedirect() {
@@ -59,6 +60,9 @@ function AppRoutes() {
 
       {/* Validate — accessible to authenticated staff/admin/supervisor */}
       <Route path="/validate/:ticket_uuid" element={<ValidatePage />} />
+
+      {/* Scan QR code*/}
+      <Route path="/scan" element={<QRScanPage />} />
 
       {/* Dashboard */}
       <Route path="/dashboard" element={<DashboardLayout />}>
