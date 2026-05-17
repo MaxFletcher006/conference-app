@@ -26,7 +26,7 @@ export interface Event {
   end_time: string
   topic: string
   agenda: string
-  speaker: number
+  speaker: string
   location: string
   building: string
   room: string
@@ -75,7 +75,7 @@ export interface EventPayload {
   end_time: string
   topic: string
   agenda: string
-  speaker: number
+  speaker: string
   location: string
   building: string
   room: string

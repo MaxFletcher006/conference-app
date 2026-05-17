@@ -6,7 +6,7 @@ import { Page, SectionHeader, Card, Table, Btn, Input, Select, Modal, toast } fr
 
 const emptyForm = (): EventPayload => ({
   date: '', start_time: '', end_time: '',
-  topic: '', agenda: '', speaker: 0,
+  topic: '', agenda: '', speaker: '',
   location: '', building: '', room: '',
 })
 
@@ -158,17 +158,11 @@ export default function EventsPage() {
             <Input label="Room" value={form.room} onChange={e => set('room', e.target.value)} required />
           </div>
 
-          <Select
+          <Input
             label="Speaker"
-            value={String(form.speaker)}
-            onChange={e => set('speaker', parseInt(e.target.value))}
-            options={[
-              { value: '0', label: 'Select speaker...' },
-              ...speakers.map(s => ({
-                value: String(s.id),
-                label: `${s.firstname} ${s.lastname} (${s.role})`,
-              }))
-            ]}
+            value={form.speaker}
+            onChange={e => set('speaker', e.target.value)}
+            required
           />
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
