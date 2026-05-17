@@ -1,65 +1,86 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Html5Qrcode } from 'html5-qrcode'
+import jsQR from 'jsqr'
 import { useAuth, isDashboardRole } from '../context/AuthContext'
 import { Spinner } from '../components/UI'
 
 export default function QRScanPage() {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
-  const scannerRef = useRef<Html5Qrcode | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const animRef = useRef<number>(0)
   const scannedRef = useRef(false)
   const [error, setError] = useState('')
   const [started, setStarted] = useState(false)
 
+  const stopEverything = () => {
+    cancelAnimationFrame(animRef.current)
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop())
+      streamRef.current = null
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+  }
+
   useEffect(() => {
     if (authLoading) return
     if (!user || !isDashboardRole(user.role)) {
-        navigate('/login')
-        return
+      navigate('/login')
+      return
     }
 
-    const scanner = new Html5Qrcode('qr-reader')
-    scannerRef.current = scanner
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    })
+      .then(stream => {
+        streamRef.current = stream
+        if (!videoRef.current) return
+        videoRef.current.srcObject = stream
+        videoRef.current.play()
+        setStarted(true)
+        tick()
+      })
+      .catch(() => setError('Camera access denied. Please allow camera permission.'))
 
-    scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-        if (scannedRef.current) return
+    return () => stopEverything()
+  }, [authLoading, user])
+
+  const tick = () => {
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    if (!video || !canvas || scannedRef.current) return
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const code = jsQR(imageData.data, imageData.width, imageData.height)
+
+      if (code?.data) {
         scannedRef.current = true
-
-        const uuid = decodedText.split('/validate/')[1]
-        if (!uuid) {
-            scannedRef.current = false
-            setError('Invalid QR code.')
-            return
+        const uuid = code.data.split('/validate/')[1]
+        if (uuid) {
+          stopEverything()
+          navigate(`/validate/${uuid}`)
+          return
+        } else {
+          scannedRef.current = false
+          setError('Invalid QR code. Not a valid ticket.')
+          return
         }
-
-        // Stop scanner, release camera, THEN navigate
-        scanner.stop()
-            .catch(() => {})
-            .finally(() => {
-            // Force release all media tracks before navigating
-            navigator.mediaDevices?.getUserMedia({ video: true })
-                .then(stream => stream.getTracks().forEach(t => t.stop()))
-                .catch(() => {})
-                .finally(() => {
-                setTimeout(() => navigate(`/validate/${uuid}`), 300) // small delay for cleanup
-                })
-            })
-        },
-        () => {}
-    )
-        .then(() => setStarted(true))
-        .catch(() => setError('Camera access denied.'))
-
-    return () => {
-        if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {})
-        }
+      }
     }
-    }, [authLoading, user])
+
+    animRef.current = requestAnimationFrame(tick)
+  }
 
   if (authLoading) return (
     <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
@@ -102,8 +123,6 @@ export default function QRScanPage() {
             background: 'var(--bg-2)', border: '1px solid var(--border)',
             borderRadius: 16, overflow: 'hidden',
           }}>
-            <div id="qr-reader" style={{ width: '100%' }} />
-
             {!started && (
               <div style={{
                 display: 'flex', flexDirection: 'column',
@@ -116,6 +135,18 @@ export default function QRScanPage() {
               </div>
             )}
 
+            {/* video is always mounted so ref works, just hidden until started */}
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              style={{
+                width: '100%', display: started ? 'block' : 'none',
+                borderRadius: 16,
+              }}
+            />
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+
             {started && (
               <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)' }}>
                 <p style={{ color: 'var(--text-3)', fontSize: 15, textAlign: 'center', margin: 0 }}>
@@ -127,7 +158,7 @@ export default function QRScanPage() {
         )}
 
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => { stopEverything(); navigate('/dashboard') }}
           style={{ ...btnStyle, marginTop: 16, width: '100%' }}
         >
           Back to dashboard
