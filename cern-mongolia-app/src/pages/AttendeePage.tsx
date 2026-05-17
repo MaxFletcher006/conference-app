@@ -43,7 +43,7 @@ export default function AttendeePage() {
       pad(date.getMonth() + 1) +
       '-' +
       pad(date.getDate()) +
-      ':' +
+      '-' +
       pad(date.getHours()) +
       ':' +
       pad(date.getMinutes()) +
@@ -141,7 +141,7 @@ export default function AttendeePage() {
             animation: 'dashPulse 2.5s ease-in-out infinite',
           }} />
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff', letterSpacing: '0.12em' }}>
-            CERN MONGOLIA 2026
+            CERN LHCb - MONGOLIA 2026
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

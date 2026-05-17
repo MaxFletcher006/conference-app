@@ -409,9 +409,6 @@ async def update_event(event_id: int, event_data: EventModel, session: SessionDe
         session.commit()
         session.refresh(db_event)
 
-        email_list = get_mail_list(session=session)
-        await publish_event(type="updated", db_event=db_event, email_list=email_list)
-
         return db_event
     
     except HTTPException:

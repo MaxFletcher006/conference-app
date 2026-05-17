@@ -103,7 +103,7 @@ export default function Sidebar() {
           onClick={handleLogout}
           style={{
             width: '100%',          
-            textAlign: 'left',       
+            textAlign: 'center',       
             padding: '8px 10px',
             borderRadius: 'var(--radius)',
             background: 'none',

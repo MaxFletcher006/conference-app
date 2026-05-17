@@ -52,7 +52,7 @@ export default function ValidatePage() {
         letterSpacing: '0.14em', marginBottom: 36, textAlign: 'center',
         position: 'relative', zIndex: 1,
       }}>
-        CERN MONGOLIA 2026 · TICKET VALIDATION
+        CERN LHCb - MONGOLIA 2026 · TICKET VALIDATION
       </div>
 
       <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1 }}>
