@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
 from models.model import User, Event, Ticket, MailList, Question, create_db_and_tables, get_session
-from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, UserQuestion
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser
 from mailer import conf 
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
@@ -716,6 +716,30 @@ def get_speaker_question(session: SessionDep, user_id: int, current_user: dict =
             raise HTTPException(status_code=404, detail="No questions found")
 
         return questions 
+    except Exception as e:
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+@app.get("/all-questions-with-users", response_model=List[QuestionWithUser])
+def get_all_questions_with_users(
+    session: SessionDep,
+    current_user: dict = Depends(require_role("admin", "supervisor", "staff"))
+):
+    try:
+        questions = session.exec(select(Question)).all()
+        result = []
+        for q in questions:
+            user = session.get(User, q.user_id)
+            fullname = f"{user.firstname} {user.lastname}" if user else "Unknown"
+            result.append(QuestionWithUser(
+                id=q.id,
+                user_id=q.user_id,
+                event_id=q.event_id,
+                question=q.question,
+                time=q.time,
+                fullname=fullname
+            ))
+        return result
     except Exception as e:
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")

@@ -41,6 +41,14 @@ class QuestionModel(BaseModel):
     question: str 
     time: str 
 
+class QuestionWithUser(BaseModel):
+    id: int
+    user_id: int
+    event_id: int
+    question: str
+    time: str
+    fullname: str
+
 class UserQuestion(BaseModel):
     user_id: int 
 

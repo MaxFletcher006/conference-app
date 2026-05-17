@@ -81,6 +81,15 @@ export interface EventPayload {
   room: string
 }
 
+export interface QuestionWithUser {
+  id: number
+  user_id: number
+  event_id: number
+  question: string
+  time: string
+  fullname: string
+}
+
 export interface QuestionPayload {
   user_id: number
   event_id: number     
@@ -121,6 +130,8 @@ export const validateTicket = (ticketUuid: string) => client.get<TicketValidatio
 export const getAllQuestions = () => client.get<Question[]>('/all-questions').then(r => r.data)
 export const addQuestion = (payload: QuestionPayload) => client.post<Question>('/add-question', payload).then(r => r.data)
 export const getQuestionsByUser = (userId: number) => client.get<Question[]>(`/question/${userId}`).then(r => r.data)
+export const getAllQuestionsWithUsers = () =>
+  client.get<QuestionWithUser[]>('/all-questions-with-users').then(r => r.data)
 
 export const getAllEmails = () => client.get<EmailEntry[]>('/test-all-emails').then(r => r.data)
 

@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { getAllQuestions, getAllEvents, Question, Event } from '../api/client'
+import { getAllQuestionsWithUsers, getAllEvents, QuestionWithUser, Event } from '../api/client'
 import { Page, SectionHeader, Card, Table, toast } from '../components/UI'
 
 export default function QuestionsPage() {
-  const [questions, setQuestions] = useState<Question[]>([])
+  const [questions, setQuestions] = useState<QuestionWithUser[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([getAllQuestions(), getAllEvents()])
+    Promise.all([getAllQuestionsWithUsers(), getAllEvents()])
       .then(([q, e]) => { setQuestions(q); setEvents(e) })
       .catch(() => toast('Failed to load questions', 'err'))
       .finally(() => setLoading(false))
@@ -40,13 +40,13 @@ export default function QuestionsPage() {
         ) : (
           <div className="table-wrapper">
             <Table
-              headers={['Event', 'User ID', 'Question', 'Time']}
+              headers={['Event', 'Fullname', 'Question', 'Time']}
               rows={questions.map(q => [
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--blue)' }}>
                   {getEventLabel(q.event_id)}
                 </span>,
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
-                  #{q.user_id}
+                  #{q.fullname}
                 </span>,
                 <span style={{ color: '#ffffff', fontSize: 16 }}>{q.question}</span>,
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
