@@ -214,7 +214,7 @@ def login_user(response: Response, session: SessionDep, login_data: LoginModel):
         )
     
 @app.post("/forgot")
-def password_forgot(session: SessionDep, data: ForgetEmail, background_tasks: BackgroundTasks):
+async def password_forgot(session: SessionDep, data: ForgetEmail, background_tasks: BackgroundTasks):
     try:
         db_user = session.exec(
             select(User).where(User.email == data.email)
@@ -222,8 +222,7 @@ def password_forgot(session: SessionDep, data: ForgetEmail, background_tasks: Ba
 
         if db_user:
             token = create_reset_token(db_user.email)
-            background_tasks.add_task(send_reset_email, db_user.email, token)
-        
+            await send_reset_email(db_user.email, token)        
         return {"message": "Reset password link has sent to email"}
     
     except Exception as e:
