@@ -15,7 +15,6 @@ export default function AttendeePage() {
 
   const [ticketModal, setTicketModal] = useState(false)
   const [ticketDay, setTicketDay] = useState('1')
-  const [ticketEmail, setTicketEmail] = useState(user?.email || '')
   const [purchasingTicket, setPurchasingTicket] = useState(false)
 
   const [questionModal, setQuestionModal] = useState(false)
@@ -62,7 +61,7 @@ export default function AttendeePage() {
     if (!user) return
     setPurchasingTicket(true)
     try {
-      await purchaseTicket({ user_id: user.id, day: parseInt(ticketDay), email: ticketEmail })
+      await purchaseTicket({ user_id: user.id, day: parseInt(ticketDay), email: user.email })
       toast('Ticket purchased! Check your email.')
       setTicketModal(false)
     } catch (err: any) {
@@ -281,7 +280,7 @@ export default function AttendeePage() {
         <Modal title="Purchase Ticket" onClose={() => setTicketModal(false)}>
           <form onSubmit={handlePurchaseTicket} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ fontSize: 16, color: '#ffffff', lineHeight: 1.6 }}>
-              A QR-code ticket will be sent to your email address below.
+              A QR-code ticket will be sent to <span style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)' }}>{user?.email}</span>
             </p>
             <Select
               label="Days of attendance"
@@ -291,14 +290,9 @@ export default function AttendeePage() {
                 { value: '1', label: '1 day' },
                 { value: '2', label: '2 days' },
                 { value: '3', label: '3 days' },
+                { value: '4', label: '4 days' },
+                { value: '5', label: '5 days' },
               ]}
-            />
-            <Input
-              label="Send ticket to email"
-              type="email"
-              value={ticketEmail}
-              onChange={e => setTicketEmail(e.target.value)}
-              required
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
               <Btn variant="ghost" type="button" onClick={() => setTicketModal(false)}>Cancel</Btn>
