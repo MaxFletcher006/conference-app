@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Html5Qrcode } from 'html5-qrcode'
-import { useAuth } from '../context/AuthContext'
-import { isDashboardRole } from '../context/AuthContext'
+import { useAuth, isDashboardRole } from '../context/AuthContext'
 import { Spinner } from '../components/UI'
 
 export default function QRScanPage() {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
   const scannerRef = useRef<Html5Qrcode | null>(null)
+  const scannedRef = useRef(false)
   const [error, setError] = useState('')
   const [started, setStarted] = useState(false)
 
@@ -26,10 +26,17 @@ export default function QRScanPage() {
       { facingMode: 'environment' },
       { fps: 10, qrbox: { width: 250, height: 250 } },
       (decodedText) => {
-        // QR contains full URL: https://yoursite.com/validate/some-uuid
+        if (scannedRef.current) return
+        scannedRef.current = true
+
         const uuid = decodedText.split('/validate/')[1]
         if (uuid) {
-          scanner.stop().then(() => navigate(`/validate/${uuid}`))
+          scanner.stop()
+            .catch(() => {})
+            .finally(() => navigate(`/validate/${uuid}`))
+        } else {
+          scannedRef.current = false
+          setError('Invalid QR code. Not a valid ticket.')
         }
       },
       () => {}
@@ -83,7 +90,6 @@ export default function QRScanPage() {
             background: 'var(--bg-2)', border: '1px solid var(--border)',
             borderRadius: 16, overflow: 'hidden',
           }}>
-            {/* scanner mounts here */}
             <div id="qr-reader" style={{ width: '100%' }} />
 
             {!started && (
