@@ -64,6 +64,7 @@ app.add_middleware(
         "https://conference-app-fawn.vercel.app",
         "http://localhost:5173",
         "https://conference-app-jade.vercel.app",
+        "https://conference-app-jade.vercel.app",
     ],
 
     allow_credentials=True,
@@ -198,9 +199,10 @@ def login_user(response: Response, session: SessionDep, login_data: LoginModel):
             key=SESSION_COOKIE,
             value=token,
             httponly=True,
-            samesite="lax",
-            secure=False,
-            max_age=SESSION_MAX_AGE
+            samesite="none",
+            secure=True,
+            max_age=SESSION_MAX_AGE,
+            path="/",
         )
 
         return db_user
