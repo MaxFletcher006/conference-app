@@ -4,8 +4,8 @@ from sqlmodel import select, Session
 from typing import Annotated, List
 from contextlib import asynccontextmanager
 from sqlalchemy.exc import IntegrityError
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from starlette.responses import JSONResponse
+#from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+#from starlette.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
@@ -14,6 +14,7 @@ from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, 
 from mailer import conf 
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
+from gmail_sender import send_email
 
 import bcrypt, io, os
 import qrcode
@@ -237,8 +238,8 @@ def password_reset(session: SessionDep, data: PasswordReset):
     RESET_SECRET_KEY = os.getenv("RESET_SECRET_KEY")
     RESET_ALGORITHM = os.getenv("RESET_ALGORITHM")
 
-    print(RESET_SECRET_KEY)
-    print(RESET_ALGORITHM)
+    # print(RESET_SECRET_KEY)
+    # print(RESET_ALGORITHM)
 
     try:
         payload = jwt.decode(data.token, RESET_SECRET_KEY, algorithms=[RESET_ALGORITHM])
@@ -407,6 +408,9 @@ async def update_event(event_id: int, event_data: EventModel, session: SessionDe
         session.commit()
         session.refresh(db_event)
 
+        email_list = get_mail_list(session=session)
+        await publish_event(type="updated", db_event=db_event, email_list=email_list)
+
         return db_event
     
     except HTTPException:
@@ -451,13 +455,13 @@ async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep, curren
     UPLOAD_DIR = "tickets"
     if not os.path.exists(UPLOAD_DIR):
         os.makedirs(UPLOAD_DIR)
-    
+
     new_ticket = Ticket(
         user_id=data.user_id,
         name="Conference Pass",
         day_length=data.day,
         used_times=0,
-        qr_code_data=ticket_uuid 
+        qr_code_data=ticket_uuid
     )
     session.add(new_ticket)
     session.commit()
@@ -471,97 +475,85 @@ async def purchase_ticket(data: TicketPurchaseModel, session: SessionDep, curren
     with open(file_path, "wb") as f:
         f.write(qr_buffer.getvalue())
 
-    message = MessageSchema(
+    html_body = f"""
+    <html>
+    <body style="margin:0;padding:0;background-color:#f4f4f7;font-family:Arial,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" style="padding:40px 0;">
+                    <table width="600" cellpadding="0" cellspacing="0"
+                        style="background:white;border-radius:16px;
+                        overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+
+                        <!-- Header -->
+                        <tr>
+                            <td align="center"
+                                style="background:#111827;padding:30px;color:white;">
+                                <h1 style="margin:0;font-size:28px;">
+                                    CERN Mongolia 2026 | Event Ticket
+                                </h1>
+                                <p style="margin-top:10px;color:#d1d5db;">
+                                    Thank you for purchasing a ticket
+                                </p>
+                            </td>
+                        </tr>
+
+                        <!-- Body -->
+                        <tr>
+                            <td style="padding:40px;color:#374151;">
+                                <h2 style="margin-top:0;">
+                                    Dear {user.firstname} {user.lastname},
+                                </h2>
+                                <p style="font-size:16px;line-height:1.6;">
+                                    Your ticket has been successfully generated.
+                                    Please present the attached QR code at the entrance.
+                                </p>
+                                <div style="
+                                    margin:30px 0;
+                                    padding:20px;
+                                    background:#f9fafb;
+                                    border-left:4px solid #2563eb;
+                                    border-radius:8px;
+                                ">
+                                    <p style="margin:0;font-size:15px;">
+                                        📌 Important:
+                                        Each QR ticket can only be used according
+                                        to its allowed entry count.
+                                    </p>
+                                </div>
+                                <p style="font-size:16px;line-height:1.6;">
+                                    We look forward to seeing you at the event.
+                                </p>
+                                <p style="margin-top:40px;">
+                                    Best regards,<br>
+                                    <strong>CERN Mongolia 2026 Event Team</strong>
+                                </p>
+                            </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                            <td align="center"
+                                style="padding:20px;background:#f3f4f6;
+                                color:#6b7280;font-size:13px;">
+                                This is an automated email. Please do not reply.
+                            </td>
+                        </tr>
+
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+
+    await send_email(
+        to=[data.email],
         subject="CERN LHCb - Mongolia 2026 | Ticket",
-        recipients=[data.email],
-        subtype=MessageType.html,
-        body=f"""
-        <html>
-        <body style="margin:0;padding:0;background-color:#f4f4f7;font-family:Arial,sans-serif;">
-            <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td align="center" style="padding:40px 0;">
-
-                        <table width="600" cellpadding="0" cellspacing="0"
-                            style="background:white;border-radius:16px;
-                            overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
-
-                            <!-- Header -->
-                            <tr>
-                                <td align="center"
-                                    style="background:#111827;padding:30px;color:white;">
-                                    <h1 style="margin:0;font-size:28px;">
-                                        CERN Mongolia 2026 | Event Ticket
-                                    </h1>
-                                    <p style="margin-top:10px;color:#d1d5db;">
-                                        Thank you for purchasing event 
-                                    </p>
-                                </td>
-                            </tr>
-
-                            <!-- Body -->
-                            <tr>
-                                <td style="padding:40px;color:#374151;">
-
-                                    <h2 style="margin-top:0;">
-                                        Dear {user.firstname} {user.lastname},
-                                    </h2>
-
-                                    <p style="font-size:16px;line-height:1.6;">
-                                        Your ticket has been successfully generated.
-                                        Please present the attached QR code at the entrance.
-                                    </p>
-
-                                    <div style="
-                                        margin:30px 0;
-                                        padding:20px;
-                                        background:#f9fafb;
-                                        border-left:4px solid #2563eb;
-                                        border-radius:8px;
-                                    ">
-                                        <p style="margin:0;font-size:15px;">
-                                            📌 Important:
-                                            Each QR ticket can only be used according
-                                            to its allowed entry count.
-                                        </p>
-                                    </div>
-
-                                    <p style="font-size:16px;line-height:1.6;">
-                                        We look forward to seeing you at the event.
-                                    </p>
-
-                                    <p style="margin-top:40px;">
-                                        Best regards,<br>
-                                        <strong>CERN Mongolia 2026 Event Team</strong>
-                                    </p>
-
-                                </td>
-                            </tr>
-
-                            <!-- Footer -->
-                            <tr>
-                                <td align="center"
-                                    style="padding:20px;background:#f3f4f6;
-                                    color:#6b7280;font-size:13px;">
-
-                                    This is an automated email. Please do not reply.
-
-                                </td>
-                            </tr>
-
-                        </table>
-
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>
-        """,
-        attachments=[file_path]
+        html_body=html_body,
+        attachment_path=file_path
     )
-
-    fm = FastMail(conf)
-    await fm.send_message(message)
 
     return {"status": "purchased", "ticket_id": new_ticket.id}
 
@@ -756,181 +748,131 @@ async def mail_service(type: str, header: str, body: str, time: str, email: List
 
     status = type.upper()
 
-    if status == "CREATED":
-        banner_color = "#16a34a"
-        status_emoji = "🟢"
-        status_text = "New Announcement"
-    elif status == "UPDATED":
+    if status == "UPDATED":
         banner_color = "#2563eb"
         status_emoji = "🔵"
-        status_text = "Announcement Updated"
+        status_text = "Event Updated"
     elif status == "CANCELLED":
         banner_color = "#dc2626"
         status_emoji = "🔴"
-        status_text = "Announcement Cancelled"
-    else:
-        banner_color = "#111827"
-        status_emoji = "📢"
-        status_text = "Announcement"
+        status_text = "Event Cancelled"
 
-    message = MessageSchema(
-        subject=f"{status} POST | CERN Mongolia 2026",
-        recipients=[entry.email for entry in email],
-        subtype=MessageType.html,
-        body=f"""
-        <html>
-        <body style="
-            margin:0;
-            padding:0;
-            background-color:#f3f4f6;
-            font-family:Arial,sans-serif;
-        ">
-
-            <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td align="center" style="padding:40px 20px;">
-
-                        <table width="600" cellpadding="0" cellspacing="0"
-                            style="
-                                background:white;
-                                border-radius:18px;
-                                overflow:hidden;
-                                box-shadow:0 6px 20px rgba(0,0,0,0.08);
-                            ">
-
-                            <!-- HEADER -->
-                            <tr>
-                                <td align="center"
-                                    style="
-                                        background:{banner_color};
-                                        padding:35px 30px;
-                                        color:white;
-                                    ">
-
-                                    <h1 style="
-                                        margin:0;
-                                        font-size:30px;
-                                        font-weight:bold;
-                                    ">
-                                        {status_emoji} {status_text}
-                                    </h1>
-
-                                    <p style="
-                                        margin-top:12px;
-                                        font-size:15px;
-                                        color:#e5e7eb;
-                                    ">
-                                        CERN Mongolia 2026
-                                    </p>
-
-                                </td>
-                            </tr>
-
-                            <!-- BODY -->
-                            <tr>
-                                <td style="
-                                    padding:40px;
-                                    color:#374151;
+    html_body = f"""
+    <html>
+    <body style="
+        margin:0;
+        padding:0;
+        background-color:#f3f4f6;
+        font-family:Arial,sans-serif;
+    ">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" style="padding:40px 20px;">
+                    <table width="600" cellpadding="0" cellspacing="0"
+                        style="
+                            background:white;
+                            border-radius:18px;
+                            overflow:hidden;
+                            box-shadow:0 6px 20px rgba(0,0,0,0.08);
+                        ">
+                        <!-- HEADER -->
+                        <tr>
+                            <td align="center"
+                                style="
+                                    background:{banner_color};
+                                    padding:35px 30px;
+                                    color:white;
                                 ">
+                                <h1 style="margin:0;font-size:30px;font-weight:bold;">
+                                    {status_emoji} {status_text}
+                                </h1>
+                                <p style="margin-top:12px;font-size:15px;color:#e5e7eb;">
+                                    CERN Mongolia 2026
+                                </p>
+                            </td>
+                        </tr>
 
-                                    <h2 style="
-                                        margin-top:0;
-                                        font-size:26px;
-                                        color:#111827;
-                                    ">
-                                        {header}
-                                    </h2>
+                        <!-- BODY -->
+                        <tr>
+                            <td style="padding:40px;color:#374151;">
+                                <h2 style="margin-top:0;font-size:26px;color:#111827;">
+                                    {header}
+                                </h2>
+                                <div style="
+                                    margin-top:25px;
+                                    padding:24px;
+                                    background:#f9fafb;
+                                    border-radius:12px;
+                                    border:1px solid #e5e7eb;
+                                    line-height:1.8;
+                                    font-size:16px;
+                                    color:#374151;
+                                    white-space:pre-line;
+                                ">
+                                    {body}
+                                </div>
 
-                                    <div style="
-                                        margin-top:25px;
-                                        padding:24px;
-                                        background:#f9fafb;
-                                        border-radius:12px;
-                                        border:1px solid #e5e7eb;
-                                        line-height:1.8;
-                                        font-size:16px;
-                                        color:#374151;
-                                        white-space:pre-line;
-                                    ">
-                                        {body}
-                                    </div>
-
-                                    <!-- TIME SECTION -->
-                                    <div style="
-                                        margin-top:25px;
-                                        padding:20px;
-                                        background:#f3f4f6;
-                                        border-radius:12px;
-                                        border:1px solid #d1d5db;
-                                    ">
-                                        <p style="
-                                            margin:0;
-                                            font-size:15px;
-                                            color:#374151;
-                                        ">
-                                            🕒 <strong>Event Time:</strong> {time}
-                                        </p>
-                                    </div>
-
-                                    <!-- NOTICE -->
-                                    <div style="
-                                        margin-top:30px;
-                                        padding:18px;
-                                        background:#eff6ff;
-                                        border-left:4px solid {banner_color};
-                                        border-radius:10px;
-                                    ">
-                                        <p style="
-                                            margin:0;
-                                            font-size:15px;
-                                            color:#1f2937;
-                                        ">
-                                            📌 Please stay updated through official
-                                            CERN Mongolia 2026 announcements.
-                                        </p>
-                                    </div>
-
-                                    <p style="
-                                        margin-top:40px;
-                                        font-size:16px;
-                                        line-height:1.7;
-                                    ">
-                                        Thank you,<br>
-                                        <strong>CERN Mongolia 2026 Event Team</strong>
+                                <!-- TIME SECTION -->
+                                <div style="
+                                    margin-top:25px;
+                                    padding:20px;
+                                    background:#f3f4f6;
+                                    border-radius:12px;
+                                    border:1px solid #d1d5db;
+                                ">
+                                    <p style="margin:0;font-size:15px;color:#374151;">
+                                        🕒 <strong>Event Time:</strong> {time}
                                     </p>
+                                </div>
 
-                                </td>
-                            </tr>
+                                <!-- NOTICE -->
+                                <div style="
+                                    margin-top:30px;
+                                    padding:18px;
+                                    background:#eff6ff;
+                                    border-left:4px solid {banner_color};
+                                    border-radius:10px;
+                                ">
+                                    <p style="margin:0;font-size:15px;color:#1f2937;">
+                                        📌 Please stay updated through official
+                                        CERN Mongolia 2026 announcements.
+                                    </p>
+                                </div>
 
-                            <!-- FOOTER -->
-                            <tr>
-                                <td align="center"
-                                    style="
-                                        background:#f9fafb;
-                                        padding:22px;
-                                        font-size:13px;
-                                        color:#6b7280;
-                                    ">
+                                <p style="margin-top:40px;font-size:16px;line-height:1.7;">
+                                    Thank you,<br>
+                                    <strong>CERN Mongolia 2026 Event Team</strong>
+                                </p>
+                            </td>
+                        </tr>
 
-                                    This is an automated email notification.<br>
-                                    Please do not reply to this email.
+                        <!-- FOOTER -->
+                        <tr>
+                            <td align="center"
+                                style="
+                                    background:#f9fafb;
+                                    padding:22px;
+                                    font-size:13px;
+                                    color:#6b7280;
+                                ">
+                                This is an automated email notification.<br>
+                                Please do not reply to this email.
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
 
-                                </td>
-                            </tr>
-
-                        </table>
-
-                    </td>
-                </tr>
-            </table>
-
-        </body>
-        </html>
-        """,
+    recipients = [entry.email for entry in email]
+    await send_email(
+        to=recipients,
+        subject=f"{status} | CERN Mongolia 2026",
+        html_body=html_body
     )
-
-    fm = FastMail(conf)
-    await fm.send_message(message)
 
 # ---- MISC FUNCTIONS ---- #
 
@@ -992,187 +934,146 @@ def create_reset_token(email: str) -> str:
 
 async def send_reset_email(email: str, token: str):
     FRONT_URL = os.getenv("FRONT_URL")
-    print(FRONT_URL)
 
     reset_link = f"{FRONT_URL}/reset-password/{token}"
 
-    message = MessageSchema(
-        subject="Reset Your Password | CERN LHCb - Mongolia 2026",
-        recipients=[email],
-        subtype=MessageType.html,
-        body=f"""
-        <html>
-        <body style="
-            margin:0;
-            padding:0;
-            background-color:#f3f4f6;
-            font-family:Arial,sans-serif;
-        ">
+    html_body = f"""
+    <html>
+    <body style="
+        margin:0;
+        padding:0;
+        background-color:#f3f4f6;
+        font-family:Arial,sans-serif;
+    ">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td align="center" style="padding:40px 20px;">
+                    <table width="600" cellpadding="0" cellspacing="0"
+                        style="
+                            background:white;
+                            border-radius:18px;
+                            overflow:hidden;
+                            box-shadow:0 6px 20px rgba(0,0,0,0.08);
+                        ">
 
-            <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td align="center" style="padding:40px 20px;">
+                        <!-- HEADER -->
+                        <tr>
+                            <td align="center"
+                                style="
+                                    background:#2563eb;
+                                    padding:35px 30px;
+                                    color:white;
+                                ">
+                                <h1 style="margin:0;font-size:30px;font-weight:bold;">
+                                    Password Reset Request
+                                </h1>
+                                <p style="margin-top:12px;font-size:15px;color:#e5e7eb;">
+                                    CERN Mongolia 2026
+                                </p>
+                            </td>
+                        </tr>
 
-                        <table width="600" cellpadding="0" cellspacing="0"
-                            style="
-                                background:white;
-                                border-radius:18px;
-                                overflow:hidden;
-                                box-shadow:0 6px 20px rgba(0,0,0,0.08);
-                            ">
-
-                            <!-- HEADER -->
-                            <tr>
-                                <td align="center"
-                                    style="
-                                        background:#2563eb;
-                                        padding:35px 30px;
-                                        color:white;
-                                    ">
-
-                                    <h1 style="
-                                        margin:0;
-                                        font-size:30px;
-                                        font-weight:bold;
-                                    ">
-                                        Password Reset Request
-                                    </h1>
-
-                                    <p style="
-                                        margin-top:12px;
-                                        font-size:15px;
-                                        color:#e5e7eb;
-                                    ">
-                                        CERN Mongolia 2026
-                                    </p>
-
-                                </td>
-                            </tr>
-
-                            <!-- BODY -->
-                            <tr>
-                                <td style="
-                                    padding:40px;
+                        <!-- BODY -->
+                        <tr>
+                            <td style="padding:40px;color:#374151;">
+                                <h2 style="margin-top:0;font-size:26px;color:#111827;">
+                                    Reset Your Password
+                                </h2>
+                                <div style="
+                                    margin-top:25px;
+                                    padding:24px;
+                                    background:#f9fafb;
+                                    border-radius:12px;
+                                    border:1px solid #e5e7eb;
+                                    line-height:1.8;
+                                    font-size:16px;
                                     color:#374151;
                                 ">
+                                    We received a request to reset your account password.
+                                    Click the button below to create a new password.
+                                </div>
 
-                                    <h2 style="
-                                        margin-top:0;
-                                        font-size:26px;
-                                        color:#111827;
-                                    ">
-                                        Reset Your Password
-                                    </h2>
-
-                                    <div style="
-                                        margin-top:25px;
-                                        padding:24px;
-                                        background:#f9fafb;
-                                        border-radius:12px;
-                                        border:1px solid #e5e7eb;
-                                        line-height:1.8;
-                                        font-size:16px;
-                                        color:#374151;
-                                    ">
-                                        We received a request to reset your account password.
-                                        Click the button below to create a new password.
-                                    </div>
-
-                                    <!-- BUTTON -->
-                                    <div style="margin-top:35px; text-align:center;">
-
-                                        <a href="{reset_link}"
-                                            style="
-                                                display:inline-block;
-                                                background:#2563eb;
-                                                color:white;
-                                                text-decoration:none;
-                                                padding:16px 34px;
-                                                border-radius:12px;
-                                                font-size:16px;
-                                                font-weight:bold;
-                                            ">
-                                            Reset Password
-                                        </a>
-
-                                    </div>
-
-                                    <!-- LINK -->
-                                    <div style="
-                                        margin-top:30px;
-                                        padding:18px;
-                                        background:#f3f4f6;
-                                        border-radius:10px;
-                                        font-size:14px;
-                                        color:#4b5563;
-                                        word-break:break-all;
-                                    ">
-                                        If the button does not work, copy and paste this link into your browser:
-                                        <br><br>
-                                        <a href="{reset_link}" style="color:#2563eb;">
-                                            {reset_link}
-                                        </a>
-                                    </div>
-
-                                    <!-- NOTICE -->
-                                    <div style="
-                                        margin-top:30px;
-                                        padding:18px;
-                                        background:#eff6ff;
-                                        border-left:4px solid #2563eb;
-                                        border-radius:10px;
-                                    ">
-                                        <p style="
-                                            margin:0;
-                                            font-size:15px;
-                                            color:#1f2937;
+                                <!-- BUTTON -->
+                                <div style="margin-top:35px;text-align:center;">
+                                    <a href="{reset_link}"
+                                        style="
+                                            display:inline-block;
+                                            background:#2563eb;
+                                            color:white;
+                                            text-decoration:none;
+                                            padding:16px 34px;
+                                            border-radius:12px;
+                                            font-size:16px;
+                                            font-weight:bold;
                                         ">
-                                            This password reset link will expire soon for security reasons.
-                                            If you did not request a password reset, you can safely ignore this email.
-                                        </p>
-                                    </div>
+                                        Reset Password
+                                    </a>
+                                </div>
 
-                                    <p style="
-                                        margin-top:40px;
-                                        font-size:16px;
-                                        line-height:1.7;
-                                    ">
-                                        Thank you,<br>
-                                        <strong>CERN Mongolia 2026 Event Team</strong>
+                                <!-- LINK FALLBACK -->
+                                <div style="
+                                    margin-top:30px;
+                                    padding:18px;
+                                    background:#f3f4f6;
+                                    border-radius:10px;
+                                    font-size:14px;
+                                    color:#4b5563;
+                                    word-break:break-all;
+                                ">
+                                    If the button does not work, copy and paste this link:
+                                    <br><br>
+                                    <a href="{reset_link}" style="color:#2563eb;">
+                                        {reset_link}
+                                    </a>
+                                </div>
+
+                                <!-- NOTICE -->
+                                <div style="
+                                    margin-top:30px;
+                                    padding:18px;
+                                    background:#eff6ff;
+                                    border-left:4px solid #2563eb;
+                                    border-radius:10px;
+                                ">
+                                    <p style="margin:0;font-size:15px;color:#1f2937;">
+                                        This link will expire in 15 minutes.
+                                        If you did not request a reset, ignore this email.
                                     </p>
+                                </div>
 
-                                </td>
-                            </tr>
+                                <p style="margin-top:40px;font-size:16px;line-height:1.7;">
+                                    Thank you,<br>
+                                    <strong>CERN Mongolia 2026 Event Team</strong>
+                                </p>
+                            </td>
+                        </tr>
 
-                            <!-- FOOTER -->
-                            <tr>
-                                <td align="center"
-                                    style="
-                                        background:#f9fafb;
-                                        padding:22px;
-                                        font-size:13px;
-                                        color:#6b7280;
-                                    ">
+                        <!-- FOOTER -->
+                        <tr>
+                            <td align="center"
+                                style="
+                                    background:#f9fafb;
+                                    padding:22px;
+                                    font-size:13px;
+                                    color:#6b7280;
+                                ">
+                                This is an automated email notification.<br>
+                                Please do not reply to this email.
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
 
-                                    This is an automated email notification.<br>
-                                    Please do not reply to this email.
-
-                                </td>
-                            </tr>
-
-                        </table>
-
-                    </td>
-                </tr>
-            </table>
-
-        </body>
-        </html>
-        """,
+    await send_email(
+        to=[email],
+        subject="Reset Your Password | CERN LHCb - Mongolia 2026",
+        html_body=html_body
     )
-
-    fm = FastMail(conf)
-    await fm.send_message(message)
 
 
 # ---- TEST FUNCTIONS ---- #
@@ -1180,3 +1081,13 @@ async def send_reset_email(email: str, token: str):
 @app.get("/test-all-emails", response_model=List[EmailSchema])
 def get_mail_list(session: SessionDep, current_user: dict = Depends(require_role("admin"))):
     return session.exec(select(MailList)).all()
+
+@app.get("/test-gmail")
+async def test_gmail():
+    from gmail_sender import send_email
+    await send_email(
+        to=["007bayraa@email.com"],
+        subject="Test",
+        html_body="<p>Gmail API working!</p>"
+    )
+    return {"status": "sent"}
