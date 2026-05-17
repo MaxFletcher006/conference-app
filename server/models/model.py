@@ -59,9 +59,10 @@ class MailList(SQLModel, table=True):
 
     user_id: int | None = Field(
         default=None,
-        foreign_key="user.id",
-        sa_column_kwargs={"ondelete": "CASCADE"},
-        index=True
+        sa_column=Field(
+            sa_column_kwargs={},
+        ),
+        foreign_key="user.id"
     )
 
     email: str = Field(index=True)
