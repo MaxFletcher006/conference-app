@@ -43,6 +43,11 @@ def decode_session_cookie(token: str) -> dict:
         raise HTTPException(status_code=401, detail="Invalid session")
 
 def get_current_user(request: Request) -> dict:
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        return decode_session_cookie(token)
+    
     token = request.cookies.get(SESSION_COOKIE)
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -178,10 +183,7 @@ def login_user(response: Response, session: SessionDep, login_data: LoginModel):
         ).first()
 
         if not db_user:
-            raise HTTPException(
-                status_code=404,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=404, detail="User not found")
 
         password_match = bcrypt.checkpw(
             login_data.password.encode("utf-8"),
@@ -189,32 +191,26 @@ def login_user(response: Response, session: SessionDep, login_data: LoginModel):
         )
 
         if not password_match:
-            raise HTTPException(
-                status_code=401,
-                detail="Email or password doesn't match"
-            )
+            raise HTTPException(status_code=401, detail="Email or password doesn't match")
 
+        # Return token in response body instead of cookie
         token = create_session_cookie({"user_id": db_user.id, "role": db_user.role})
-        response.set_cookie(
-            key=SESSION_COOKIE,
-            value=token,
-            httponly=True,
-            samesite="none",
-            secure=True,
-            max_age=SESSION_MAX_AGE,
-            path="/",
-        )
-
-        return db_user
+        
+        return JSONResponse(content={
+            "id": db_user.id,
+            "firstname": db_user.firstname,
+            "lastname": db_user.lastname,
+            "email": db_user.email,
+            "phone_number": db_user.phone_number,
+            "role": db_user.role,
+            "token": token,  # ← send token in body
+        })
 
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Internal server error"
-        )
+        raise HTTPException(status_code=500, detail="Internal server error")
     
 @app.post("/forgot")
 async def password_forgot(session: SessionDep, data: ForgetEmail, background_tasks: BackgroundTasks):

@@ -11,7 +11,11 @@ interface AuthCtx {
 const AuthContext = createContext<AuthCtx | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<User | null>(() => {
+    const stored = localStorage.getItem('user')
+    return stored ? JSON.parse(stored) : null
+  })  
+
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -33,6 +37,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await apiLogout()
     setUser(null)
     sessionStorage.removeItem('cern_user')
+  }
+
+  const handleLogin = async (email: string, password: string) => {
+    const data = await login(email, password)
+    localStorage.setItem('user', JSON.stringify(data))
+    setUser(data)
+  }
+
+  const handleLogout = async () => {
+    await logout()
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+    setUser(null)
   }
 
   return (

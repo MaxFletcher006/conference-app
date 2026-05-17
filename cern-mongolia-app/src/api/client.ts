@@ -4,8 +4,16 @@ const BASE_URL = import.meta.env.VITE_API_URL
 console.log(BASE_URL);
 
 export const client = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true,
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: false,  
+})
+
+client.interceptors.request.use(config => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
 })
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -113,8 +121,17 @@ export const serverTest = () => client.get<{ message: string }>('/').then(r => r
 export const getAllUsers = () => client.get<User[]>('/all-users').then(r => r.data)
 export const getUser = (id: number) => client.get<User>(`/user/${id}`).then(r => r.data)
 export const register = (payload: UserCreatePayload) => client.post<User>('/register', payload).then(r => r.data)
-export const login = (email: string, password: string) => client.post<User>('/login', { email, password }).then(r => r.data)
-export const logout = () => client.post<{ message: string }>('/logout').then(r => r.data)
+
+export const login = async (email: string, password: string) => {
+  const data = await client.post<User & { token: string }>('/login', { email, password }).then(r => r.data)
+  localStorage.setItem('token', data.token)  // ← save token
+  return data
+}
+export const logout = () => {
+  localStorage.removeItem('token')  // ← clear token
+  return client.post<{ message: string }>('/logout').then(r => r.data)
+}
+
 export const updateUser = (id: number, payload: Partial<UserCreatePayload>) => client.put<User>(`/user/${id}`, payload).then(r => r.data)
 export const deleteUser = (id: number) => client.delete<{ message: string }>(`/user/${id}`).then(r => r.data)
 
