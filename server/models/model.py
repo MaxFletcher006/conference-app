@@ -56,7 +56,14 @@ class Question(SQLModel, table=True):
 
 class MailList(SQLModel, table=True):
     mail_id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="user.id")
+
+    user_id: int | None = Field(
+        default=None,
+        foreign_key="user.id",
+        sa_column_kwargs={"ondelete": "CASCADE"},
+        index=True
+    )
+
     email: str = Field(index=True)
 
 engine = create_engine(DB_URL)
