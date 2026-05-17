@@ -41,7 +41,7 @@ class Post(SQLModel, table=True):
 
 class Ticket(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="user.id", index=True)
+    user_id: int | None = Field(default=None, foreign_key="user.id", index=True, ondelete="CASCADE")
     name: str
     day_length: int 
     used_times: int 
@@ -49,8 +49,8 @@ class Ticket(SQLModel, table=True):
 
 class Question(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="user.id")
-    event_id: int | None = Field(default=None, foreign_key="event.id")
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="CASCADE")
+    event_id: int | None = Field(default=None, foreign_key="event.id", ondelete="CASCADE")
     question: str = Field(index=True)
     time: str = Field(index=True)
 
@@ -59,6 +59,7 @@ class MailList(SQLModel, table=True):
     user_id: int | None = Field(
         default=None, 
         foreign_key="user.id", 
+        ondelete="CASCADE"
     )
     
     email: str = Field(index=True)
