@@ -34,6 +34,24 @@ export default function AttendeePage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const formatLocalDateTime = (date = new Date()) => {
+    const pad = (n: number) => String(n).padStart(2, '0')
+
+    return (
+      date.getFullYear() +
+      '-' +
+      pad(date.getMonth() + 1) +
+      '-' +
+      pad(date.getDate()) +
+      ':' +
+      pad(date.getHours()) +
+      ':' +
+      pad(date.getMinutes()) +
+      ':' +
+      pad(date.getSeconds())
+    )
+  }
+  
   const handleLogout = async () => {
     await logout()
     navigate('/login')
@@ -62,7 +80,7 @@ export default function AttendeePage() {
         user_id: user.id,
         event_id: parseInt(eventId),
         question: questionText,
-        time: new Date().toISOString(),
+        time: formatLocalDateTime(),
       })
       toast('Question submitted')
       setQuestionModal(false)
