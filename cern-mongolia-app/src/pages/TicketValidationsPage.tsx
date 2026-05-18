@@ -19,6 +19,15 @@ export default function TicketValidationsPage() {
     v.ticket_uuid.toLowerCase().includes(search.toLowerCase())
   )
 
+  const parseValidationTime = (raw: string) => {
+    if (!raw) return null
+    // format: 2026-05-18-14-30-45
+    const parts = raw.split('-')
+    if (parts.length < 6) return null
+    const [year, month, day, hour, min, sec] = parts
+    return new Date(+year, +month - 1, +day, +hour, +min, +sec)
+  }
+
   const todayStr = new Date().toISOString().split('T')[0]
   const todayCount = validations.filter(v =>
     v.validation_time?.startsWith(todayStr)
@@ -32,7 +41,6 @@ export default function TicketValidationsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 32 }}>
         <StatMini label="Total Scans" value={validations.length} color="var(--blue)" />
         <StatMini label="Today" value={todayCount} color="var(--yellow)" />
-        <StatMini label="Unique Users" value={new Set(validations.map(v => v.validated_user)).size} color="var(--green)" />
       </div>
 
       {/* Search */}
