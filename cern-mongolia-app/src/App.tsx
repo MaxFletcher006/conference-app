@@ -56,17 +56,12 @@ function AppRoutes() {
       {/* Public */}
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       {/* Attendee */}
       <Route path="/home" element={<AttendeeRoute><AttendeePage /></AttendeeRoute>} />
 
-      {/* Validate — accessible to authenticated staff/admin/supervisor */}
-      <Route path="/validate/:ticket_uuid" element={<ValidatePage />} />
-
-      {/* Scan QR code*/}
-      <Route path="/scan" element={<QRScanPage />} />
-
-      {/* Dashboard */}
+      {/* Dashboard + Sidebar layout */}
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<DashboardOverview />} />
         <Route path="users" element={<UsersPage />} />
@@ -74,10 +69,15 @@ function AppRoutes() {
         <Route path="questions" element={<QuestionsPage />} />
       </Route>
 
+      {/* These also need sidebar — move into a layout wrapper */}
+      <Route element={<DashboardLayout />}>
+        <Route path="/scan" element={<QRScanPage />} />
+        <Route path="/validate" element={<TicketValidationsPage />} />
+        <Route path="/validate/:ticket_uuid" element={<ValidatePage />} />
+      </Route>
+
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
-      <Route path="/validate" element={<TicketValidationsPage />} />
     </Routes>
   )
 }

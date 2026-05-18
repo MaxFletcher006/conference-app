@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { validateTicket, TicketVerification } from '../api/client'
+import { validateTicket, ticketValidation, TicketVerification } from '../api/client'
 import { useAuth, isDashboardRole } from '../context/AuthContext'
 import { Spinner } from '../components/UI'
 
@@ -31,7 +31,21 @@ export default function ValidatePage() {
 
     const timer = setTimeout(() => {
       validateTicket(ticket_uuid)
-        .then(data => setResult(data))
+        .then(async (data) => {
+          setResult(data)
+
+          if (user && data.day_left >= 0) {
+            try {
+              await ticketValidation({
+                ticket_uuid: ticket_uuid,
+                user_id: user.id,
+                validated_user: `${user.firstname} ${user.lastname}`,
+                validation_time: formatValidationTime(),
+              })
+            } catch {
+            }
+          }
+        })
         .catch(err => setError(err?.response?.data?.detail || 'Validation failed.'))
         .finally(() => setLoading(false))
     }, 500)
@@ -40,6 +54,12 @@ export default function ValidatePage() {
   }, [authLoading, user, ticket_uuid])
 
   const isValid = result !== null && result.day_left > 0
+
+  const formatValidationTime = () => {
+    const now = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`
+  }
 
   return (
     <div className="validate-container" style={{
