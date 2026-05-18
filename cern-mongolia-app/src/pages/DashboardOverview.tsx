@@ -3,6 +3,213 @@ import { getAllUsers, getAllEvents, getAllQuestions, User, Event, Question, getT
 import { useAuth } from '../context/AuthContext'
 import { Page, StatCard, SectionHeader, Badge, Card, Table } from '../components/UI'
 
+// ─── EventRow Component ────────────────────────────────────────────────────────
+
+function EventRow({ event: e, variant }: { event: Event; variant: 'today' | 'upcoming' | 'past' }) {
+  const accentColor =
+    variant === 'today' ? 'var(--yellow)' :
+    variant === 'upcoming' ? 'var(--blue)' :
+    'var(--text-3)'
+  const isPast = variant === 'past'
+
+  return (
+    <div style={{
+      background: 'var(--bg-2)',
+      border: `1px solid ${isPast ? 'var(--border)' : 'var(--border-2)'}`,
+      borderRadius: 'var(--radius-lg)',
+      padding: '18px 22px',
+      opacity: isPast ? 0.55 : 1,
+      transition: 'all 0.2s',
+    }}>
+      <div
+        className="event-row-inner"
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontWeight: 600,
+            fontSize: 16,
+            marginBottom: 5,
+            color: isPast ? 'var(--text-2)' : '#ffffff',
+          }}>
+            {e.topic}
+          </div>
+
+          {e.agenda && (
+            <div style={{ fontSize: 16, color: '#ffffff', marginBottom: 8, lineHeight: 1.5 }}>
+              {e.agenda}
+            </div>
+          )}
+
+          {e.speaker && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              marginBottom: 8,
+              background: 'var(--bg-3)',
+              border: '1px solid var(--border)',
+              borderRadius: 6,
+              padding: '3px 10px',
+            }}>
+              <span style={{ fontSize: 13 }}>🎤</span>
+              <span style={{ fontSize: 14, color: accentColor, fontFamily: 'var(--font-mono)' }}>
+                {e.speaker}
+              </span>
+            </div>
+          )}
+
+          <div style={{ fontSize: 16, color: '#ffffff', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <span>📍 {e.location}</span>
+            <span>🏛 {e.building}, Room {e.room}</span>
+          </div>
+        </div>
+
+        <div
+          className="event-row-time"
+          style={{ marginLeft: 24, textAlign: 'right', flexShrink: 0 }}
+        >
+          <div style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 16,
+            fontWeight: 600,
+            color: accentColor,
+            marginBottom: 4,
+          }}>
+            {e.start_time} – {e.end_time}
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
+            {e.date}
+          </div>
+          {variant === 'today' && (
+            <div style={{
+              marginTop: 6,
+              display: 'inline-block',
+              background: 'var(--yellow-dim)',
+              color: 'var(--yellow)',
+              borderRadius: 4,
+              padding: '2px 8px',
+              fontSize: 12,
+              fontFamily: 'var(--font-mono)',
+              letterSpacing: '0.08em',
+            }}>
+              TODAY
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── EventGroup Component ──────────────────────────────────────────────────────
+
+function EventGroup({
+  label,
+  date,
+  events,
+  todayStr,
+}: {
+  label: string
+  date: string
+  events: Event[]
+  todayStr: string
+}) {
+  const isToday = date === todayStr
+  const isPast = date < todayStr
+  const variant: 'today' | 'upcoming' | 'past' =
+    isToday ? 'today' : isPast ? 'past' : 'upcoming'
+  const accentColor =
+    isToday ? 'var(--yellow)' : isPast ? 'var(--text-3)' : 'var(--blue)'
+
+  return (
+    <div style={{ marginBottom: 28 }}>
+      {/* Weekday label row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 13,
+          fontWeight: 600,
+          letterSpacing: '0.08em',
+          color: accentColor,
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        }}>
+          {label}
+        </span>
+        {isToday && (
+          <span style={{
+            background: 'var(--yellow-dim)',
+            color: 'var(--yellow)',
+            borderRadius: 4,
+            padding: '2px 8px',
+            fontSize: 11,
+            fontFamily: 'var(--font-mono)',
+            letterSpacing: '0.08em',
+            whiteSpace: 'nowrap',
+          }}>
+            TODAY
+          </span>
+        )}
+        <div style={{
+          flex: 1,
+          height: 1,
+          background: 'var(--border)',
+          opacity: isPast ? 0.4 : 0.7,
+        }} />
+      </div>
+
+      {/* Events under this date */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {events.map(e => (
+          <EventRow key={e.id} event={e} variant={variant} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+function getTimeOfDay() {
+  const h = new Date().getHours()
+  if (h < 12) return 'morning'
+  if (h < 17) return 'afternoon'
+  return 'evening'
+}
+
+/**
+ * Groups events by their exact date string (YYYY-MM-DD), sorted chronologically.
+ * Two events on the same date → one group.
+ * Same weekday name on different dates (e.g. two Mondays) → two separate groups.
+ */
+function groupEventsByDate(events: Event[]): { label: string; date: string; events: Event[] }[] {
+  const map = new Map<string, Event[]>()
+
+  const sorted = [...events].sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date)
+    return a.start_time.localeCompare(b.start_time)
+  })
+
+  for (const e of sorted) {
+    const existing = map.get(e.date)
+    if (existing) {
+      existing.push(e)
+    } else {
+      map.set(e.date, [e])
+    }
+  }
+
+  return Array.from(map.entries()).map(([date, evts]) => {
+    // Parse manually to avoid timezone shifts from new Date('YYYY-MM-DD')
+    const [year, month, day] = date.split('-').map(Number)
+    const d = new Date(year, month - 1, day)
+    const weekday = d.toLocaleDateString('en-US', { weekday: 'long' })
+    const monthDay = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+    return { label: `${weekday} · ${monthDay}`, date, events: evts }
+  })
+}
+
+// ─── DashboardOverview ─────────────────────────────────────────────────────────
+
 export default function DashboardOverview() {
   const { user } = useAuth()
   const [users, setUsers] = useState<User[]>([])
@@ -41,9 +248,14 @@ export default function DashboardOverview() {
 
   const roleCount = (role: string) => users.filter(u => u.role === role).length
   const todayStr = new Date().toISOString().split('T')[0]
-  const todayEvents = events.filter(e => e.date === todayStr)
-  const upcomingEvents = events.filter(e => e.date > todayStr)
 
+  const todayEvents    = events.filter(e => e.date === todayStr)
+  const upcomingEvents = events.filter(e => e.date > todayStr)
+  const pastEvents     = events.filter(e => e.date < todayStr)
+
+  const groupedToday    = groupEventsByDate(todayEvents)
+  const groupedUpcoming = groupEventsByDate(upcomingEvents)
+  const groupedPast     = groupEventsByDate(pastEvents)
 
   return (
     <Page>
@@ -80,165 +292,136 @@ export default function DashboardOverview() {
           {(user?.role === 'admin' || user?.role === 'supervisor') && (
             <>
               <SectionHeader title="Users" />
-              <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 36 }}>
+              <div
+                className="stat-grid"
+                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 36 }}
+              >
                 <StatCard label="Total users" value={users.length} />
                 <StatCard label="Attendees" value={roleCount('attendee')} />
                 <StatCard label="Staff" value={roleCount('staff')} accent="var(--blue)" />
                 <StatCard label="Supervisors" value={roleCount('supervisor')} accent="var(--green)" />
-                <StatCard label="Purchased tickets" value={totalTickets} accent="var(--green)" />
+                <StatCard label="Total Tickets" value={totalTickets} accent="var(--green)" />
               </div>
             </>
           )}
 
           {/* Event stats */}
           <SectionHeader title="Events" />
-          <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 36 }}>
+          <div
+            className="stat-grid"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 36 }}
+          >
             <StatCard label="Total events" value={events.length} />
             <StatCard label="Today" value={todayEvents.length} accent="var(--yellow)" />
             <StatCard label="Upcoming" value={upcomingEvents.length} accent="var(--blue)" />
             <StatCard label="Questions" value={questions.length} accent="var(--purple)" />
           </div>
 
-          {/* Today's events */}
-          {todayEvents.length > 0 && (
+          {/* Today's Events */}
+          {groupedToday.length > 0 && (
             <>
               <SectionHeader title="Today's schedule" />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 36 }}>
-                {todayEvents.map(e => (
-                  <Card key={e.id} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                    borderColor: 'var(--border-2)',
-                    background: 'linear-gradient(135deg, var(--bg-2), var(--bg-3))',
-                    flexWrap: 'wrap', gap: 10,
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: 600, marginBottom: 5, fontSize: 16, color: '#ffffff' }}>{e.topic}</div>
-                      <div style={{ fontSize: 16, color: 'var(--text-3)' }}>
-                        {e.location} · {e.building}, Room {e.room}
-                      </div>
-                    </div>
-                    <div style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 16,
-                      color: 'var(--yellow)', whiteSpace: 'nowrap',
-                      fontWeight: 600,
-                    }}>
-                      {e.start_time} – {e.end_time}
-                    </div>
-                  </Card>
+              <div style={{ marginBottom: 36 }}>
+                {groupedToday.map(group => (
+                  <EventGroup
+                    key={group.date}
+                    label={group.label}
+                    date={group.date}
+                    events={group.events}
+                    todayStr={todayStr}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Upcoming Events */}
+          {groupedUpcoming.length > 0 && (
+            <>
+              <SectionHeader title="Upcoming events" />
+              <div style={{ marginBottom: 36 }}>
+                {groupedUpcoming.map(group => (
+                  <EventGroup
+                    key={group.date}
+                    label={group.label}
+                    date={group.date}
+                    events={group.events}
+                    todayStr={todayStr}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Past Events */}
+          {groupedPast.length > 0 && (
+            <>
+              <SectionHeader title="Past events" />
+              <div style={{ marginBottom: 36 }}>
+                {groupedPast.map(group => (
+                  <EventGroup
+                    key={group.date}
+                    label={group.label}
+                    date={group.date}
+                    events={group.events}
+                    todayStr={todayStr}
+                  />
                 ))}
               </div>
             </>
           )}
 
           {/* Recent users */}
-            {(user?.role === 'admin' || user?.role === 'supervisor') && users.length > 0 && (
-              <>
-                <SectionHeader title="Recent users" />
-                <Card style={{ padding: 0, overflow: 'hidden' }}>
-                  <div className="table-wrapper">
-                    <Table
-                      headers={['Name', 'Email', 'Phone Number', 'Role', 'Ticket']}
-                      rows={users.slice(0, 8).map(u => [
-                        <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>
-                          {u.firstname} {u.lastname}
-                        </span>,
-                        <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
-                          {u.email}
-                        </span>,
-                        <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
-                          {u.phone_number}
-                        </span>,
-                        <Badge label={u.role} />,
-
-                        // Only show ticket status for attendees
-                        u.role === 'attendee' ? (
-                          <span style={{
-                            display: 'inline-block',
-                            fontSize: 12,
-                            fontFamily: 'var(--font-mono)',
-                            letterSpacing: '0.06em',
-                            padding: '3px 10px',
-                            borderRadius: 6,
-                            background: ticketedUserIds.has(u.id)
-                              ? 'rgba(52,211,153,0.1)' : 'rgba(220,38,38,0.1)',
-                            border: `1px solid ${ticketedUserIds.has(u.id)
-                              ? 'rgba(52,211,153,0.25)' : 'rgba(220,38,38,0.25)'}`,
-                            color: ticketedUserIds.has(u.id) ? 'var(--green)' : '#ef4444',
-                          }}>
-                            {ticketedUserIds.has(u.id) ? '✓ Purchased' : '✗ No ticket'}
-                          </span>
-                        ) : (
-                          <span style={{
-                            fontSize: 12,
-                            fontFamily: 'var(--font-mono)',
-                            color: 'var(--text-3)',
-                            letterSpacing: '0.06em',
-                          }}>—</span>
-                        ),
-                      ])}
-                    />
-                  </div>
-                </Card>
-              </>
-            )}
-
-            {/* Recent Scans — mobile only */}
-          {/* <div className="mobile-only" style={{ marginTop: 32 }}>
-            <SectionHeader title="Recent Scans" />
-            <Card style={{ padding: 0, overflow: 'hidden' }}>
-              {validations.length === 0 ? (
-                <div style={{ padding: 24, color: 'var(--text-3)', fontSize: 15, textAlign: 'center' }}>
-                  No scans yet
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  {validations.slice(0, 5).map((v, i) => {
-                    const parts = v.validation_time?.split('-') || []
-                    const parsed = parts.length >= 6
-                      ? new Date(+parts[0], +parts[1] - 1, +parts[2], +parts[3], +parts[4], +parts[5])
-                      : null
-                    return (
-                      <div key={i} style={{
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        padding: '12px 16px',
-                        borderBottom: i < Math.min(validations.length, 5) - 1 ? '1px solid var(--border)' : 'none',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{
-                            width: 28, height: 28, borderRadius: '50%',
-                            background: 'rgba(56,189,248,0.12)',
-                            border: '1px solid rgba(56,189,248,0.2)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 12, fontWeight: 700, color: 'var(--blue)',
-                            fontFamily: 'var(--font-mono)',
-                          }}>
-                            {v.validated_user?.charAt(0).toUpperCase()}
-                          </div>
-                          <span style={{ fontSize: 15, fontWeight: 600, color: '#ffffff' }}>
-                            {v.validated_user}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
-                          {parsed
-                            ? parsed.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                            : '—'}
+          {(user?.role === 'admin' || user?.role === 'supervisor') && users.length > 0 && (
+            <>
+              <SectionHeader title="Recent users" />
+              <Card style={{ padding: 0, overflow: 'hidden' }}>
+                <div className="table-wrapper">
+                  <Table
+                    headers={['Name', 'Email', 'Phone Number', 'Role', 'Ticket']}
+                    rows={users.slice(0, 8).map(u => [
+                      <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>
+                        {u.firstname} {u.lastname}
+                      </span>,
+                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
+                        {u.email}
+                      </span>,
+                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
+                        {u.phone_number}
+                      </span>,
+                      <Badge label={u.role} />,
+                      u.role === 'attendee' ? (
+                        <span style={{
+                          display: 'inline-block',
+                          fontSize: 12,
+                          fontFamily: 'var(--font-mono)',
+                          letterSpacing: '0.06em',
+                          padding: '3px 10px',
+                          borderRadius: 6,
+                          background: ticketedUserIds.has(u.id)
+                            ? 'rgba(52,211,153,0.1)' : 'rgba(220,38,38,0.1)',
+                          border: `1px solid ${ticketedUserIds.has(u.id)
+                            ? 'rgba(52,211,153,0.25)' : 'rgba(220,38,38,0.25)'}`,
+                          color: ticketedUserIds.has(u.id) ? 'var(--green)' : '#ef4444',
+                        }}>
+                          {ticketedUserIds.has(u.id) ? '✓ Purchased' : '✗ No ticket'}
                         </span>
-                      </div>
-                    )
-                  })}
+                      ) : (
+                        <span style={{
+                          fontSize: 12,
+                          fontFamily: 'var(--font-mono)',
+                          color: 'var(--text-3)',
+                          letterSpacing: '0.06em',
+                        }}>—</span>
+                      ),
+                    ])}
+                  />
                 </div>
-              )}
-            </Card>
-          </div> */}
+              </Card>
+            </>
+          )}
         </>
       )}
     </Page>
   )
-}
-
-function getTimeOfDay() {
-  const h = new Date().getHours()
-  if (h < 12) return 'morning'
-  if (h < 17) return 'afternoon'
-  return 'evening'
 }

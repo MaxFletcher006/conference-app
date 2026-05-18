@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { getAllUsers, deleteUser, register, User, UserCreatePayload } from '../api/client'
+import { getAllUsers, deleteUser, register, updateUser, User, UserCreatePayload } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { Page, SectionHeader, Card, Table, Badge, Btn, Input, Select, Modal, toast } from '../components/UI'
 
@@ -13,6 +13,15 @@ const emptyStaffForm = (): UserCreatePayload => ({
   role: 'staff',
 })
 
+const emptyEditForm = (u: User): Partial<UserCreatePayload> => ({
+  firstname: u.firstname,
+  lastname: u.lastname,
+  email: u.email,
+  phone_number: u.phone_number,
+  role: u.role,
+  password: '',
+})
+
 export default function UsersPage() {
   const { user: me } = useAuth()
   const [users, setUsers] = useState<User[]>([])
@@ -23,6 +32,12 @@ export default function UsersPage() {
   const [staffForm, setStaffForm] = useState<UserCreatePayload>(emptyStaffForm())
   const [addingStaff, setAddingStaff] = useState(false)
 
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editTarget, setEditTarget] = useState<User | null>(null)
+  const [editForm, setEditForm] = useState<Partial<UserCreatePayload>>({})
+  const [editingUser, setEditingUser] = useState(false)
+
+  const isAdmin = me?.role === 'admin'
   const canManage = me?.role === 'admin' || me?.role === 'supervisor'
 
   const load = async () => {
@@ -38,13 +53,10 @@ export default function UsersPage() {
   useEffect(() => { load() }, [])
 
   useEffect(() => {
-    if (showAddModal) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    const open = showAddModal || showEditModal
+    document.body.style.overflow = open ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [showAddModal])
+  }, [showAddModal, showEditModal])
 
   const handleDelete = async (id: number, role: string) => {
     if (role === 'admin') return toast('Cannot delete admin', 'err')
@@ -55,6 +67,39 @@ export default function UsersPage() {
       setUsers(u => u.filter(x => x.id !== id))
     } catch (err: any) {
       toast(err?.response?.data?.detail || 'Delete failed', 'err')
+    }
+  }
+
+  const openEditModal = (u: User) => {
+    setEditTarget(u)
+    setEditForm(emptyEditForm(u))
+    setShowEditModal(true)
+  }
+
+  const closeEditModal = () => {
+    setShowEditModal(false)
+    setEditTarget(null)
+    setEditForm({})
+  }
+
+  const handleEditUser = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!editTarget) return
+    setEditingUser(true)
+    try {
+      // Strip password entirely if blank — don't send empty string to API
+      const payload: Partial<UserCreatePayload> = { ...editForm }
+      if (!payload.password) delete payload.password
+
+      const updated = await updateUser(editTarget.id, payload)
+      setUsers(u => u.map(x => x.id === updated.id ? updated : x))
+      toast(`User ${updated.firstname} updated`)
+      closeEditModal()
+    } catch (err: any) {
+      toast(err?.response?.data?.detail || 'Update failed', 'err')
+    } finally {
+      // Always runs — prevents permanent loading/black screen on error
+      setEditingUser(false)
     }
   }
 
@@ -69,12 +114,16 @@ export default function UsersPage() {
       setStaffForm(emptyStaffForm())
     } catch (err: any) {
       toast(err?.response?.data?.detail || 'Failed to create staff', 'err')
+    } finally {
+      setAddingStaff(false)
     }
-    setAddingStaff(false)
   }
 
   const setField = (k: string, v: string) =>
     setStaffForm(f => ({ ...f, [k]: v }))
+
+  const setEditField = (k: string, v: string) =>
+    setEditForm(f => ({ ...f, [k]: v }))
 
   const filtered =
     filter === 'all' ? users : users.filter(u => u.role === filter)
@@ -87,24 +136,37 @@ export default function UsersPage() {
     { value: 'admin', label: 'Admins' },
   ]
 
-  const modal = showAddModal ? createPortal(
+  const overlayStyle = {
+    position: 'fixed' as const,
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: 'rgba(5, 5, 10, 0.75)',
+    backdropFilter: 'blur(4px)',
+    zIndex: 9999,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '20px',
+    boxSizing: 'border-box' as const,
+  }
+
+  const innerStyle = {
+    width: '100%',
+    maxWidth: 460,
+    background: 'var(--bg-2)',
+    border: '1px solid var(--border-2)',
+    borderRadius: 'var(--radius-lg)',
+    boxShadow: 'var(--shadow-lg)',
+    padding: 24,
+    boxSizing: 'border-box' as const,
+  }
+
+  const formStyle = { display: 'flex', flexDirection: 'column' as const, gap: 16, width: '100%' }
+
+  // ── Add Staff Modal ──────────────────────────────────────────────────────────
+  const addModal = showAddModal ? createPortal(
     <div
       className="modal-overlay fade-in"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(5, 5, 10, 0.75)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        boxSizing: 'border-box',
-      }}
+      style={overlayStyle}
       onMouseDown={e => {
         if (e.target === e.currentTarget) {
           setShowAddModal(false)
@@ -112,23 +174,8 @@ export default function UsersPage() {
         }
       }}
     >
-      <div
-        className="modal-inner fade-up"
-        style={{
-          width: '100%',
-          maxWidth: 460,
-          background: 'var(--bg-2)',
-          border: '1px solid var(--border-2)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-lg)',
-          padding: 24,
-          boxSizing: 'border-box',
-        }}
-      >
-        <form
-          onSubmit={handleAddStaff}
-          style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}
-        >
+      <div className="modal-inner fade-up" style={innerStyle}>
+        <form onSubmit={handleAddStaff} style={formStyle}>
           <div>
             <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 6px 0', color: '#ffffff' }}>
               Add Staff Member
@@ -138,7 +185,7 @@ export default function UsersPage() {
             </p>
           </div>
 
-          <div className="name-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%' }}>
             <Input label="First name" value={staffForm.firstname} onChange={e => setField('firstname', e.target.value)} required />
             <Input label="Last name" value={staffForm.lastname} onChange={e => setField('lastname', e.target.value)} required />
           </div>
@@ -153,7 +200,7 @@ export default function UsersPage() {
             onChange={e => setField('role', e.target.value)}
             options={[
               { value: 'staff', label: 'Staff' },
-              ...(me?.role === 'admin' ? [{ value: 'supervisor', label: 'Supervisor' }] : []),
+              ...(isAdmin ? [{ value: 'supervisor', label: 'Supervisor' }] : []),
             ]}
           />
 
@@ -168,6 +215,88 @@ export default function UsersPage() {
     </div>,
     document.body
   ) : null
+
+  // ── Edit User Modal (admin only) ─────────────────────────────────────────────
+  const editModal = showEditModal && editTarget ? createPortal(
+    <div
+      className="modal-overlay fade-in"
+      style={overlayStyle}
+      onMouseDown={e => { if (e.target === e.currentTarget) closeEditModal() }}
+    >
+      <div className="modal-inner fade-up" style={innerStyle}>
+        <form onSubmit={handleEditUser} style={formStyle}>
+          <div>
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 6px 0', color: '#ffffff' }}>
+              Edit User
+            </h3>
+            <p style={{ fontSize: 14, color: 'var(--text-3)', margin: 0, lineHeight: 1.4 }}>
+              Updating <strong style={{ color: '#ffffff' }}>{editTarget.firstname} {editTarget.lastname}</strong>
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%' }}>
+            <Input
+              label="First name"
+              value={editForm.firstname ?? ''}
+              onChange={e => setEditField('firstname', e.target.value)}
+              required
+            />
+            <Input
+              label="Last name"
+              value={editForm.lastname ?? ''}
+              onChange={e => setEditField('lastname', e.target.value)}
+              required
+            />
+          </div>
+
+          <Input
+            label="Email"
+            type="email"
+            value={editForm.email ?? ''}
+            onChange={e => setEditField('email', e.target.value)}
+            required
+          />
+          <Input
+            label="Phone Number"
+            type="tel"
+            value={editForm.phone_number ?? ''}
+            onChange={e => setEditField('phone_number', e.target.value)}
+            required
+          />
+
+          {editTarget.role !== 'admin' && (
+            <Select
+              label="Role"
+              value={editForm.role ?? editTarget.role}
+              onChange={e => setEditField('role', e.target.value)}
+              options={[
+                { value: 'attendee', label: 'Attendee' },
+                { value: 'staff', label: 'Staff' },
+                { value: 'supervisor', label: 'Supervisor' },
+              ]}
+            />
+          )}
+
+          <Input
+            label="New Password (leave blank to keep current)"
+            type="password"
+            value={editForm.password ?? ''}
+            onChange={e => setEditField('password', e.target.value)}
+          />
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
+            <Btn variant="ghost" type="button" onClick={closeEditModal}>
+              Cancel
+            </Btn>
+            <Btn type="submit" loading={editingUser}>Save changes</Btn>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body
+  ) : null
+
+  const tableHeaders = ['Name', 'Email', 'Phone Number', 'Role','Edit','Delete']
 
   return (
     <Page>
@@ -187,7 +316,6 @@ export default function UsersPage() {
         }
       />
 
-      {/* FILTERS */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, flexWrap: 'wrap' }}>
         {roleFilters.map(f => (
           <button
@@ -215,21 +343,34 @@ export default function UsersPage() {
         ) : (
           <div className="table-wrapper">
             <Table
-              headers={['Name', 'Email', 'Phone Number', 'Role', 'Action']}
+              headers={tableHeaders}
               rows={filtered.map(u => [
                 <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>{u.firstname} {u.lastname}</span>,
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>{u.email}</span>,
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>{u.phone_number}</span>,
                 <Badge label={u.role} />,
-                ...(me?.role === 'admin'
+                ...(isAdmin
                   ? [
-                      u.role !== 'admin' ? (
-                        <Btn variant="danger" onClick={() => handleDelete(u.id, u.role)} style={{ padding: '6px 12px', fontSize: 16 }}>
-                          Delete
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <Btn
+                          variant="ghost"
+                          onClick={() => openEditModal(u)}
+                          style={{ padding: '6px 12px', fontSize: 14 }}
+                        >
+                          Edit
                         </Btn>
-                      ) : (
-                        <span style={{ color: 'var(--text-3)' }}>—</span>
-                      ),
+                        {u.role !== 'admin' ? (
+                          <Btn
+                            variant="danger"
+                            onClick={() => handleDelete(u.id, u.role)}
+                            style={{ padding: '6px 12px', fontSize: 14 }}
+                          >
+                            Delete
+                          </Btn>
+                        ) : (
+                          <span style={{ color: 'var(--text-3)' }}>—</span>
+                        )}
+                      </div>,
                     ]
                   : []),
               ])}
@@ -238,7 +379,8 @@ export default function UsersPage() {
         )}
       </Card>
 
-      {modal}
+      {addModal}
+      {editModal}
     </Page>
   )
 }
