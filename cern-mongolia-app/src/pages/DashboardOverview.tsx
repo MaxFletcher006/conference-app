@@ -120,45 +120,56 @@ export default function DashboardOverview() {
           )}
 
           {/* Recent users */}
-          {(user?.role === 'admin' || user?.role === 'supervisor') && users.length > 0 && (
-            <>
-              <SectionHeader title="Recent users" />
-              <Card style={{ padding: 0, overflow: 'hidden' }}>
-                <div className="table-wrapper">
-                  <Table
-                    headers={['Name', 'Email', 'Phone Number', 'Role', 'Ticket']}
-                    rows={users.slice(0, 8).map(u => [
-                      <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>
-                        {u.firstname} {u.lastname}
-                      </span>,
-                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
-                        {u.email}
-                      </span>,
-                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
-                        {u.phone_number}
-                      </span>,
-                      <Badge label={u.role} />,
-                      <span style={{
-                        display: 'inline-block',
-                        fontSize: 12,
-                        fontFamily: 'var(--font-mono)',
-                        letterSpacing: '0.06em',
-                        padding: '3px 10px',
-                        borderRadius: 6,
-                        background: ticketedUserIds.has(u.id)
-                          ? 'rgba(52,211,153,0.1)' : 'rgba(220,38,38,0.1)',
-                        border: `1px solid ${ticketedUserIds.has(u.id)
-                          ? 'rgba(52,211,153,0.25)' : 'rgba(220,38,38,0.25)'}`,
-                        color: ticketedUserIds.has(u.id) ? 'var(--green)' : '#ef4444',
-                      }}>
-                        {ticketedUserIds.has(u.id) ? '✓ Purchased' : '✗ No ticket'}
-                      </span>,
-                    ])}
-                  />
-                </div>
-              </Card>
-            </>
-          )}
+            {(user?.role === 'admin' || user?.role === 'supervisor') && users.length > 0 && (
+              <>
+                <SectionHeader title="Recent users" />
+                <Card style={{ padding: 0, overflow: 'hidden' }}>
+                  <div className="table-wrapper">
+                    <Table
+                      headers={['Name', 'Email', 'Phone Number', 'Role', 'Ticket']}
+                      rows={users.slice(0, 8).map(u => [
+                        <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>
+                          {u.firstname} {u.lastname}
+                        </span>,
+                        <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
+                          {u.email}
+                        </span>,
+                        <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
+                          {u.phone_number}
+                        </span>,
+                        <Badge label={u.role} />,
+
+                        // Only show ticket status for attendees
+                        u.role === 'attendee' ? (
+                          <span style={{
+                            display: 'inline-block',
+                            fontSize: 12,
+                            fontFamily: 'var(--font-mono)',
+                            letterSpacing: '0.06em',
+                            padding: '3px 10px',
+                            borderRadius: 6,
+                            background: ticketedUserIds.has(u.id)
+                              ? 'rgba(52,211,153,0.1)' : 'rgba(220,38,38,0.1)',
+                            border: `1px solid ${ticketedUserIds.has(u.id)
+                              ? 'rgba(52,211,153,0.25)' : 'rgba(220,38,38,0.25)'}`,
+                            color: ticketedUserIds.has(u.id) ? 'var(--green)' : '#ef4444',
+                          }}>
+                            {ticketedUserIds.has(u.id) ? '✓ Purchased' : '✗ No ticket'}
+                          </span>
+                        ) : (
+                          <span style={{
+                            fontSize: 12,
+                            fontFamily: 'var(--font-mono)',
+                            color: 'var(--text-3)',
+                            letterSpacing: '0.06em',
+                          }}>—</span>
+                        ),
+                      ])}
+                    />
+                  </div>
+                </Card>
+              </>
+            )}
         </>
       )}
     </Page>
