@@ -183,53 +183,53 @@ export default function DashboardOverview() {
             )}
 
             {/* Recent Scans — mobile only */}
-            <div className="mobile-only" style={{ marginTop: 32 }}>
-              <SectionHeader title="Recent Scans" />
-              <Card style={{ padding: 0, overflow: 'hidden' }}>
-                {validations.length === 0 ? (
-                  <div style={{ padding: 24, color: 'var(--text-3)', fontSize: 15, textAlign: 'center' }}>
-                    No scans yet
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    {validations.slice(0, 5).map((v, i) => {
-                      const parts = v.validation_time?.split('-') || []
-                      const parsed = parts.length >= 6
-                        ? new Date(+parts[0], +parts[1] - 1, +parts[2], +parts[3], +parts[4], +parts[5])
-                        : null
-                      return (
-                        <div key={i} style={{
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          padding: '12px 16px',
-                          borderBottom: i < Math.min(validations.length, 5) - 1 ? '1px solid var(--border)' : 'none',
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{
-                              width: 28, height: 28, borderRadius: '50%',
-                              background: 'rgba(56,189,248,0.12)',
-                              border: '1px solid rgba(56,189,248,0.2)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 12, fontWeight: 700, color: 'var(--blue)',
-                              fontFamily: 'var(--font-mono)',
-                            }}>
-                              {v.validated_user?.charAt(0).toUpperCase()}
-                            </div>
-                            <span style={{ fontSize: 15, fontWeight: 600, color: '#ffffff' }}>
-                              {v.validated_user}
-                            </span>
+          {/* <div className="mobile-only" style={{ marginTop: 32 }}>
+            <SectionHeader title="Recent Scans" />
+            <Card style={{ padding: 0, overflow: 'hidden' }}>
+              {validations.length === 0 ? (
+                <div style={{ padding: 24, color: 'var(--text-3)', fontSize: 15, textAlign: 'center' }}>
+                  No scans yet
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {validations.slice(0, 5).map((v, i) => {
+                    const parts = v.validation_time?.split('-') || []
+                    const parsed = parts.length >= 6
+                      ? new Date(+parts[0], +parts[1] - 1, +parts[2], +parts[3], +parts[4], +parts[5])
+                      : null
+                    return (
+                      <div key={i} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '12px 16px',
+                        borderBottom: i < Math.min(validations.length, 5) - 1 ? '1px solid var(--border)' : 'none',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: '50%',
+                            background: 'rgba(56,189,248,0.12)',
+                            border: '1px solid rgba(56,189,248,0.2)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 12, fontWeight: 700, color: 'var(--blue)',
+                            fontFamily: 'var(--font-mono)',
+                          }}>
+                            {v.validated_user?.charAt(0).toUpperCase()}
                           </div>
-                          <span style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
-                            {parsed
-                              ? parsed.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                              : '—'}
+                          <span style={{ fontSize: 15, fontWeight: 600, color: '#ffffff' }}>
+                            {v.validated_user}
                           </span>
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </Card>
-            </div>
+                        <span style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                          {parsed
+                            ? parsed.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                            : '—'}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </Card>
+          </div> */}
         </>
       )}
     </Page>
