@@ -13,6 +13,7 @@ import AttendeePage from './pages/AttendeePage'
 import ValidatePage from './pages/ValidatePage'
 import QRScanPage from './pages/QRScanPage'
 import ResetPassword from './pages/ResetPassword'
+import TicketValidationsPage from './pages/TicketValidationsPage'
 
 // Guard: redirect based on auth state + role
 function RootRedirect() {
@@ -76,6 +77,7 @@ function AppRoutes() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/validate" element={<TicketValidationsPage />} />
     </Routes>
   )
 }

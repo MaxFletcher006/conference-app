@@ -114,6 +114,13 @@ export interface TicketVerification {
   day_left: number
 }
 
+export interface TicketValidation {
+  ticket_uuid: string
+  user_id: number
+  validated_user: string
+  validation_time: string
+}
+
 // ─── API FUNCTIONS ────────────────────────────────────────────────────────────
 
 export const serverTest = () => client.get<{ message: string }>('/').then(r => r.data)
@@ -143,6 +150,10 @@ export const deleteEvent = (id: number) => client.delete<{ status: boolean; mess
 
 export const purchaseTicket = (payload: TicketPurchasePayload) => client.post<TicketPurchaseResult>('/purchase_ticket', payload).then(r => r.data)
 export const validateTicket = (ticketUuid: string) => client.get<TicketVerification>(`/validate/${ticketUuid}`).then(r => r.data)
+export const ticketValidation = (ticket: TicketValidation) => client.post<TicketValidation>('/ticket/validation', ticket).then(r => r.data)
+export const getValidations = () => client.get<TicketValidation[]>('/ticket/get-validations').then((r) => r.data)
+export const getTotalTickets = () => client.get('/tickets').then((r) => r.data)
+export const getTicketSummary = () => client.get<{ user_ids: number[] }>('/tickets/summary').then(r => r.data)
 
 export const getAllQuestions = () => client.get<Question[]>('/all-questions').then(r => r.data)
 export const addQuestion = (payload: QuestionPayload) => client.post<Question>('/add-question', payload).then(r => r.data)

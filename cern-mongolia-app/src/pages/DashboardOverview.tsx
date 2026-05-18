@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAllUsers, getAllEvents, getAllQuestions, User, Event, Question } from '../api/client'
+import { getAllUsers, getAllEvents, getAllQuestions, User, Event, Question, getTotalTickets, getTicketSummary } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { Page, StatCard, SectionHeader, Badge, Card, Table } from '../components/UI'
 
@@ -9,13 +9,15 @@ export default function DashboardOverview() {
   const [events, setEvents] = useState<Event[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(true)
+  const [totalTickets, setTotalTickets] = useState<number>(0)
+  const [ticketedUserIds, setTicketedUserIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
         if (user?.role === 'admin' || user?.role === 'supervisor') {
-          const [u, e, q] = await Promise.all([getAllUsers(), getAllEvents(), getAllQuestions()])
-          setUsers(u); setEvents(e); setQuestions(q)
+          const [u, e, q, t, ts] = await Promise.all([getAllUsers(), getAllEvents(), getAllQuestions(), getTotalTickets(), getTicketSummary()])
+          setUsers(u); setEvents(e); setQuestions(q), setTotalTickets(t), setTicketedUserIds(new Set(ts.user_ids))
         } else if (user?.role === 'staff') {
           const [e, q] = await Promise.all([getAllEvents(), getAllQuestions()])
           setEvents(e); setQuestions(q)
@@ -30,6 +32,7 @@ export default function DashboardOverview() {
   const todayStr = new Date().toISOString().split('T')[0]
   const todayEvents = events.filter(e => e.date === todayStr)
   const upcomingEvents = events.filter(e => e.date > todayStr)
+
 
   return (
     <Page>
@@ -71,6 +74,7 @@ export default function DashboardOverview() {
                 <StatCard label="Attendees" value={roleCount('attendee')} />
                 <StatCard label="Staff" value={roleCount('staff')} accent="var(--blue)" />
                 <StatCard label="Supervisors" value={roleCount('supervisor')} accent="var(--green)" />
+                <StatCard label="Purchased tickets" value={totalTickets} accent="var(--green)" />
               </div>
             </>
           )}
@@ -122,12 +126,33 @@ export default function DashboardOverview() {
               <Card style={{ padding: 0, overflow: 'hidden' }}>
                 <div className="table-wrapper">
                   <Table
-                    headers={['Name', 'Email', 'Phone Number', 'Role']}
+                    headers={['Name', 'Email', 'Phone Number', 'Role', 'Ticket']}
                     rows={users.slice(0, 8).map(u => [
-                      <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>{u.firstname} {u.lastname}</span>,
-                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>{u.email}</span>,
-                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>{u.phone_number}</span>,
+                      <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>
+                        {u.firstname} {u.lastname}
+                      </span>,
+                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
+                        {u.email}
+                      </span>,
+                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 16 }}>
+                        {u.phone_number}
+                      </span>,
                       <Badge label={u.role} />,
+                      <span style={{
+                        display: 'inline-block',
+                        fontSize: 12,
+                        fontFamily: 'var(--font-mono)',
+                        letterSpacing: '0.06em',
+                        padding: '3px 10px',
+                        borderRadius: 6,
+                        background: ticketedUserIds.has(u.id)
+                          ? 'rgba(52,211,153,0.1)' : 'rgba(220,38,38,0.1)',
+                        border: `1px solid ${ticketedUserIds.has(u.id)
+                          ? 'rgba(52,211,153,0.25)' : 'rgba(220,38,38,0.25)'}`,
+                        color: ticketedUserIds.has(u.id) ? 'var(--green)' : '#ef4444',
+                      }}>
+                        {ticketedUserIds.has(u.id) ? '✓ Purchased' : '✗ No ticket'}
+                      </span>,
                     ])}
                   />
                 </div>

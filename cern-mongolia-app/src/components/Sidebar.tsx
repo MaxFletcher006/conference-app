@@ -9,6 +9,7 @@ const navItems = {
     { to: '/dashboard/events', label: 'Events' },
     { to: '/dashboard/questions', label: 'Questions' },
     { to: '/scan', label: 'Scan Ticket' },  
+    { to: '/validate', label: 'Ticket Validations' },  
   ],
   supervisor: [
     { to: '/dashboard', label: 'Overview' },
@@ -16,11 +17,13 @@ const navItems = {
     { to: '/dashboard/events', label: 'Events' },
     { to: '/dashboard/questions', label: 'Questions' },
     { to: '/scan', label: 'Scan Ticket' },  
+    { to: '/validate', label: 'Ticket Validations' },  
   ],
   staff: [
     { to: '/dashboard', label: 'Overview' },
     { to: '/dashboard/questions', label: 'Questions' },
-    { to: '/scan', label: 'Scan Ticket' },   
+    { to: '/scan', label: 'Scan Ticket' },  
+    { to: '/validate', label: 'Ticket Validations' },   
   ],
 }
 

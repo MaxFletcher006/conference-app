@@ -64,6 +64,13 @@ class MailList(SQLModel, table=True):
     
     email: str = Field(index=True)
 
+class Validation(SQLModel, table=True):
+    val_id: int | None = Field(default=None, primary_key=True)
+    ticket_uuid: str = Field(index=True)
+    user_id: int = Field(index=True, foreign_key="user.id", ondelete="CASCADE")
+    validated_user: str = Field(index=True)
+    validation_time: str = Field(index=True)
+
 engine = create_engine(DB_URL)
 
 def create_db_and_tables():

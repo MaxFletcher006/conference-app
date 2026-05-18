@@ -215,9 +215,8 @@ export default function UsersPage() {
         ) : (
           <div className="table-wrapper">
             <Table
-              headers={['#', 'Name', 'Email', 'Phone Number', 'Role', 'Action']}
+              headers={['Name', 'Email', 'Phone Number', 'Role', 'Action']}
               rows={filtered.map(u => [
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>{u.id}</span>,
                 <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>{u.firstname} {u.lastname}</span>,
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>{u.email}</span>,
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>{u.phone_number}</span>,

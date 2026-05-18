@@ -3,14 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import select, Session
 from typing import Annotated, List
 from contextlib import asynccontextmanager
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 #from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from starlette.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
-from models.model import User, Event, Ticket, MailList, Question, create_db_and_tables, get_session
-from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification
+from models.model import User, Event, Ticket, MailList, Question, Validation, create_db_and_tables, get_session
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation
 from mailer import conf 
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
@@ -130,6 +131,9 @@ def get_user(
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+# @app.get("/user/ticket")
+# def is_user_have_ticket():
 
 
 @app.post("/register", response_model=UserReturn)
@@ -783,7 +787,39 @@ def validate_ticket(session: SessionDep, ticket_uuid: str, current_user: dict = 
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.post("/ticket/validation", response_model=TicketValidation)
+def ticket_validation(session: SessionDep, val_ticket: TicketValidation, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
+    ticket_info = Validation.model_validate(val_ticket)
+
+    if not ticket_info:
+        print("Empty ticket: ERROR !")
+        raise HTTPException(status_code=401, detail="Cannot submit empty ticket")
     
+    try:
+        session.add(ticket_info)
+        session.commit()
+        session.refresh(ticket_info)
+        return ticket_info
+
+    except Exception as e:
+        session.rollback()
+        print(f'Error occured: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/ticket/get-validations", response_model=List[TicketValidation])
+def get_validations(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
+    return session.exec(select(Validation)).all()
+
+@app.get("/tickets/summary")
+def tickets_summary(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    tickets = session.exec(select(Ticket)).all()
+    return {"user_ids": list(set(t.user_id for t in tickets))}
+
+@app.get("/tickets")
+def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
+    return session.exec(select(func.count()).select_from(Validation)).one()
+
 # ---- POST FUNCTIONS ---- #
 
 '''
