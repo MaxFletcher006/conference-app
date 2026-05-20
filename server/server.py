@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, Response
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, Response, Header
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import select, Session
 from typing import Annotated, List
@@ -10,16 +10,16 @@ from starlette.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
-from models.model import User, Event, Ticket, MailList, Question, Validation, create_db_and_tables, get_session
-from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation
+from models.model import User, Event, Ticket, MailList, Question, Validation, Transaction, create_db_and_tables, get_session
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, TicketPurchaseModel, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel
 from mailer import conf 
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from gmail_sender import send_email
 
-import bcrypt, io, os
+import bcrypt, io, os, hmac, hashlib, json
 import qrcode
-import jwt
+import jwt, httpx
 
 load_dotenv()
 
@@ -30,6 +30,14 @@ if not SESSION_SECRET:
     raise RuntimeError("SESSION_SECRET is not set in environment")
 SESSION_COOKIE = "session"
 SESSION_MAX_AGE = 60 * 60 * 24 * 7
+
+# --- BYL VARIABLES --- #
+BYL_TOKEN = os.getenv("BYL_TOKEN")
+BYL_URL = os.getenv("BYL_URL")
+BYL_PROJECT_ID = 599
+BYL_SECRET_KEY = os.getenv("BYL_SECRET_KEY")
+
+print(f'BYL URL: {BYL_URL}')
 
 serializer = URLSafeTimedSerializer(SESSION_SECRET)
 
@@ -823,6 +831,108 @@ def tickets_summary(session: SessionDep, current_user: dict = Depends(require_ro
 def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
     return session.exec(select(func.count()).select_from(Validation)).one()
 
+@app.post("/invoice")
+async def create_invoice(data: InvoiceModel, current_user: dict = Depends(require_role("attendee"))):
+    url = f"{BYL_URL}/api/v1/projects/{BYL_PROJECT_ID}/invoices"
+    print(url)
+    headers = {
+        "Authorization": f"Bearer {BYL_TOKEN}",
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "amount": data.amount,
+        "description": f"MONGOLIA - CERN LHCb 2026 | Ticket Purchase | ID:{data.user_id}, NAME: {data.username}",
+        "auto_advanec": True
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=payload)
+
+        if response.status_code != 200:
+            return {"error": "Failed to create invoice", "details": response.json()}
+
+        data = response.json()
+
+    invoice_url = data.get("data", {}).get("url")
+
+    if invoice_url:
+        return {"invoice_url": invoice_url}
+    
+    return {"error": "Invoice URL not found in response"}
+
+@app.post("/byl/webhook")
+async def byl_webhook(session: SessionDep, request: Request, byl_signature: str = Header(None)):
+    raw_body = await request.body()
+    payload_str = raw_body.decode("utf-8")
+
+    key_bytes = BYL_SECRET_KEY.encode("utf-8")
+    payload_bytes = payload_str.encode("utf-8")
+
+    computed_signature = hmac.new(
+        key_bytes, 
+        msg=payload_bytes, 
+        digestmod=hashlib.sha256
+    ).hexdigest()
+
+    if not byl_signature or not hmac.compare_digest(computed_signature, byl_signature):
+        raise HTTPException(status_code=403, detail="Invalid webhook signature")
+
+    try:
+        webhook_data = json.loads(payload_str)    
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format")
+    
+    event_type = webhook_data.get("type")
+    invoice_object = webhook_data.get("data", {}).get("object", {})
+    status = invoice_object.get("status")       
+    description = invoice_object.get("description")
+
+    if event_type == "invoice.paid" and status == "paid":
+        match = re.search(r"ID:(\d+)", description)
+        
+        if match:
+            extracted_user_id = int(match.group(1)) 
+            
+            transaction_id = invoice_object.get("id")
+            amount = invoice_object.get("amount")
+            created_at = invoice_object.get("created_at")
+            url = invoice_object.get("url") 
+            
+            new_transaction = Transaction(
+                user_id=extracted_user_id, 
+                amount=amount, 
+                transaction_id=transaction_id, 
+                created_at=created_at, 
+                description=description,
+                url=url
+            )
+
+            session.add(new_transaction)
+            session.commit()
+            session.refresh(new_transaction) # 
+            
+            print(f"Transaction saved successfully for User: {extracted_user_id}")
+    
+    return Response(content="Webhook received!", media_type="text/plain")
+
+@app.post("/check-purchase")
+def check_purchase(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
+    statement = select(Transaction).where(Transaction.user_id == current_user["id"])
+    transaction = session.exec(statement).first()
+
+    if not transaction:
+        return {"purchased": False, "message": "No successful transaction found."}
+
+    return {
+        "purchased": True,
+        "details": {
+            "transaction_id": transaction.transaction_id,
+            "amount": transaction.amount,
+            "created_at": transaction.created_at,
+        }
+    }
+
 # ---- POST FUNCTIONS ---- #
 
 '''
@@ -1565,7 +1675,7 @@ async def send_reset_email(email: str, token: str):
         to=[email],
         subject="Reset Your Password | CERN LHCb - Mongolia 2026",
         html_body=html_body
-    )
+    )    
 
 
 # ---- TEST FUNCTIONS ---- #

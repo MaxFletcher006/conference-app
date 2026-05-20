@@ -1,9 +1,12 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  getAllEvents, purchaseTicket, addQuestion, getQuestionsByUser,
+  getAllEvents, addQuestion, getQuestionsByUser,
+  createInvoice, checkPurchase,
   Event, Question,
 } from '../api/client'
+
+const PRICE_PER_DAY = 10
 import { useAuth } from '../context/AuthContext'
 import { Btn, Input, Select, Modal, toast, Spinner } from '../components/UI'
 
@@ -42,6 +45,12 @@ const T = {
     myQTitle:        'My Questions',
     noQYet:          "You haven't submitted any questions yet.",
     close:           'Close',
+    // invoice / check purchase
+    totalPrice:      (n: number) => `Total: ₮${(n * PRICE_PER_DAY).toLocaleString()}`,
+    checkPurchase:   'Check Purchase',
+    invoiceHint:     'Invoice opened in a new tab. Complete the payment, then click below to confirm.',
+    paymentConfirmed:'Payment confirmed! Your ticket is being prepared.',
+    noPaymentFound:  'No payment found yet. Please complete the payment first.',
     // date
     weekdays:        ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
   },
@@ -77,6 +86,12 @@ const T = {
     myQTitle:        'Миний Асуултууд',
     noQYet:          'Та одоогоор асуулт илгээгээгүй байна.',
     close:           'Хаах',
+    // invoice / check purchase
+    totalPrice:      (n: number) => `Нийт: ₮${(n * PRICE_PER_DAY).toLocaleString()}`,
+    checkPurchase:   'Худалдан авалт шалгах',
+    invoiceHint:     'Нэхэмжлэл шинэ цонхонд нээгдлээ. Төлбөр хийсний дараа доорх товчийг дарна уу.',
+    paymentConfirmed:'Төлбөр баталгаажлаа! Таны тасалбар бэлтгэгдэж байна.',
+    noPaymentFound:  'Төлбөр олдсонгүй. Эхлээд төлбөрөө хийнэ үү.',
     // date
     weekdays:        ['Ням','Даваа','Мягмар','Лхагва','Пүрэв','Баасан','Бямба'],
   },
@@ -98,6 +113,8 @@ export default function AttendeePage() {
   const [ticketModal, setTicketModal] = useState(false)
   const [ticketDay, setTicketDay] = useState('1')
   const [purchasingTicket, setPurchasingTicket] = useState(false)
+  const [invoiceOpened, setInvoiceOpened] = useState(false)
+  const [checkingPayment, setCheckingPayment] = useState(false)
 
   const [questionModal, setQuestionModal] = useState(false)
   const [eventId, setEventId] = useState('')
@@ -130,13 +147,39 @@ export default function AttendeePage() {
     if (!user) return
     setPurchasingTicket(true)
     try {
-      await purchaseTicket({ user_id: user.id, day: parseInt(ticketDay), email: user.email })
-      toast('Ticket purchased! Check your email.')
-      setTicketModal(false)
+      const days = parseInt(ticketDay)
+      const result = await createInvoice({
+        user_id: user.id,
+        username: `${user.firstname} ${user.lastname}`,
+        amount: days * PRICE_PER_DAY,
+      })
+      if (result.invoice_url) {
+        window.open(result.invoice_url, '_blank', 'noopener,noreferrer')
+        setInvoiceOpened(true)
+        setTicketModal(false)
+      } else {
+        toast(result.error || 'Failed to create invoice', 'err')
+      }
     } catch (err: any) {
-      toast(err?.response?.data?.detail || 'Purchase failed', 'err')
+      toast(err?.response?.data?.detail || 'Invoice creation failed', 'err')
     }
     setPurchasingTicket(false)
+  }
+
+  const handleCheckPurchase = async () => {
+    setCheckingPayment(true)
+    try {
+      const result = await checkPurchase()
+      if (result.purchased) {
+        toast(t.paymentConfirmed)
+        setInvoiceOpened(false)
+      } else {
+        toast(t.noPaymentFound, 'err')
+      }
+    } catch (err: any) {
+      toast(err?.response?.data?.detail || 'Check failed', 'err')
+    }
+    setCheckingPayment(false)
   }
 
   const handleAddQuestion = async (e: FormEvent) => {
@@ -311,12 +354,53 @@ export default function AttendeePage() {
               onChange={e => setTicketDay(e.target.value)}
               options={[1,2,3,4,5].map(n => ({ value: String(n), label: t.day(n) }))}
             />
+            <div style={{
+              background: 'var(--bg-3)', border: '1px solid var(--border-2)',
+              borderRadius: 'var(--radius)', padding: '12px 16px',
+              fontFamily: 'var(--font-mono)', fontSize: 16,
+              color: 'var(--blue)', letterSpacing: '0.05em',
+            }}>
+              {t.totalPrice(parseInt(ticketDay))}
+            </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
               <Btn variant="ghost" type="button" onClick={() => setTicketModal(false)}>{t.cancel}</Btn>
               <Btn type="submit" loading={purchasingTicket}>{t.purchase}</Btn>
             </div>
           </form>
         </Modal>
+      )}
+
+      {/* ── Check Purchase floating button ── */}
+      {invoiceOpened && (
+        <div style={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+        }}>
+          <div style={{
+            background: 'rgba(8,8,16,0.92)', border: '1px solid var(--yellow)',
+            borderRadius: 'var(--radius-lg)', padding: '10px 20px',
+            fontSize: 13, color: 'var(--yellow)', fontFamily: 'var(--font-mono)',
+            letterSpacing: '0.04em', textAlign: 'center', maxWidth: 360,
+            backdropFilter: 'blur(16px)', boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+          }}>
+            {t.invoiceHint}
+          </div>
+          <button
+            onClick={handleCheckPurchase}
+            disabled={checkingPayment}
+            style={{
+              background: checkingPayment ? 'var(--bg-3)' : 'var(--yellow)',
+              color: checkingPayment ? 'var(--text-3)' : '#000000',
+              border: 'none', borderRadius: 'var(--radius)', cursor: checkingPayment ? 'default' : 'pointer',
+              padding: '14px 36px', fontSize: 15, fontWeight: 700,
+              fontFamily: 'var(--font-mono)', letterSpacing: '0.08em',
+              boxShadow: checkingPayment ? 'none' : '0 0 24px rgba(255,200,0,0.35)',
+              transition: 'all 0.2s',
+            }}
+          >
+            {checkingPayment ? '...' : t.checkPurchase}
+          </button>
+        </div>
       )}
 
       {/* ── Question modal ── */}

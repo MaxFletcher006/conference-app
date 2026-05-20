@@ -4,7 +4,7 @@ export const pub = {
     nav: { home: 'Home', about: 'About', partners: 'Partners', speakers: 'Speakers', contact: 'Contact', register: 'Register' },
     // home hero
     badge:      'Science Development Accelerator NGO',
-    heroTitle:  'Mongolia Meets\nGlobal Particle Physics',
+    heroTitle:  'Mongolia Meets\nGlobal Frontier \nHigh Energy Physics',
     heroDesc:   'Science Development Accelerator NGO connects Mongolian scientists with CERN and the global research community — bringing world-class science to Mongolia and showcasing Mongolian talent to the world.',
     exploreBtn: 'Explore LHCb 2026 →',
     aboutBtn:   'About NGO',
@@ -21,17 +21,17 @@ export const pub = {
     // mission
     missionEyebrow: 'Our Mission',
     missionTitle:   'Advancing Mongolian Science on the Global Stage',
-    missionLead:    'We believe in the power of collaboration and the potential of Mongolian talent. Our goal is to create bridges between local researchers and world-class institutions like CERN.',
+    missionLead:    'We believe in the power of collaborative science and the potential of Mongolian talent. Our goal is to create bridges between local researchers and world-class institutions such as CERN.',
     missionLink:    'Read our strategic roadmap →',
     cards: [
-      { icon: '🌍', title: 'Global Impact',  desc: 'Direct participation in the world\'s largest particle physics experiment.' },
-      { icon: '🌱', title: 'Local Growth',   desc: 'Nurturing the next generation of Mongolian physicists and engineers.' },
-      { icon: '⚡', title: 'Innovation',     desc: 'Bringing cutting-edge detector and computing technology to Mongolia.' },
-      { icon: '🎓', title: 'Education',      desc: 'Intensive training and workshops for students and researchers.' },
+      { icon: '🌍', title: 'Global Impact',  desc: 'Direct participation in the world\'s largest scientific communities.' },
+      { icon: '🌱', title: 'Local Growth',   desc: 'Nurturing the next generation of Mongolian scientists and engineers.' },
+      { icon: '⚡', title: 'Innovation',     desc: 'Bringing cutting-edge electronics and computational technologies to Mongolia.' },
+      { icon: '🎓', title: 'Education',      desc: 'World class academic training and workshops for students and researchers.' },
     ],
     // event
-    eventTitle:     'LHCb 2026 Conference',
-    eventDesc:      'Join us for five days of intensive scientific exchange, featuring lectures from world-renowned CERN scientists, student poster sessions, and cultural excursions.',
+    eventTitle:     'Mongolia - CERN LHCb 2026 Conference',
+    eventDesc:      'Join us for five days of scientific exchange, featuring lectures from world-renowned CERN scientists, student poster sessions, and cultural excursions.',
     eventDetails: [
       { icon: '📍', text: 'National University of Mongolia, Ulaanbaatar' },
       { icon: '📅', text: 'June 8–12, 2026' },
@@ -60,8 +60,8 @@ export const pub = {
     nav: { home: 'Нүүр', about: 'Бидний Тухай', partners: 'Түншүүд', speakers: 'Илтгэгчид', contact: 'Холбоо Барих', register: 'Бүртгүүлэх' },
     // home hero
     badge:      'Шинжлэх Ухааны Хөгжлийн Хурдасгуур ТББ',
-    heroTitle:  'Монгол Дэлхийн\nБөөмийн Физикт Нэгдэж Байна',
-    heroDesc:   'Шинжлэх Ухааны Хөгжлийн Хурдасгуур ТББ нь Монголын эрдэмтдийг CERN болон дэлхийн судалгааны хамтын нийгэмлэгтэй холбодог — дэлхийн жишгийн шинжлэх ухааныг Монголд авчирч, Монголын авъяасыг дэлхийд харуулдаг.',
+    heroTitle:  'Дэлхийн шинжлэх ухаан \nМонгол улсад',
+    heroDesc:   'Шинжлэх Ухааны Хөгжлийн Хурдасгуур ТББ нь Монгол эрдэмтдийг дэлхийн тэргүүлэх судалгаа, хамтын ажиллагаатай холбодог. — дэлхийн жишгийн шинжлэх ухааныг Монголд авчирч, Монголын авъяасыг дэлхийд харуулдаг.',
     exploreBtn: 'LHCb 2026-г Судлах →',
     aboutBtn:   'ТББ-ын Тухай',
     heroCaption:'📷 Шинжлэх Ухааны Хөгжлийн Хурдасгуур ТББ-ын төлөөлөгчид CERN-д — Женев, Швейцарь',
@@ -86,7 +86,7 @@ export const pub = {
       { icon: '🎓', title: 'Боловсрол',           desc: 'Оюутан, судлаачдад зориулсан эрчимтэй сургалт, семинарууд.' },
     ],
     // event
-    eventTitle:     'LHCb 2026 Бага Хурал',
+    eventTitle:     'Mongolia - CERN LHCb 2026 Бага Хурал',
     eventDesc:      'Дэлхийн алдартай CERN-ийн эрдэмтдийн лекц, оюутны постер хэлэлцүүлэг болон соёлын аялалыг хамарсан таван өдрийн эрчимтэй шинжлэх ухааны солилцоонд нэгдэнэ үү.',
     eventDetails: [
       { icon: '📍', text: 'Монгол Улсын Их Сургууль, Улаанбаатар' },

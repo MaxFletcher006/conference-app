@@ -71,6 +71,16 @@ class Validation(SQLModel, table=True):
     validated_user: str = Field(index=True)
     validation_time: str = Field(index=True)
 
+class Transaction(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key = "user.id", ondelete="CASCADE")
+    amount: int = Field(index=True)
+    transaction_id: int = Field(index=True)
+    created_at: str = Field(index=True)
+    description: str = Field(index=True)
+    url: str = Field(index=True)
+    
+
 engine = create_engine(DB_URL)
 
 def create_db_and_tables():

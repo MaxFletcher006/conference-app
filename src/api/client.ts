@@ -168,3 +168,30 @@ export const forgotPassword = (email: string) =>
 
 export const resetPassword = (token: string, new_password: string) =>
   client.post<{ message: string }>('/reset-password', { token, new_password }).then(r => r.data)
+
+export interface InvoicePayload {
+  user_id: number
+  username: string
+  amount: number
+}
+
+export interface InvoiceResult {
+  invoice_url?: string
+  error?: string
+}
+
+export interface CheckPurchaseResult {
+  purchased: boolean
+  message?: string
+  details?: {
+    transaction_id: string
+    amount: number
+    created_at: string
+  }
+}
+
+export const createInvoice = (payload: InvoicePayload) =>
+  client.post<InvoiceResult>('/invoice', payload).then(r => r.data)
+
+export const checkPurchase = () =>
+  client.post<CheckPurchaseResult>('/check-purchase').then(r => r.data)
