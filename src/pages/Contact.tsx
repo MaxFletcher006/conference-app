@@ -6,7 +6,7 @@ const infoCards = [
   {
     icon: <Mail size={20} />,
     title: 'Email Us',
-    lines: ['erkhembayar@sciencedev.edu.mn', 'baasansuren.batsukh@cern.ch'],
+    lines: ['erkhembayar@sciencedev.edu.mn', 'bgbaacka@gmail.com'],
   },
   {
     icon: <Globe size={20} />,

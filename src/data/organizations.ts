@@ -15,8 +15,8 @@ export const partners: Organization[] = [
     url:  'https://cern.ch',
     role: 'Scientific Partner',
     role_mn: 'Шинжлэх ухааны түнш',
-    desc_mn: 'Европын цөмийн судалгааны байгууллага (CERN) нь дэлхийн хамгийн том бөгөөд хамгийн өндөр энергийн бөөмийн физикийн судалгааны төв юм. Женев хотод байрлах энэ байгууллага LHC хурдасгуурыг ажиллуулдаг.',
-    desc_en: 'The European Organization for Nuclear Research (CERN) is the world\'s largest particle physics laboratory. Based in Geneva, it operates the Large Hadron Collider and hosts thousands of scientists from over 100 nationalities.',
+    desc_mn: 'Европын цөмийн судалгааны байгууллага (CERN) нь дэлхийн хамгийн том бөгөөд хамгийн хүчирхэг бөөмийн физикийн судалгааны төв юм. Женев хотод байрлах энэ байгууллага LHC хурдасгуурыг ажиллуулдаг.',
+    desc_en: 'The European Organization for Nuclear Research (CERN) is the world\'s largest and most powerful particle physics laboratory. Based in Geneva, it operates the Large Hadron Collider and hosts thousands of scientists from over 100 nationalities.',
   },
   {
     name: 'Science Development Accelerator',
@@ -33,7 +33,7 @@ export const partners: Organization[] = [
     url:  'http://ipt.ac.mn',
     role: 'Organizer',
     role_mn: 'Зохион байгуулагч',
-    desc_mn: 'Монгол Улсын Шинжлэх Ухааны Академийн Физик, Технологийн Хүрээлэн (ФТХ) нь онолын болон өндөр энергийн физикийн судалгаа явуулдаг. Монгол-CERN хамтын ажиллагааны суурь болох LHCb бүлгийн үйл ажиллагааны төв.',
+    desc_mn: 'Монгол Улсын Шинжлэх Ухааны Академийн Физик, Технологийн Хүрээлэн (ФТХ) нь онолын болон их энергийн физикийн судалгаа явуулдаг. Монгол-CERN хамтын ажиллагааны суурь болох LHCb багийн үйл ажиллагааны төв.',
     desc_en: 'The Institute of Physics and Technology (IPT) of the Mongolian Academy of Sciences conducts research in theoretical and high-energy physics. It hosts Mongolia\'s LHCb research group — the cornerstone of the Mongolia–CERN collaboration.',
   },
   {
@@ -42,8 +42,8 @@ export const partners: Organization[] = [
     url:  'https://num.edu.mn',
     role: 'Organizer',
     role_mn: 'Зохион байгуулагч',
-    desc_mn: 'Монгол Улсын Их Сургууль (МУИС) нь Монгол Улсын тэргүүлэгч их дээд сургууль. LHCb 2026 хурлын гол талбар болж, их танхим болон лекцийн танхимуудаа зориулан нээж өгч байна.',
-    desc_en: 'The National University of Mongolia (NUM) is the country\'s leading higher education institution. It serves as the main venue for LHCb 2026, providing its Grand Hall and lecture theatres for the conference.',
+    desc_mn: 'Монгол Улсын Их Сургууль (МУИС) нь Монгол Улсын тэргүүлэгч их дээд сургууль юм. Mongolia - CERN LHCb 2026 хурлын үндсэн зохион байгуулагч болон лекцийн танхимуудаа нээж өгч байна.',
+    desc_en: 'The National University of Mongolia (NUM) is the country\'s leading higher education institution. It serves as the one of the main organizers for Mongolia - CERN LHCb 2026, providing its Academic Hall.',
   },
   {
     name: 'CNBC Mongolia',
@@ -52,7 +52,7 @@ export const partners: Organization[] = [
     role: 'Media Partner',
     role_mn: 'Хэвлэл мэдээллийн түнш',
     desc_mn: 'Монголын тэргүүлэгч эдийн засгийн мэдээллийн телевиз CNBC Mongolia нь олон нийтийн лекцийг шууд нэвтрүүлэх болон хурлын онцлох мөчүүдийг нийтэлнэ.',
-    desc_en: 'CNBC Mongolia is the country\'s leading business news television channel. It will broadcast the public lecture live and cover key highlights from the LHCb 2026 conference.',
+    desc_en: 'CNBC Mongolia is the country\'s leading business news television channel. It will broadcast the public lecture live and cover key highlights from the Mongolia - CERN LHCb 2026 conference.',
   },
   {
     name: 'Gej Yu Ve',
@@ -60,8 +60,8 @@ export const partners: Organization[] = [
     url:  '#',
     role: 'Media Partner',
     role_mn: 'Хэвлэл мэдээллийн түнш',
-    desc_mn: '"Гэж Юу Вэ?" нь Монголын шинжлэх ухааны алдартай нэвтрүүлэг. CERN болон LHCb-ийн тухай гүнзгий нэвтрүүлэг бэлтгэж, Монгол эрдэмтэдтэй ярилцлага хийнэ.',
-    desc_en: '"What Is It?" (Gej Yu Ve) is a popular Mongolian science programme that will produce an in-depth feature on CERN and LHCb, and interview Mongolian scientists.',
+    desc_mn: '"Гэж Юу Вэ?" нь Монголын шинжлэх ухааны сонирхогчдын хамгийн том хүрээлэл юм. CERN болон LHCb-ийн тухай нэвтрүүлэгүүдийг бэлтгэж, Монгол эрдэмтэдтэй ярилцлага хийнэ.',
+    desc_en: '"Gej Yu Ve? is a popular Mongolian science community that will produce an in-depth feature on CERN and LHCb, and interview Mongolian scientists.',
   },
   {
     name: 'Ulaanbaatar Hotel',
@@ -69,7 +69,7 @@ export const partners: Organization[] = [
     url:  '#',
     role: 'Hospitality Partner',
     role_mn: 'Зочлох үйлчилгээний түнш',
-    desc_mn: 'Улаанбаатар зочид буудал нь Монголын анхны орчин үеийн зочид буудлуудын нэг бөгөөд LHCb 2026 хурлын олон нийтийн лекц болон зочдыг хүлээн авах түншээр ажиллаж байна.',
-    desc_en: 'Ulaanbaatar Hotel is one of Mongolia\'s first modern hotels. It serves as the official hospitality partner for LHCb 2026, hosting the public lectures and guest receptions.',
+    desc_mn: 'Улаанбаатар зочид буудал нь Монголын анхны орчин үеийн зочид буудлуудын нэг бөгөөд Mongolia - CERN LHCb 2026 хурлын олон нийтийн лекц болон зочдыг хүлээн авах түншээр ажиллаж байна.',
+    desc_en: 'Ulaanbaatar Hotel is one of Mongolia\'s first modern hotels. It serves as the official hospitality partner for Mongolia - CERN LHCb 2026, hosting the public lectures and guest receptions.',
   },
 ];

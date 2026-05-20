@@ -41,9 +41,9 @@ export default function LeftPanel({ subtitle = 'Access the conference platform' 
         fontSize: 42, fontWeight: 700, lineHeight: 1.1,
         letterSpacing: '-0.035em', color: '#eef4ff', marginBottom: 14,
       }}>
-        High Energy<br />
-        Physics<br />
-        <span style={{ color: '#38bdf8' }}>Conference</span>
+        Public<br />
+        Lecture of<br />
+        <span style={{ color: '#38bdf8' }}>High Energy Physics</span>
       </h1>
 
       <p style={{ fontSize: 15, color: '#a0b8cc', lineHeight: 1.7, marginBottom: 36 }}>
@@ -54,8 +54,8 @@ export default function LeftPanel({ subtitle = 'Access the conference platform' 
       <div style={{ display: 'flex', gap: 16, marginBottom: 32}}>
         {[
           { num: '14 TeV', label: 'COLLISION ENERGY' },
-          { num: '10+',   label: 'SPEAKERS' },
-          { num: '5 Days', label: 'PROGRAMME' },
+          { num: '6+',   label: 'SPEAKERS' },
+          { num: '2 Days', label: 'PROGRAMME' },
         ].map(s => (
           <div className="lp-stat" key={s.label}>
             <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>{s.num}</div>
