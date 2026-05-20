@@ -832,8 +832,10 @@ def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_
 
 @app.post("/invoice")
 async def create_invoice(data: InvoiceModel, current_user: dict = Depends(require_role("attendee"))):
+    if not BYL_URL or not BYL_TOKEN:
+        raise HTTPException(status_code=503, detail="Payment service not configured")
+
     url = f"{BYL_URL}/api/v1/projects/{BYL_PROJECT_ID}/invoices"
-    print(url)
     headers = {
         "Authorization": f"Bearer {BYL_TOKEN}",
         "Accept": "application/json",
@@ -845,19 +847,22 @@ async def create_invoice(data: InvoiceModel, current_user: dict = Depends(requir
         "auto_advanec": True
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, headers=headers, json=payload)
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, json=payload)
 
-        if response.status_code != 200:
-            return {"error": "Failed to create invoice", "details": response.json()}
+            if response.status_code != 200:
+                return {"error": "Failed to create invoice", "details": response.json()}
 
-        data = response.json()
+            result = response.json()
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=502, detail=f"Payment service unreachable: {str(e)}")
 
-    invoice_url = data.get("data", {}).get("url")
+    invoice_url = result.get("data", {}).get("url")
 
     if invoice_url:
         return {"invoice_url": invoice_url}
-    
+
     return {"error": "Invoice URL not found in response"}
 
 @app.post("/byl/webhook")
