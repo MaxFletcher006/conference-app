@@ -958,7 +958,7 @@ async def byl_webhook(session: SessionDep, request: Request, byl_signature: str 
 
 @app.post("/check-purchase")
 def check_purchase(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
-    statement = select(Transaction).where(Transaction.user_id == current_user["id"])
+    statement = select(Transaction).where(Transaction.user_id == current_user["user_id"])
     transaction = session.exec(statement).first()
 
     if not transaction:
