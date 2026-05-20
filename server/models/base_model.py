@@ -86,3 +86,4 @@ class InvoiceModel(BaseModel):
     user_id: int
     username: str
     amount: int
+    days: int

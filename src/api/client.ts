@@ -196,6 +196,7 @@ export interface InvoicePayload {
   user_id: number
   username: string
   amount: number
+  days: number
 }
 
 export interface InvoiceResult {
@@ -203,18 +204,5 @@ export interface InvoiceResult {
   error?: string
 }
 
-export interface CheckPurchaseResult {
-  purchased: boolean
-  message?: string
-  details?: {
-    transaction_id: string
-    amount: number
-    created_at: string
-  }
-}
-
 export const createInvoice = (payload: InvoicePayload) =>
   client.post<InvoiceResult>('/invoice', payload).then(r => r.data)
-
-export const checkPurchase = () =>
-  client.post<CheckPurchaseResult>('/check-purchase').then(r => r.data)
