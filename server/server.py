@@ -32,7 +32,8 @@ SESSION_MAX_AGE = 60 * 60 * 24 * 7
 
 # --- BYL VARIABLES --- #
 BYL_TOKEN = os.getenv("BYL_TOKEN")
-BYL_URL = os.getenv("BYL_URL")
+_byl_url_raw = os.getenv("BYL_URL", "")
+BYL_URL = _byl_url_raw if _byl_url_raw.startswith(("http://", "https://")) else f"https://{_byl_url_raw}" if _byl_url_raw else ""
 BYL_PROJECT_ID = 599
 BYL_SECRET_KEY = os.getenv("BYL_SECRET_KEY")
 
@@ -836,6 +837,7 @@ async def create_invoice(data: InvoiceModel, current_user: dict = Depends(requir
         raise HTTPException(status_code=503, detail="Payment service not configured")
 
     url = f"{BYL_URL}/api/v1/projects/{BYL_PROJECT_ID}/invoices"
+    print(f'url:{url}')
     headers = {
         "Authorization": f"Bearer {BYL_TOKEN}",
         "Accept": "application/json",
