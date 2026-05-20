@@ -957,12 +957,101 @@ async def byl_webhook(session: SessionDep, request: Request, byl_signature: str 
     return Response(content="Webhook received!", media_type="text/plain")
 
 @app.post("/check-purchase")
-def check_purchase(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
-    statement = select(Transaction).where(Transaction.user_id == current_user["user_id"])
+async def check_purchase(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
+    user_id = current_user["user_id"]
+
+    statement = select(Transaction).where(Transaction.user_id == user_id)
     transaction = session.exec(statement).first()
 
     if not transaction:
         return {"purchased": False, "message": "No successful transaction found."}
+
+    # Create ticket and send email only if ticket doesn't exist yet
+    existing_ticket = session.exec(select(Ticket).where(Ticket.user_id == user_id)).first()
+    if not existing_ticket:
+        user = session.get(User, user_id)
+        FRONT_URL = os.getenv("FRONT_URL", "")
+        ticket_uuid = str(uuid4())
+        day_length = 7
+
+        UPLOAD_DIR = "tickets"
+        if not os.path.exists(UPLOAD_DIR):
+            os.makedirs(UPLOAD_DIR)
+
+        new_ticket = Ticket(
+            user_id=user_id,
+            name="Conference Pass",
+            day_length=day_length,
+            used_times=0,
+            qr_code_data=ticket_uuid
+        )
+        session.add(new_ticket)
+        session.commit()
+        session.refresh(new_ticket)
+
+        qr_buffer = generate_qr_buffer(f'{FRONT_URL}/validate/{ticket_uuid}')
+        file_name = f"ticket_{user.firstname}.png"
+        file_path = os.path.join(UPLOAD_DIR, file_name)
+        with open(file_path, "wb") as f:
+            f.write(qr_buffer.getvalue())
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="margin:0;padding:0;background-color:#060911;font-family:'Segoe UI',Arial,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#060911;padding:40px 0;">
+            <tr><td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;">
+                <tr><td align="center" style="padding-bottom:24px;">
+                    <span style="display:inline-block;font-family:'Courier New',monospace;font-size:13px;letter-spacing:0.15em;color:#38bdf8;border:1px solid rgba(56,189,248,0.3);background:rgba(56,189,248,0.07);padding:6px 16px;border-radius:4px;">CERN LHCb — MONGOLIA 2026</span>
+                </td></tr>
+                <tr><td style="background:rgba(6,10,22,0.95);border:1px solid rgba(56,189,248,0.16);border-radius:16px;overflow:hidden;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr><td style="background:linear-gradient(135deg,#0f172a 0%,#0c1a3a 50%,#0f172a 100%);padding:40px 40px 36px;border-bottom:1px solid rgba(56,189,248,0.16);text-align:center;">
+                        <div style="width:12px;height:12px;border-radius:50%;background:#38bdf8;box-shadow:0 0 20px 6px rgba(56,189,248,0.6);margin:0 auto 20px;display:block;"></div>
+                        <h1 style="margin:0 0 10px;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;line-height:1.2;">Event Ticket Confirmed</h1>
+                        <p style="margin:0;font-size:14px;color:#94a3b8;font-family:'Courier New',monospace;letter-spacing:0.08em;">HIGH ENERGY PHYSICS CONFERENCE · ULAANBAATAR</p>
+                    </td></tr>
+                    </table>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr><td style="padding:36px 40px;">
+                        <p style="margin:0 0 8px;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.12em;">PARTICIPANT</p>
+                        <h2 style="margin:0 0 24px;font-size:22px;font-weight:700;color:#ffffff;">{user.firstname} {user.lastname}</h2>
+                        <p style="margin:0 0 28px;font-size:15px;color:#94a3b8;line-height:1.7;">Your conference ticket has been successfully generated. Please find your QR code attached to this email and present it at the entrance for verification.</p>
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                        <tr>
+                            <td width="33%" style="padding-right:8px;"><div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.14);border-radius:10px;padding:16px;text-align:center;"><div style="font-size:20px;margin-bottom:6px;">🎟️</div><div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">TYPE</div><div style="font-size:13px;color:#ffffff;font-weight:600;margin-top:4px;">Conference Pass</div></div></td>
+                            <td width="33%" style="padding:0 4px;"><div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.14);border-radius:10px;padding:16px;text-align:center;"><div style="font-size:20px;margin-bottom:6px;">📅</div><div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">DURATION</div><div style="font-size:13px;color:#ffffff;font-weight:600;margin-top:4px;">{day_length} Days</div></div></td>
+                            <td width="33%" style="padding-left:8px;"><div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.14);border-radius:10px;padding:16px;text-align:center;"><div style="font-size:20px;margin-bottom:6px;">✅</div><div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">STATUS</div><div style="font-size:13px;color:#34d399;font-weight:600;margin-top:4px;">Confirmed</div></div></td>
+                        </tr>
+                        </table>
+                        <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.18);border-left:3px solid #38bdf8;border-radius:0 10px 10px 0;padding:16px 20px;margin-bottom:28px;">
+                        <p style="margin:0;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.08em;margin-bottom:6px;">📌 IMPORTANT</p>
+                        <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6;">Each QR code ticket is valid for the number of days selected at purchase. The QR code will be scanned once per day at the entrance.</p>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:18px 20px;margin-bottom:28px;text-align:center;">
+                        <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">🔗 Your QR code ticket is attached to this email as a <strong style="color:#94a3b8;">PNG image</strong>. Download and save it to your phone for easy access at the venue.</p>
+                        </div>
+                        <p style="margin:0;font-size:14px;color:#64748b;line-height:1.7;">We look forward to seeing you at the conference.<br><span style="color:#94a3b8;font-weight:600;">CERN LHCb — Mongolia 2026 Event Team</span></p>
+                    </td></tr>
+                    </table>
+                    <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:0 40px;"><div style="height:2px;border-radius:2px;background:linear-gradient(90deg,#38bdf8,#f472b6,#34d399);opacity:0.3;"></div></td></tr></table>
+                    <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:24px 40px;text-align:center;"><p style="margin:0;font-size:12px;font-family:'Courier New',monospace;color:#334155;letter-spacing:0.06em;">AUTOMATED NOTIFICATION — DO NOT REPLY<br>© 2026 CERN LHCb MONGOLIA CONFERENCE</p></td></tr></table>
+                </td></tr>
+                </table>
+            </td></tr>
+        </table>
+        </body>
+        </html>
+        """
+
+        await send_email(
+            to=[user.email],
+            subject="CERN LHCb - Mongolia 2026 | Ticket",
+            html_body=html_body,
+            attachment_path=file_path
+        )
 
     return {
         "purchased": True,

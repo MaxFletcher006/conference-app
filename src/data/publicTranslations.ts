@@ -41,6 +41,10 @@ export const pub = {
     regSoon:        'Registration Opening Soon',
     countdown:      'Countdown to Launch',
     registerBtn:    'Register Now',
+    // agenda
+    agendaEyebrow:  'Full Programme',
+    agendaTitle:    'Conference Schedule',
+    agendaLead:     '8–14 June 2026 · Ulaanbaatar, Mongolia',
     // partners
     partnersLabel:  'Supported by Leading Institutions',
     // cta
@@ -97,6 +101,10 @@ export const pub = {
     regSoon:        'Бүртгэл Удахгүй Нээгдэнэ',
     countdown:      'Эхлэх Хүртэл Хугацаа',
     registerBtn:    'Бүртгүүлэх',
+    // agenda
+    agendaEyebrow:  'Бүрэн Хөтөлбөр',
+    agendaTitle:    'Бага Хурлын Хуваарь',
+    agendaLead:     '2026 оны 6-р сарын 8–14 · Улаанбаатар, Монгол',
     // partners
     partnersLabel:  'Тэргүүлэгч Байгууллагуудын Дэмжлэгтэйгээр',
     // cta

@@ -3,6 +3,7 @@ import { CountdownTimer } from '@/components/ui/CountdownTimer'
 import { partners } from '@/data/organizations'
 import { useLang } from '@/context/LanguageContext'
 import { pub } from '@/data/publicTranslations'
+import { HomeAgendaSection } from '@/components/HomeAgendaSection'
 
 export default function Home() {
   const { lang } = useLang()
@@ -155,6 +156,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Agenda ── */}
+      <HomeAgendaSection />
 
       {/* ── Partners ── */}
       <section style={{ padding: '64px 0', background: 'var(--bg)' }}>
