@@ -32,7 +32,7 @@ SESSION_MAX_AGE = 60 * 60 * 24 * 7
 
 # --- BYL VARIABLES --- #
 BYL_TOKEN = os.getenv("BYL_TOKEN")
-_byl_url_raw = os.getenv("BYL_URL", "")
+_byl_url_raw = os.getenv("BYL_URL", "").strip().strip('"').strip("'")
 BYL_URL = _byl_url_raw if _byl_url_raw.startswith(("http://", "https://")) else f"https://{_byl_url_raw}" if _byl_url_raw else ""
 BYL_PROJECT_ID = 599
 BYL_SECRET_KEY = os.getenv("BYL_SECRET_KEY")
@@ -822,6 +822,40 @@ def ticket_validation(session: SessionDep, val_ticket: TicketValidation, current
 def get_validations(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
     return session.exec(select(Validation)).all()
 
+@app.get("/ticket/get-validations-full")
+def get_validations_full(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor"))):
+    validations = session.exec(select(Validation)).all()
+    result = []
+    for v in validations:
+        staff = session.get(User, v.user_id)
+        result.append({
+            "val_id": v.val_id,
+            "ticket_uuid": v.ticket_uuid,
+            "validated_user": v.validated_user,
+            "staff_name": f"{staff.firstname} {staff.lastname}" if staff else "Unknown",
+            "staff_id": v.user_id,
+            "validation_time": v.validation_time,
+        })
+    return result
+
+@app.get("/all-transactions")
+def get_all_transactions(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor"))):
+    transactions = session.exec(select(Transaction)).all()
+    result = []
+    for t in transactions:
+        user = session.get(User, t.user_id)
+        result.append({
+            "id": t.id,
+            "user_id": t.user_id,
+            "username": f"{user.firstname} {user.lastname}" if user else "Unknown",
+            "amount": t.amount,
+            "transaction_id": t.transaction_id,
+            "created_at": t.created_at,
+            "description": t.description,
+            "url": t.url,
+        })
+    return result
+
 @app.get("/tickets/summary")
 def tickets_summary(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
     tickets = session.exec(select(Ticket)).all()
@@ -853,7 +887,7 @@ async def create_invoice(data: InvoiceModel, current_user: dict = Depends(requir
         async with httpx.AsyncClient() as client:
             response = await client.post(url, headers=headers, json=payload)
 
-            if response.status_code != 200:
+            if not response.is_success:
                 return {"error": "Failed to create invoice", "details": response.json()}
 
             result = response.json()

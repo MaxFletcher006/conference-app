@@ -28,6 +28,8 @@ import AttendeePage from './pages/AttendeePage'
 import ValidatePage from './pages/ValidatePage'
 import QRScanPage from './pages/QRScanPage'
 import TicketValidationsPage from './pages/TicketValidationsPage'
+import ValidationsAdminPage from './pages/ValidationsAdminPage'
+import TransactionsPage from './pages/TransactionsPage'
 
 // ── Auth guards ────────────────────────────────────────────────────────────────
 
@@ -103,9 +105,11 @@ function AppRoutes() {
       {/* Dashboard */}
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<DashboardOverview />} />
-        <Route path="users"     element={<UsersPage />} />
-        <Route path="events"    element={<EventsPage />} />
-        <Route path="questions" element={<QuestionsPage />} />
+        <Route path="users"         element={<UsersPage />} />
+        <Route path="events"        element={<EventsPage />} />
+        <Route path="questions"     element={<QuestionsPage />} />
+        <Route path="validations"   element={<ValidationsAdminPage />} />
+        <Route path="transactions"  element={<TransactionsPage />} />
       </Route>
 
       <Route element={<DashboardLayout />}>

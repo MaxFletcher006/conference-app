@@ -152,6 +152,29 @@ export const purchaseTicket = (payload: TicketPurchasePayload) => client.post<Ti
 export const validateTicket = (ticketUuid: string) => client.get<TicketVerification>(`/validate/${ticketUuid}`).then(r => r.data)
 export const ticketValidation = (ticket: TicketValidation) => client.post<TicketValidation>('/ticket/validation', ticket).then(r => r.data)
 export const getValidations = () => client.get<TicketValidation[]>('/ticket/get-validations').then((r) => r.data)
+
+export interface ValidationFull {
+  val_id: number
+  ticket_uuid: string
+  validated_user: string
+  staff_name: string
+  staff_id: number
+  validation_time: string
+}
+
+export interface TransactionFull {
+  id: number
+  user_id: number
+  username: string
+  amount: number
+  transaction_id: number
+  created_at: string
+  description: string
+  url: string
+}
+
+export const getValidationsFull = () => client.get<ValidationFull[]>('/ticket/get-validations-full').then(r => r.data)
+export const getAllTransactions = () => client.get<TransactionFull[]>('/all-transactions').then(r => r.data)
 export const getTotalTickets = () => client.get('/tickets').then((r) => r.data)
 export const getTicketSummary = () => client.get<{ user_ids: number[] }>('/tickets/summary').then(r => r.data)
 
