@@ -16,7 +16,7 @@ from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from gmail_sender import send_email
 
-import bcrypt, io, os, hmac, hashlib, json
+import bcrypt, io, os, hmac, hashlib, json, re
 import qrcode
 import jwt, httpx
 
