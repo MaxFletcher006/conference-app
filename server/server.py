@@ -576,11 +576,14 @@ def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_
 
 @app.post("/invoice")
 async def create_invoice(data: InvoiceModel):
+
     if not BYL_URL or not BYL_TOKEN:
         raise HTTPException(status_code=503, detail="Payment service not configured")
 
     url = f"{BYL_URL}/api/v1/projects/{BYL_PROJECT_ID}/invoices"
     print(f'url:{url}')
+    print(f"PROJECT_ID: {BYL_PROJECT_ID}")
+    print(f"TOKEN set: {bool(BYL_TOKEN)}")
     headers = {
         "Authorization": f"Bearer {BYL_TOKEN}",
         "Accept": "application/json",
@@ -588,7 +591,8 @@ async def create_invoice(data: InvoiceModel):
     }
     payload = {
         "amount": data.amount,
-        "description": f"MONGOLIA - CERN LHCb 2026 | Ticket Purchase | ID:{data.user_id} | DAYS:{data.days} | NAME:{data.username}"
+        "description": f"ID:{data.user_id} | NAME:{data.username}",
+        "auto_advance": True
     }
 
     try:
