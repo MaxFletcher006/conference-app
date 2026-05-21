@@ -581,9 +581,6 @@ async def create_invoice(data: InvoiceModel):
         raise HTTPException(status_code=503, detail="Payment service not configured")
 
     url = f"{BYL_URL}/api/v1/projects/{BYL_PROJECT_ID}/invoices"
-    print(f'url:{url}')
-    print(f"PROJECT_ID: {BYL_PROJECT_ID}")
-    print(f"TOKEN set: {bool(BYL_TOKEN)}")
     headers = {
         "Authorization": f"Bearer {BYL_TOKEN}",
         "Accept": "application/json",
