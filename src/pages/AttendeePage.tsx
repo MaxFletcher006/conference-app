@@ -10,8 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { Btn, Input, Select, Modal, toast, Spinner } from '../components/UI'
 
 
-const PRICE_PER_DAY = 10;
-console.log(PRICE_PER_DAY);
+const PRICE_PER_DAY = 15000 ;
 
 
 // ── Translations ──────────────────────────────────────────────────────────────
@@ -109,7 +108,6 @@ export default function AttendeePage() {
   const [loading, setLoading] = useState(true)
 
   const [ticketModal, setTicketModal] = useState(false)
-  const [ticketDay, setTicketDay] = useState('1')
   const [purchasingTicket, setPurchasingTicket] = useState(false)
 
   const [questionModal, setQuestionModal] = useState(false)
@@ -143,7 +141,7 @@ export default function AttendeePage() {
     if (!user) return
     setPurchasingTicket(true)
     try {
-      const days = parseInt(ticketDay)
+      const days = 1
       const result = await createInvoice({
         user_id: user.id,
         username: `${user.firstname} ${user.lastname}`,
@@ -174,7 +172,6 @@ export default function AttendeePage() {
       setQuestionText('')
       setEventId('')
       if (myQuestions.length > 0 || myQuestionsModal) fetchMyQuestions()
-        console.log(myQuestions);
     } catch (err: any) {
       toast(err?.response?.data?.detail || 'Submission failed', 'err')
     }
@@ -192,7 +189,6 @@ export default function AttendeePage() {
   const handleOpenMyQuestions = () => { setMyQuestionsModal(true); fetchMyQuestions() }
   const getEventTopic = (evId: number) => events.find(e => e.id === evId)?.topic ?? `Event #${evId}`
   const todayStr = new Date().toISOString().split('T')[0]
-  console.log(myQuestions);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
@@ -337,7 +333,7 @@ export default function AttendeePage() {
               fontFamily: 'var(--font-mono)', fontSize: 16,
               color: 'var(--blue)', letterSpacing: '0.05em',
             }}>
-              {t.totalPrice(parseInt(ticketDay))}
+              {t.totalPrice(1)}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
               <Btn variant="ghost" type="button" onClick={() => setTicketModal(false)}>{t.cancel}</Btn>
