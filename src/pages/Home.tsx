@@ -17,8 +17,8 @@ export default function Home() {
         position: 'relative', height: '85vh', minHeight: 600,
         display: 'flex', alignItems: 'center', overflow: 'hidden',
       }}>
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.18 }}>
-          <img src="/speakers/cernTrip2.webp" alt="CERN LHCb" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.75 }}>
+          <img src="/speakers/cernTrip2.webp" alt="CERN LHCb" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 95%' }} />
         </div>
         <div style={{
           position: 'absolute', inset: 0, zIndex: 0,
@@ -29,16 +29,6 @@ export default function Home() {
 
         <div className="max-w-[1240px] mx-auto px-6 md:px-12" style={{ position: 'relative', zIndex: 1, width: '100%' }}>
           <div style={{ maxWidth: 700 }}>
-            <span style={{
-              display: 'inline-block',
-              fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
-              letterSpacing: '0.12em', textTransform: 'uppercase',
-              color: 'var(--blue)', marginBottom: 24,
-              padding: '4px 14px', background: 'var(--blue-dim)',
-              borderRadius: 100, border: '1px solid rgba(129,140,248,0.25)',
-            }}>
-              {t.badge}
-            </span>
 
             <h1 style={{
               fontSize: 'clamp(2.4rem, 5.5vw, 4.2rem)', fontWeight: 800,
@@ -78,28 +68,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Stat strip ── */}
-      <div style={{ background: 'var(--bg-3)', borderTop: '1px solid var(--border)' }}>
-        <div className="max-w-[1240px] mx-auto px-6 md:px-12" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
-          {[
-            { label: t.statDateLabel,     value: t.statDate },
-            { label: t.statLocationLabel, value: t.statLocation },
-            { label: t.statScisLabel,     value: t.statScientists },
-            { label: t.statAttenLabel,    value: t.statAttendees },
-          ].map((s) => (
-            <div key={s.label} style={{ padding: '16px 20px', borderRight: '1px solid var(--border)' }}>
-              <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--blue)', marginBottom: 2 }}>{s.label}</p>
-              <p style={{ fontSize: 18, fontWeight: 700, color: '#ffffff' }}>{s.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* ── Mission ── */}
       <section style={{ padding: '96px 0', background: 'var(--bg)' }}>
         <div className="max-w-[1240px] mx-auto px-6 md:px-12" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 64, alignItems: 'center' }}>
           <div>
-            <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--blue)', marginBottom: 10 }}>
+            <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--blue-text)', marginBottom: 10 }}>
               {t.missionEyebrow}
             </span>
             <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', fontWeight: 700, color: '#ffffff', marginBottom: 16, lineHeight: 1.25 }}>
@@ -108,7 +81,7 @@ export default function Home() {
             <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.6)', lineHeight: 1.75, marginBottom: 28 }}>
               {t.missionLead}
             </p>
-            <Link to="/about" style={{ color: 'var(--blue)', fontWeight: 700, fontSize: 15 }}>
+            <Link to="/about" style={{ color: 'var(--blue-text)', fontWeight: 700, fontSize: 15 }}>
               {t.missionLink}
             </Link>
           </div>
@@ -134,7 +107,7 @@ export default function Home() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {t.eventDetails.map(({ icon, text }) => (
                 <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: 'var(--blue-dim)', border: '1px solid rgba(129,140,248,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{icon}</div>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: 'var(--blue-dim)', border: '1px solid rgba(74,144,248,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{icon}</div>
                   <span style={{ fontSize: 16, fontWeight: 600, color: '#ffffff' }}>{text}</span>
                 </div>
               ))}
@@ -145,7 +118,7 @@ export default function Home() {
             <div style={{ position: 'absolute', top: 0, right: 0, padding: 28, opacity: 0.05, pointerEvents: 'none', userSelect: 'none' }}>
               <span style={{ fontSize: 120, fontWeight: 800, color: '#ffffff' }}>26</span>
             </div>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--blue)', marginBottom: 12 }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--blue-text)', marginBottom: 12 }}>
               {t.regSoon}
             </p>
             <h3 style={{ fontSize: 26, fontWeight: 700, color: '#ffffff', marginBottom: 28 }}>{t.countdown}</h3>
@@ -187,7 +160,7 @@ export default function Home() {
       {/* ── CTA ── */}
       <section style={{ padding: '120px 0', textAlign: 'center', background: 'var(--bg-2)', position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--border)' }}>
         <div className="grid-bg" />
-        <div className="nebula" style={{ width: 500, height: 500, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'radial-gradient(circle, rgba(129,140,248,0.06) 0%, transparent 70%)' }} />
+        <div className="nebula" style={{ width: 500, height: 500, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'radial-gradient(circle, rgba(74,144,248,0.06) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 700, margin: '0 auto', padding: '0 24px' }}>
           <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#ffffff', marginBottom: 20, lineHeight: 1.2 }}>
             {t.ctaTitle}

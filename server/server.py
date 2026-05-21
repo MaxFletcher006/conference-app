@@ -590,8 +590,7 @@ async def create_invoice(data: InvoiceModel, current_user: dict = Depends(requir
     }
     payload = {
         "amount": data.amount,
-        "description": f"MONGOLIA - CERN LHCb 2026 | Ticket Purchase | ID:{data.user_id} | DAYS:{data.days} | NAME:{data.username}",
-        "auto_advanec": True
+        "description": f"MONGOLIA - CERN LHCb 2026 | Ticket Purchase | ID:{data.user_id} | DAYS:{data.days} | NAME:{data.username}"
     }
 
     try:

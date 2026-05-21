@@ -19,8 +19,8 @@
   --green: #4ade80;
   --green-dim: rgba(74,222,128,0.12);
   --red: #f87171;
-  --red-dim: rgba(248,113,113,0.12);
-  --blue: #818cf8;
+  --red-dim: rgba(248,113,113,0.8);
+  --blue: #5260d9;
   --blue-dim: rgba(129,140,248,0.12);
   --yellow: #fbbf24;
   --yellow-dim: rgba(251,191,36,0.12);
@@ -45,7 +45,7 @@
     font-size: 15px;
   }
   body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     background: var(--bg);
     color: #ffffff;
@@ -166,6 +166,58 @@
   .auth-left-panel  { display: none !important; }
   .auth-divider     { display: none !important; }
   .auth-right-panel { width: 100% !important; padding: 24px 16px !important; }
+}
+
+
+/* ── FOOTER RESPONSIVE ── */
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+  .footer-brand {
+    grid-column: span 1 !important;
+  }
+}
+
+/* ── ATTENDEE PAGE RESPONSIVE ── */
+@media (max-width: 640px) {
+  .attendee-nav {
+    padding: 8px 12px !important;
+    height: auto !important;
+    min-height: 52px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .attendee-nav .attendee-brand span {
+    font-size: 11px !important;
+    letter-spacing: 0.05em !important;
+  }
+  .attendee-nav-user {
+    display: none !important;
+  }
+  .attendee-page-content {
+    padding: 20px 14px !important;
+  }
+  .action-card-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .action-card {
+    padding: 16px 18px !important;
+  }
+  .event-row-inner {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .event-row-time {
+    margin-left: 0 !important;
+    text-align: left !important;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
 }
 
 @layer utilities {

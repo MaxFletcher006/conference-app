@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth, isDashboardRole } from './context/AuthContext'
 import { ToastContainer, Spinner } from './components/UI'
@@ -30,6 +31,12 @@ import QRScanPage from './pages/QRScanPage'
 import TicketValidationsPage from './pages/TicketValidationsPage'
 import ValidationsAdminPage from './pages/ValidationsAdminPage'
 import TransactionsPage from './pages/TransactionsPage'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 
 // ── Auth guards ────────────────────────────────────────────────────────────────
 
@@ -93,6 +100,8 @@ function PublicLayout() {
 // ── Root app ──────────────────────────────────────────────────────────────────
 function AppRoutes() {
   return (
+    <>
+    <ScrollToTop />
     <Routes>
       {/* Auth pages — no LHCB navbar */}
       <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
@@ -121,6 +130,7 @@ function AppRoutes() {
       {/* LHCB public pages — everything else */}
       <Route path="/*" element={<PublicLayout />} />
     </Routes>
+    </>
   )
 }
 

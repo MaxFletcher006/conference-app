@@ -32,7 +32,7 @@ export function Navbar() {
             </div>
             <div className="flex flex-col leading-none">
               <span className="font-bold text-sm tracking-tight text-white uppercase">Science Development</span>
-              <span className="font-bold text-sm tracking-tight text-indigo uppercase">Accelerator</span>
+              <span className="font-bold text-sm tracking-tight text-white uppercase">Accelerator</span>
             </div>
           </Link>
 
@@ -45,7 +45,7 @@ export function Navbar() {
                 style={{ fontSize: 15 }}
                 className={`font-medium transition-colors ${
                   (item.href === '/' ? pathname === '/' : pathname.startsWith(item.href))
-                    ? 'text-indigo'
+                    ? 'text-grey'
                     : 'text-white/70 hover:text-white'
                 }`}
               >
@@ -80,8 +80,8 @@ export function Navbar() {
 
             <Link
               to="/register"
-              className="hidden md:inline-flex items-center bg-indigo hover:bg-indigo-dark text-white font-semibold px-4 py-2 rounded-xl transition-colors"
-              style={{ fontSize: 15 }}
+              className="hidden md:inline-flex items-center bg-[#080a5e] hover:bg-indigo-dark text-white font-semibold px-4 py-2 rounded-xl transition-colors"
+              style={{ fontSize: 15, color: '#fff' }}
             >
               {t.register}
             </Link>

@@ -6,9 +6,13 @@ import {
   Event, Question,
 } from '../api/client'
 
-const PRICE_PER_DAY = 10
 import { useAuth } from '../context/AuthContext'
 import { Btn, Input, Select, Modal, toast, Spinner } from '../components/UI'
+
+
+const PRICE_PER_DAY = 10;
+console.log(PRICE_PER_DAY);
+
 
 // ── Translations ──────────────────────────────────────────────────────────────
 
@@ -170,6 +174,7 @@ export default function AttendeePage() {
       setQuestionText('')
       setEventId('')
       if (myQuestions.length > 0 || myQuestionsModal) fetchMyQuestions()
+        console.log(myQuestions);
     } catch (err: any) {
       toast(err?.response?.data?.detail || 'Submission failed', 'err')
     }
@@ -187,6 +192,7 @@ export default function AttendeePage() {
   const handleOpenMyQuestions = () => { setMyQuestionsModal(true); fetchMyQuestions() }
   const getEventTopic = (evId: number) => events.find(e => e.id === evId)?.topic ?? `Event #${evId}`
   const todayStr = new Date().toISOString().split('T')[0]
+  console.log(myQuestions);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
@@ -195,20 +201,20 @@ export default function AttendeePage() {
       <div className="nebula nebula-2" />
 
       {/* ── Nav ── */}
-      <nav style={{
+      <nav className="attendee-nav" style={{
         position: 'sticky', top: 0, zIndex: 50,
         borderBottom: '1px solid var(--border)',
         background: 'rgba(8,8,16,0.85)', backdropFilter: 'blur(20px)',
         padding: '0 32px', height: 60,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="attendee-brand" style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, overflow: 'hidden' }}>
           <div style={{
-            width: 8, height: 8, borderRadius: '50%',
+            width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
             background: 'var(--blue)', boxShadow: '0 0 12px var(--blue)',
             animation: 'dashPulse 2.5s ease-in-out infinite',
           }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: '#ffffff', letterSpacing: '0.1em' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: '#ffffff', letterSpacing: '0.1em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {t.brand}
           </span>
         </div>
@@ -256,7 +262,7 @@ export default function AttendeePage() {
 
         {/* Hero */}
         <div style={{ marginBottom: 48 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--blue)', letterSpacing: '0.15em', marginBottom: 12, opacity: 0.8 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: 'var(--blue)', letterSpacing: '0.15em', marginBottom: 12 }}>
             {t.portal}
           </div>
           <h1 style={{ fontSize: 36, fontWeight: 700, letterSpacing: '-0.03em', color: '#ffffff', marginBottom: 6 }}>
@@ -325,12 +331,6 @@ export default function AttendeePage() {
               {t.ticketSentTo}{' '}
               <span style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)' }}>{user?.email}</span>
             </p>
-            <Select
-              label={t.daysLabel}
-              value={ticketDay}
-              onChange={e => setTicketDay(e.target.value)}
-              options={[1,2,3,4,5].map(n => ({ value: String(n), label: t.day(n) }))}
-            />
             <div style={{
               background: 'var(--bg-3)', border: '1px solid var(--border-2)',
               borderRadius: 'var(--radius)', padding: '12px 16px',
@@ -408,7 +408,7 @@ export default function AttendeePage() {
                     <p style={{ margin: 0, fontSize: 15, color: '#ffffff', lineHeight: 1.6 }}>{q.question}</p>
                     {q.time && (
                       <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
-                        🕒 {new Date(q.time).toLocaleString()}
+                        🕒 {new Date(q.time.replace(/^(\d{4}-\d{2}-\d{2})-/, '$1T')).toLocaleString()}
                       </div>
                     )}
                   </div>
@@ -443,6 +443,7 @@ function ActionCard({ icon, title, desc, color, dimColor, onClick }: {
 }) {
   return (
     <button
+      className="action-card"
       onClick={onClick}
       style={{
         background: dimColor, border: `1px solid ${color}22`,

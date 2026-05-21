@@ -5,9 +5,9 @@ import { agendaDays } from '@/data/agenda'
 import type { AgendaItemType } from '@/data/agenda'
 
 const TYPE_STYLES: Record<AgendaItemType, { dot: string; badge: string; label: { en: string; mn: string } }> = {
-  session: { dot: 'var(--blue)',   badge: 'rgba(129,140,248,0.12)', label: { en: 'Session',  mn: 'Хэлэлцүүлэг' } },
+  session: { dot: 'var(--blue-text)', badge: 'rgba(74,144,248,0.12)', label: { en: 'Session',  mn: 'Хэлэлцүүлэг' } },
   break:   { dot: '#94a3b8',       badge: 'rgba(148,163,184,0.1)',  label: { en: 'Break',    mn: 'Завсарлага'   } },
-  social:  { dot: '#f59e0b',       badge: 'rgba(245,158,11,0.12)',  label: { en: 'Social',   mn: 'Нийгмийн'    } },
+  social:  { dot: '#f59e0b',       badge: 'rgba(245,158,11,0.12)',  label: { en: 'Social',   mn: 'Нийтийн цаг'    } },
   travel:  { dot: '#34d399',       badge: 'rgba(52,211,153,0.12)',  label: { en: 'Travel',   mn: 'Аялал'       } },
   info:    { dot: 'rgba(255,255,255,0.4)', badge: 'rgba(255,255,255,0.06)', label: { en: 'Info', mn: 'Мэдээлэл' } },
 }
@@ -27,9 +27,9 @@ export function HomeAgendaSection() {
           <span style={{
             display: 'inline-block', fontFamily: 'var(--font-mono)',
             fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
-            color: 'var(--blue)', marginBottom: 12,
+            color: 'var(--blue-text)', marginBottom: 12,
             padding: '4px 14px', background: 'var(--blue-dim)',
-            borderRadius: 100, border: '1px solid rgba(129,140,248,0.25)',
+            borderRadius: 100, border: '1px solid rgba(74,144,248,0.25)',
           }}>
             {t.agendaEyebrow}
           </span>
@@ -52,13 +52,13 @@ export function HomeAgendaSection() {
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center',
                   padding: '10px 18px', borderRadius: 12, cursor: 'pointer',
-                  border: isActive ? '1px solid rgba(129,140,248,0.5)' : '1px solid var(--border)',
+                  border: isActive ? '1px solid rgba(74,144,248,0.5)' : '1px solid var(--border)',
                   background: isActive ? 'var(--blue-dim)' : 'var(--bg-2)',
                   transition: 'all 0.15s',
                   minWidth: 72,
                 }}
               >
-                <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: isActive ? 'var(--blue)' : 'var(--text-3)', marginBottom: 2 }}>
+                <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: isActive ? 'var(--blue-text)' : 'var(--text-3)', marginBottom: 2 }}>
                   {d.date}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: isActive ? '#ffffff' : 'var(--text-2)' }}>
@@ -76,10 +76,10 @@ export function HomeAgendaSection() {
           <div style={{ padding: '24px 32px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
             <div style={{
               width: 52, height: 52, borderRadius: 14, flexShrink: 0,
-              background: 'var(--blue-dim)', border: '1px solid rgba(129,140,248,0.3)',
+              background: 'var(--blue-dim)', border: '1px solid rgba(74,144,248,0.3)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             }}>
-              <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--blue)', fontWeight: 700, letterSpacing: '0.05em' }}>2026</span>
+              <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--blue-text)', fontWeight: 700, letterSpacing: '0.05em' }}>2026</span>
               <span style={{ fontSize: 15, fontWeight: 800, color: '#ffffff', lineHeight: 1.1 }}>{day.date}</span>
             </div>
             <div>
@@ -87,7 +87,7 @@ export function HomeAgendaSection() {
                 {lang === 'en' ? day.en : day.mn}
               </div>
               {(lang === 'en' ? day.noteEn : day.noteMn) && (
-                <div style={{ fontSize: 13, color: 'var(--blue)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                <div style={{ fontSize: 13, color: 'var(--blue-text)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
                   {lang === 'en' ? day.noteEn : day.noteMn}
                 </div>
               )}
@@ -114,7 +114,7 @@ export function HomeAgendaSection() {
                   <div style={{ minWidth: 90, flexShrink: 0, paddingTop: 2 }}>
                     <span style={{
                       fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700,
-                      color: item.time ? 'var(--blue)' : 'transparent',
+                      color: item.time ? 'var(--blue-text)' : 'transparent',
                     }}>
                       {item.time || '—'}
                     </span>
@@ -140,7 +140,7 @@ export function HomeAgendaSection() {
                         padding: '2px 8px', borderRadius: 6,
                         background: style.badge, color: style.dot,
                       }}>
-                        {style.label[lang]}
+                        {style.label.en}
                       </span>
                     </div>
                     {item.speakers && (
@@ -166,7 +166,7 @@ export function HomeAgendaSection() {
             <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />
               <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
-                {s.label[lang]}
+                {s.label.en}
               </span>
             </div>
           ))}

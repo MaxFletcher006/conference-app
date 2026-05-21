@@ -1,8 +1,10 @@
 import { partners } from '@/data/organizations'
+import { useLang } from '@/context/LanguageContext'
+import { pub } from '@/data/publicTranslations'
 
 const keyOrgs = partners.filter((p) => p.role === 'Organizer' || p.role === 'Venue Partner')
 
-const boardMembers = [
+const boardMembers_en = [
   { name: 'Dolguun U.',       role: 'Board Chairman',     photo: '/speakers/dolguun.png',      initials: 'DU' },
   { name: 'Erkhembayar M.',   role: 'Executive Director', photo: '/speakers/erkhembayar.png',  initials: 'EM' },
   { name: 'Baasansuren B.',   role: 'Board Member',       photo: '/speakers/baasansuren1.png', initials: 'BB' },
@@ -10,7 +12,19 @@ const boardMembers = [
   { name: 'Dorjpalam A.',     role: 'Board Member',       photo: '/speakers/dorjpalam.png',    initials: 'DA' },
 ]
 
+const boardMembers_mn = [
+  { name: 'Ө.Дөлгөөн',       role: 'Зөвлөлийн дарга',    photo: '/speakers/dolguun.png',      initials: 'DU' },
+  { name: 'М.Эрхэмбаяр',     role: 'Гүйцэтгэх захирал',  photo: '/speakers/erkhembayar.png',  initials: 'EM' },
+  { name: 'Б.Баасансүрэн',   role: 'Зөвлөлийн гишүүн',   photo: '/speakers/baasansuren1.png', initials: 'BB' },
+  { name: 'Ц.Энхбат',        role: 'Зөвлөлийн гишүүн',   photo: '/speakers/enkhbat.png',      initials: 'ET' },
+  { name: 'А.Доржпалам',     role: 'Зөвлөлийн гишүүн',   photo: '/speakers/dorjpalam.png',    initials: 'DA' },
+]
+
 export default function About() {
+  const { lang } = useLang()
+  const t = pub[lang]
+  const boardMembers = lang === 'mn' ? boardMembers_mn : boardMembers_en
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
@@ -20,15 +34,15 @@ export default function About() {
           <span style={{
             display: 'block', fontFamily: 'var(--font-mono)',
             fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-            textTransform: 'uppercase', color: 'var(--blue)', marginBottom: 10,
+            textTransform: 'uppercase', color: 'var(--blue-text)', marginBottom: 10,
           }}>
-            Who We Are
+            {t.aboutEyebrow}
           </span>
           <h1 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)', fontWeight: 700, color: '#ffffff', marginBottom: 16, maxWidth: 700 }}>
-            Dedicated to Scientific Excellence in Mongolia
+            {t.aboutTitle}
           </h1>
           <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.6)', lineHeight: 1.75, maxWidth: 680 }}>
-            The Mongolia - CERN LHCb 2026 conference is organized by a coalition of non-governmental and academic institutions committed to advancing high-energy physics research.
+            {t.aboutDesc}
           </p>
         </div>
       </section>
@@ -36,7 +50,7 @@ export default function About() {
       {/* Organizations */}
       <section style={{ padding: '96px 0', background: 'var(--bg)' }}>
         <div className="max-w-[1240px] mx-auto px-6 md:px-12">
-          <h2 style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', marginBottom: 48 }}>Organizing Institutions</h2>
+          <h2 style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', marginBottom: 48 }}>{t.aboutOrgsTitle}</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
             {keyOrgs.map((org) => (
               <div key={org.name} style={{
@@ -58,18 +72,20 @@ export default function About() {
                 <span style={{
                   display: 'inline-block', fontFamily: 'var(--font-mono)',
                   fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
-                  color: 'var(--blue)', marginBottom: 8,
+                  color: 'var(--blue-text)', marginBottom: 8,
                 }}>
-                  {org.role}
+                  {lang === 'mn' ? org.role_mn : org.role}
                 </span>
                 <h3 style={{ fontSize: 17, fontWeight: 700, color: '#ffffff', marginBottom: 12 }}>{org.name}</h3>
-                <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, flex: 1, marginBottom: 16 }}>{org.desc_en}</p>
+                <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, flex: 1, marginBottom: 16 }}>
+                  {lang === 'mn' ? org.desc_mn : org.desc_en}
+                </p>
                 {org.url !== '#' && (
                   <a
                     href={org.url} target="_blank" rel="noopener noreferrer"
-                    style={{ color: 'var(--blue)', fontWeight: 700, fontSize: 14 }}
+                    style={{ color: 'var(--blue-text)', fontWeight: 700, fontSize: 14 }}
                   >
-                    Visit Website →
+                    {t.aboutVisitSite}
                   </a>
                 )}
               </div>
@@ -87,13 +103,13 @@ export default function About() {
             <span style={{
               display: 'block', fontFamily: 'var(--font-mono)',
               fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-              textTransform: 'uppercase', color: 'var(--blue)', marginBottom: 10,
+              textTransform: 'uppercase', color: 'var(--blue-text)', marginBottom: 10,
             }}>
-              Science Development Accelerator NGO
+              {t.boardEyebrow}
             </span>
-            <h2 style={{ fontSize: 34, fontWeight: 700, color: '#ffffff', marginBottom: 16 }}>Board of Directors</h2>
+            <h2 style={{ fontSize: 34, fontWeight: 700, color: '#ffffff', marginBottom: 16 }}>{t.boardTitle}</h2>
             <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7 }}>
-              The board and executive team driving Science Development Accelerator NGO's mission to advance science in Mongolia.
+              {t.boardDesc}
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 32 }}>
@@ -113,7 +129,7 @@ export default function About() {
                 </div>
                 <p style={{ fontWeight: 700, fontSize: 15, color: '#ffffff' }}>{member.name}</p>
                 <p style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--blue)',
+                  fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--blue-text)',
                   marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700,
                 }}>{member.role}</p>
               </div>

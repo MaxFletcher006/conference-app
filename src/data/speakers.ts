@@ -10,6 +10,7 @@ export interface Speaker {
   bio_mn:      string;
   bio_en:      string;
   photo?:      string;
+  photoZoom?:  number;
   links?: { type: 'web'|'orcid'|'scholar'; url: string }[];
 }
 
@@ -110,7 +111,8 @@ export const speakers: Speaker[] = [
     specialty: 'LHCb RTA and Allen.',
     bio_mn: `INFN Bologna-ийн судлаач. LHCb RTA -ийн мэргэжилтэн.`,
     bio_en: `Researcher at INFN Bologna. Specialises in LHCb real time analysis.`,
-    photo: '/speakers/marianna_fontana.png'
+    photo: '/speakers/marianna_fontana.png',
+    photoZoom: 1.6
   },
   {
     slug: 'da-yu-tou', initials: 'DT',
@@ -150,8 +152,8 @@ export const speakers: Speaker[] = [
   },
   {
     slug: 'enkhbat-tsedenbaljir', initials: 'ET',
-    name: 'Д-р Энхбат Цэдэнбалжир', title: 'Лабораторийн эрхлэгч',
-    institution: 'ШУА-ийн Физик, Технологийн Хүрээлэн', country: 'Mongolia', flag: '🇲🇳',
+    name: 'Dr. Enkhbat Tsedenbaljir', title: 'Лабораторийн эрхлэгч',
+    institution: 'Mongolian Academy of Science, IPT', country: 'Mongolia', flag: '🇲🇳',
     specialty: 'Theoretical and High Energy Physics Laboratory, IPT',
     bio_mn: `ШУА-ийн ФТХ-ийн Онол ба Их энергийн физикийн салбарын эрхлэгч.`,
     bio_en: `Head of the Theoretical and High Energy Physics Division at IPT, Mongolia.`,
@@ -159,8 +161,8 @@ export const speakers: Speaker[] = [
   },
   {
     slug: 'baasansuren-batsukh', initials: 'BB',
-    name: 'Д-р Баасансүрэн Батсүх', title: 'Ахлах судлаач',
-    institution: 'ШУА-ийн Физик, Технологийн Хүрээлэн', country: 'Mongolia', flag: '🇲🇳',
+    name: 'Dr. Baasansuren Batsukh', title: 'Ахлах судлаач',
+    institution: 'Mongolian Academy of Science, IPT', country: 'Mongolia', flag: '🇲🇳',
     specialty: 'Head of LHCb group at IPT; Mongolia–CERN liaison',
     bio_mn: `ФТХ-ийн LHCb судалгааны багийн ахлагч бөгөөд Монгол–CERN хамтын ажиллагааны гол холбоос. Монгол Улсыг LHCb туршилтад оруулах, Монголын залуу физикчдийг LHCb хамтын ажиллагаатай холбох ажлыг санаачлан удирдсан.`,
     bio_en: `Head of the LHCb group at IPT and the primary Mongolia–CERN liaison. Pioneered Mongolia's participation in LHCb and connects Mongolian physicists with CERN research groups.`,

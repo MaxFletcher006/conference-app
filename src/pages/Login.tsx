@@ -113,6 +113,18 @@ export default function Login() {
           padding: '40px 52px', position: 'relative', zIndex: 10,
         }}
       >
+        <Link to="/" style={{
+          position: 'absolute', top: 20, right: 24,
+          fontSize: 14, color: 'rgba(255,255,255,0.55)',
+          fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
+          display: 'flex', alignItems: 'center', gap: 5,
+          transition: 'color 0.2s',
+        }}
+          onMouseOver={e => (e.currentTarget.style.color = '#ffffff')}
+          onMouseOut={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
+        >
+          ← HOME
+        </Link>
         <div style={{
           width: '100%', maxWidth: 420,
           background: 'rgba(6,10,22,.78)',

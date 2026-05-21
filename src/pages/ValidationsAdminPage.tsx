@@ -120,7 +120,7 @@ export default function ValidationsAdminPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: isToday ? 'var(--yellow)' : '#ffffff' }}>
                       {v.validation_time
-                        ? new Date(v.validation_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        ? new Date(v.validation_time.replace(/^(\d{4}-\d{2}-\d{2})-/, '$1T')).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                         : '—'}
                     </span>
                     {isToday && (

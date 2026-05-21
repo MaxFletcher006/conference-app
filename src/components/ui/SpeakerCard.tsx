@@ -12,7 +12,7 @@ export function SpeakerCard({ speaker }: { speaker: Speaker }) {
         transition: 'all 0.2s',
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(129,140,248,0.4)'
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(74,144,248,0.4)'
         ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
       }}
       onMouseLeave={e => {
@@ -27,9 +27,9 @@ export function SpeakerCard({ speaker }: { speaker: Speaker }) {
         overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {speaker.photo ? (
-          <img src={speaker.photo} alt={speaker.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={speaker.photo} alt={speaker.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: speaker.photoZoom ? `scale(${speaker.photoZoom})` : undefined }} />
         ) : (
-          <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--blue)' }}>{speaker.initials}</span>
+          <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--blue-text)' }}>{speaker.initials}</span>
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>
@@ -37,7 +37,7 @@ export function SpeakerCard({ speaker }: { speaker: Speaker }) {
           <p style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', lineHeight: 1.3 }}>{speaker.name}</p>
           <span style={{ fontSize: 18, flexShrink: 0 }}>{speaker.flag}</span>
         </div>
-        <p style={{ fontSize: 13, color: 'var(--blue)', fontWeight: 700, marginBottom: 4 }}>{speaker.title}</p>
+        <p style={{ fontSize: 13, color: 'var(--blue-text)', fontWeight: 700, marginBottom: 4 }}>{speaker.title}</p>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 500, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{speaker.institution}</p>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{speaker.specialty}</p>
       </div>

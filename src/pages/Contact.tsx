@@ -1,26 +1,31 @@
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Mail, Globe, MapPin, Send } from 'lucide-react'
-
-const infoCards = [
-  {
-    icon: <Mail size={20} />,
-    title: 'Email Us',
-    lines: ['erkhembayar@sciencedev.edu.mn', 'bgbaacka@gmail.com'],
-  },
-  {
-    icon: <Globe size={20} />,
-    title: 'Phone',
-    lines: ['+976 9811 5512, 9960 2999', 'Mon–Fri, 9am–6pm (ULAT)'],
-  },
-  {
-    icon: <MapPin size={20} />,
-    title: 'Office',
-    lines: ['Naran Khotkhon 21v-2, Peace Avenue, 1st Khoroo, Khan-Uul District, Ulaanbaatar', 'Postal Code: 17030'],
-  },
-]
+import { useLang } from '@/context/LanguageContext'
+import { pub } from '@/data/publicTranslations'
 
 export default function Contact() {
+  const { lang } = useLang()
+  const t = pub[lang]
+
+  const infoCards = [
+    {
+      icon: <Mail size={20} />,
+      title: t.contactEmailTitle,
+      lines: ['erkhembayar@sciencedev.edu.mn', 'bgbaacka@gmail.com'],
+    },
+    {
+      icon: <Globe size={20} />,
+      title: t.contactPhoneTitle,
+      lines: ['+976 9811 5512, 9960 2999', 'Mon–Fri, 9am–6pm (ULAT)'],
+    },
+    {
+      icon: <MapPin size={20} />,
+      title: t.contactOfficeTitle,
+      lines: ['Naran Khotkhon 21v-2, Peace Avenue, 1st Khoroo, Khan-Uul District, Ulaanbaatar', 'Postal Code: 17030'],
+    },
+  ]
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '96px 0' }}>
       <div className="max-w-[1240px] mx-auto px-6 md:px-12">
@@ -30,15 +35,15 @@ export default function Contact() {
           <span style={{
             display: 'block', fontFamily: 'var(--font-mono)',
             fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-            textTransform: 'uppercase', color: 'var(--blue)', marginBottom: 10,
+            textTransform: 'uppercase', color: 'var(--blue-text)', marginBottom: 10,
           }}>
-            Get in Touch
+            {t.contactEyebrow}
           </span>
           <h1 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)', fontWeight: 700, color: '#ffffff', marginBottom: 14 }}>
-            Contact Organizing Committee
+            {t.contactPageTitle}
           </h1>
           <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.6)', lineHeight: 1.75, maxWidth: 540 }}>
-            Have questions about registration, sponsorship, or the scientific program? Our team is here to help.
+            {t.contactPageDesc}
           </p>
         </div>
 
@@ -55,9 +60,9 @@ export default function Contact() {
                 <div style={{
                   width: 42, height: 42, flexShrink: 0,
                   borderRadius: 10, background: 'var(--blue-dim)',
-                  border: '1px solid rgba(129,140,248,0.2)',
+                  border: '1px solid rgba(74,144,248,0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--blue)',
+                  color: 'var(--blue-text)',
                 }}>
                   {card.icon}
                 </div>
@@ -76,25 +81,25 @@ export default function Contact() {
             background: 'var(--bg-2)', borderRadius: 24,
             padding: '40px 48px', border: '1px solid var(--border-2)',
           }}>
-            <h3 style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', marginBottom: 28 }}>Send a Message</h3>
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', marginBottom: 28 }}>{t.contactFormTitle}</h3>
             <form style={{ display: 'flex', flexDirection: 'column', gap: 20 }} onSubmit={(e) => e.preventDefault()}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 8 }}>Full Name</label>
-                  <Input placeholder="Your name" />
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 8 }}>{t.contactNameLabel}</label>
+                  <Input placeholder={t.contactNamePh} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 8 }}>Email Address</label>
-                  <Input type="email" placeholder="your@email.com" />
+                  <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 8 }}>{t.contactEmailLabel}</label>
+                  <Input type="email" placeholder={t.contactEmailPh} />
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 8 }}>Subject</label>
-                <Input placeholder="Inquiry about Sponsorship" />
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 8 }}>{t.contactSubjectLabel}</label>
+                <Input placeholder={t.contactSubjectPh} />
               </div>
               <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 8 }}>Message</label>
-                <Textarea placeholder="How can we help you?" style={{ minHeight: 160 }} />
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#00000', marginBottom: 8 }}>{t.contactMsgLabel}</label>
+                <Textarea placeholder={t.contactMsgPh} style={{ minHeight: 160, backgroundColor: "#051e47" }} />
               </div>
               <button type="submit" style={{
                 width: '100%', height: 56,
@@ -105,7 +110,7 @@ export default function Contact() {
                 transition: 'opacity 0.2s',
               }}>
                 <Send size={18} />
-                Send Message
+                {t.contactSendBtn}
               </button>
             </form>
           </div>
