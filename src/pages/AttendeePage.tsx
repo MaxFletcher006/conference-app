@@ -2,7 +2,7 @@ import { useEffect, useState, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   getAllEvents, addQuestion, getQuestionsByUser,
-  createInvoice,
+  createInvoice, checkUserTicket,
   Event, Question,
 } from '../api/client'
 
@@ -135,6 +135,19 @@ export default function AttendeePage() {
   }
 
   const handleLogout = async () => { await logout(); navigate('/login') }
+
+  const handleOpenTicketModal = async () => {
+    try {
+      const { has_ticket } = await checkUserTicket()
+      if (has_ticket) {
+        toast(lang === 'mn'
+          ? 'Та аль хэдийн тасалбар авсан байна. И-мэйлээ шалгана уу.'
+          : 'You already have a ticket. Please check your email.', 'err')
+        return
+      }
+    } catch {}
+    setTicketModal(true)
+  }
 
   const handlePurchaseTicket = async (e: FormEvent) => {
     e.preventDefault()
@@ -269,7 +282,7 @@ export default function AttendeePage() {
 
         {/* Action cards */}
         <div className="action-card-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 48 }}>
-          <ActionCard icon="🎫" title={t.buyTicket} desc={t.buyDesc} color="var(--blue)"   dimColor="var(--blue-dim)"   onClick={() => setTicketModal(true)} />
+          <ActionCard icon="🎫" title={t.buyTicket} desc={t.buyDesc} color="var(--blue)"   dimColor="var(--blue-dim)"   onClick={handleOpenTicketModal} />
           <ActionCard icon="💬" title={t.askQ}      desc={t.askDesc}  color="var(--purple)" dimColor="var(--purple-dim)" onClick={() => setQuestionModal(true)} />
           <ActionCard icon="📋" title={t.myQ}       desc={t.myQDesc}  color="var(--green)"  dimColor="var(--green-dim)"  onClick={handleOpenMyQuestions} />
         </div>

@@ -203,3 +203,6 @@ export interface InvoiceResult {
 
 export const createInvoice = (payload: InvoicePayload) =>
   client.post<InvoiceResult>('/invoice', payload).then(r => r.data)
+
+export const checkUserTicket = () =>
+  client.get<{ has_ticket: boolean }>('/ticket/check').then(r => r.data)

@@ -574,6 +574,12 @@ def tickets_summary(session: SessionDep, current_user: dict = Depends(require_ro
 def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
     return session.exec(select(func.count()).select_from(Validation)).one()
 
+@app.get("/ticket/check")
+def check_user_ticket(session: SessionDep, current_user: dict = Depends(require_role("attendee"))):
+    user_id = current_user.get("user_id")
+    exists = session.exec(select(Ticket).where(Ticket.user_id == user_id)).first() is not None
+    return {"has_ticket": exists}
+
 @app.post("/invoice")
 async def create_invoice(data: InvoiceModel, current_user: dict = Depends(require_role("attendee"))):
 
