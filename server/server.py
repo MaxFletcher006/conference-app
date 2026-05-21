@@ -473,7 +473,7 @@ def validate_ticket(session: SessionDep, ticket_uuid: str, current_user: dict = 
         if not db_ticket:
             raise HTTPException(status_code=404, detail="Invalid ticket")
         
-        if db_ticket.day_length - db_ticket.used_times == 0:
+        if db_ticket.day_length == db_ticket.used_times:
             return {"status": "expired", "detail": "Your ticket has been expired"}
         
         else:
