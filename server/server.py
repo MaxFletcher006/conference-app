@@ -575,7 +575,7 @@ def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_
     return session.exec(select(func.count()).select_from(Validation)).one()
 
 @app.post("/invoice")
-async def create_invoice(data: InvoiceModel):
+async def create_invoice(data: InvoiceModel, current_user: dict = Depends(require_role("attendee"))):
 
     if not BYL_URL or not BYL_TOKEN:
         raise HTTPException(status_code=503, detail="Payment service not configured")
@@ -642,7 +642,7 @@ async def byl_webhook(session: SessionDep, request: Request, background_tasks: B
         if match_id:
             extracted_user_id = int(match_id.group(1))
             match_days = re.search(r"DAYS:(\d+)", description)
-            day_length = int(match_days.group(1)) if match_days else 7
+            day_length = 1
 
             new_transaction = Transaction(
                 user_id=extracted_user_id,
