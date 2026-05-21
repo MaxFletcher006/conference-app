@@ -37,8 +37,6 @@ BYL_URL = _byl_url_raw if _byl_url_raw.startswith(("http://", "https://")) else 
 BYL_PROJECT_ID = 599
 BYL_SECRET_KEY = os.getenv("BYL_SECRET_KEY")
 
-print(f'BYL URL: {BYL_URL}')
-
 serializer = URLSafeTimedSerializer(SESSION_SECRET)
 
 def create_session_cookie(data: dict) -> str:
@@ -577,7 +575,7 @@ def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_
     return session.exec(select(func.count()).select_from(Validation)).one()
 
 @app.post("/invoice")
-async def create_invoice(data: InvoiceModel, current_user: dict = Depends(require_role("attendee"))):
+async def create_invoice(data: InvoiceModel):
     if not BYL_URL or not BYL_TOKEN:
         raise HTTPException(status_code=503, detail="Payment service not configured")
 
