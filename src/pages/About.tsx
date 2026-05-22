@@ -61,12 +61,13 @@ export default function About() {
                 <div style={{
                   height: 64, width: '100%', marginBottom: 24,
                   display: 'flex', alignItems: 'center',
-                  background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '8px 14px',
+                  background: '#ffffff', borderRadius: 8, padding: '8px 14px',
+                  justifyContent: 'center',
                 }}>
                   <img
                     src={org.logo}
                     alt={org.name}
-                    style={{ height: '100%', maxWidth: '100%', objectFit: 'contain', objectPosition: 'left' }}
+                    style={{ height: '100%', maxWidth: '100%', objectFit: 'contain', objectPosition: 'center' }}
                   />
                 </div>
                 <span style={{
@@ -112,7 +113,7 @@ export default function About() {
               {t.boardDesc}
             </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 32 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 32 }}>
             {boardMembers.map((member) => (
               <div key={member.name} style={{ textAlign: 'center' }}>
                 <div style={{

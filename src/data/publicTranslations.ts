@@ -121,7 +121,7 @@ export const pub = {
     speakerLinkOrcid:  'ORCID',
     speakerLinkScholar:'Google Scholar',
     // footer
-    footerDesc:     'Mongolia - CERN LHCb 2026 — A world-class particle physics conference in Mongolia. Ulaanbaatar, June 8–12, 2026.',
+    footerDesc:     'Mongolia - CERN LHCb 2026 Conference. Ulaanbaatar, June 8–12, 2026.',
     quickLinks:     'Quick Links',
     contactLabel:   'Contact',
     copyright:      '© 2026 Science Development Accelerator NGO. All rights reserved.',
