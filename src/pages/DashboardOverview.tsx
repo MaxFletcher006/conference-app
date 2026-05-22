@@ -376,10 +376,10 @@ export default function DashboardOverview() {
             <>
               <SectionHeader title="Recent users" />
               <Card style={{ padding: 0, overflow: 'hidden' }}>
-                <div className="table-wrapper">
+                <div className="table-wrapper" style={{ maxHeight: 420, overflowY: 'auto' }}>
                   <Table
                     headers={['Name', 'Email', 'Phone Number', 'Role', 'Ticket']}
-                    rows={users.slice(0, 8).map(u => [
+                    rows={users.map(u => [
                       <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>
                         {u.firstname} {u.lastname}
                       </span>,

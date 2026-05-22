@@ -72,9 +72,9 @@ class PasswordReset(BaseModel):
     new_password: str 
 
 class TicketVerification(BaseModel):
-    ticket_uuid: str 
-    username: str 
-    day_left: int 
+    ticket_uuid: str
+    username: str
+    entry_day: int
     used_times: int
 
 class TicketValidation(BaseModel):
