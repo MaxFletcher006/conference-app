@@ -466,47 +466,49 @@ async def delete_event(event_id: int, session: SessionDep, current_user: dict = 
 # ---- TICKET FUNCTIONS ---- #
 
 @app.get("/validate/{ticket_uuid}", response_model=TicketVerification)
-def validate_ticket(session: SessionDep, ticket_uuid: str, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
+def validate_ticket(
+    session: SessionDep, 
+    ticket_uuid: str, 
+    current_user: dict = Depends(require_role("admin", "supervisor", "staff"))
+):
     try:
-        db_ticket = session.exec(select(Ticket).where(Ticket.qr_code_data == ticket_uuid)).first()
+        statement = select(Ticket, User).where(Ticket.qr_code_data == ticket_uuid).join(User, Ticket.user_id == User.id)
+        result = session.exec(statement).first()
 
-        if not db_ticket:
-            raise HTTPException(status_code=404, detail="Invalid ticket")
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="Invalid ticket or user not found"
+            )
         
-        if db_ticket.day_length == db_ticket.used_times:
-            return {"status": "expired", "detail": "Your ticket has been expired"}
+        db_ticket, attendee = result
+
+        if db_ticket.used_times >= db_ticket.day_length:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Your ticket has expired"
+            )
         
-        else:
-            db_ticket.used_times += 1
+        db_ticket.used_times += 1
         
         session.add(db_ticket)
         session.commit()
         session.refresh(db_ticket)
 
-        attendee = session.get(User, db_ticket.user_id)
-
-        ticket_response = TicketVerification(
+        return TicketVerification(
             ticket_uuid=db_ticket.qr_code_data, 
-            username=f'{attendee.firstname} {attendee.lastname}',
+            username=f"{attendee.firstname} {attendee.lastname}",
             day_left=db_ticket.day_length - db_ticket.used_times,
-
         )
-
-        # return {
-        #         "status": "valid",
-        #         "detail": "Ticket validated",
-        #         "remaining_entries":
-        #             db_ticket.day_length - db_ticket.used_times
-        #     }    
-    
-        return ticket_response
 
     except HTTPException:
         raise
-
     except Exception as e:
-        print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        print(f"Database error during ticket validation: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Internal server error"
+        )
 
 @app.post("/ticket/validation", response_model=TicketValidation)
 def ticket_validation(session: SessionDep, val_ticket: TicketValidation, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
