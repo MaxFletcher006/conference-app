@@ -483,6 +483,12 @@ def validate_ticket(
         
         db_ticket, attendee = result
 
+        if db_ticket.used_times >= db_ticket.day_length:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ticket expired: no entries remaining"
+            )
+
         db_ticket.used_times += 1
         session.add(db_ticket)
         session.commit()
@@ -1146,31 +1152,31 @@ async def publish_event(type: str, db_event: Event, email_list: List[EmailSchema
 
 async def _issue_ticket(user_id: int, day_length: int):
     with Session(engine) as session:
-        if session.exec(select(Ticket).where(Ticket.user_id == user_id)).first():
-            print(f"Ticket already exists for user {user_id}, skipping")
-            return
-
         user = session.get(User, user_id)
         if not user:
             print(f"User {user_id} not found, cannot issue ticket")
             return
 
         FRONT_URL = os.getenv("FRONT_URL", "")
-        ticket_uuid = str(uuid4())
-
-        new_ticket = Ticket(
-            user_id=user_id,
-            name="Conference Pass",
-            day_length=day_length,
-            used_times=0,
-            qr_code_data=ticket_uuid,
-        )
-        session.add(new_ticket)
-        session.commit()
-
         firstname = user.firstname
         lastname = user.lastname
         email = user.email
+
+        existing = session.exec(select(Ticket).where(Ticket.user_id == user_id)).first()
+        if existing:
+            ticket_uuid = existing.qr_code_data
+            print(f"Ticket already exists for user {user_id}, resending email")
+        else:
+            ticket_uuid = str(uuid4())
+            new_ticket = Ticket(
+                user_id=user_id,
+                name="Conference Pass",
+                day_length=day_length,
+                used_times=0,
+                qr_code_data=ticket_uuid,
+            )
+            session.add(new_ticket)
+            session.commit()
 
     qr_buffer = await asyncio.to_thread(generate_qr_buffer, f"{FRONT_URL}/validate/{ticket_uuid}")
 
