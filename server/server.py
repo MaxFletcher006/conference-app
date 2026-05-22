@@ -1349,7 +1349,7 @@ async def send_reset_email(email: str, token: str):
                         color:#94a3b8;
                         font-family:'Courier New',monospace;
                         letter-spacing:0.08em;
-                        ">HIGH ENERGY PHYSICS CONFERENCE · ULAANBAATAR</p>
+                        ">MONGOLIA - CERN LHCb 2026 CONFERENCE · ULAANBAATAR</p>
                     </td>
                     </tr>
                 </table>
