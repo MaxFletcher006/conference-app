@@ -80,8 +80,7 @@ app.add_middleware(
         "http://localhost:5175",
         "http://localhost:5176",
         "https://conference-app-jade.vercel.app",
-        "https://conference-app-jade.vercel.app",
-        "https://sciencedev.org/",
+        "https://sciencedev.org",
     ],
 
     allow_credentials=True,
