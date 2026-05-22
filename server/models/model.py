@@ -44,9 +44,8 @@ class Ticket(SQLModel, table=True):
     user_id: int | None = Field(default=None, foreign_key="user.id", index=True, ondelete="CASCADE")
     name: str
     day_length: int
-    last_used_date: int
+    used_times: int
     qr_code_data: str = Field(unique=True)
-    last_used_date: str | None = Field(default=None)
 
 class Question(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
