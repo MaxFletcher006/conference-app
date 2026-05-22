@@ -54,7 +54,7 @@ export default function ValidatePage() {
   }, [authLoading, user, ticket_uuid])
 
   const dayLeft = result ? result.entry_day - result.used_times : 0
-  const isValid = result !== null && result.used_times < result.entry_day
+  const isValid = result !== null
 
   const formatValidationTime = () => {
     const now = new Date()
