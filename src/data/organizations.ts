@@ -25,7 +25,7 @@ export const partners: Organization[] = [
     role: 'Organizer',
     role_mn: 'Зохион байгуулагч',
     desc_mn: 'Шинжлэх Ухааны Хөгжлийн Хурдасгуур ТББ нь Монгол Улсад шинжлэх ухаан, боловсрол, өндөр технологийн судалгааг дэмжин хөгжүүлэх зорилго бүхий байгууллага. Монголын залуу судлаачдыг CERN зэрэг дэлхийн тэргүүлэгч байгууллагуудтай холбодог.',
-    desc_en: 'Science Development Accelerator NGO is dedicated to advancing science, education, and high-technology research in Mongolia. It bridges Mongolian researchers with world-class institutions such as CERN.',
+    desc_en: "Science Development Accelerator NGO is dedicated to advancing science, education, and high-technology research in Mongolia. One of our core missions is to support collaborations between Mongolian researchers and World's leading scientific institutions such as CERN",
   },
   {
     name: 'IPT',

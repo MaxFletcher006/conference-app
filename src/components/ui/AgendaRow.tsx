@@ -1,14 +1,6 @@
 import type { AgendaItem } from '@/data/agenda'
 import { MapPin, User, Clock } from 'lucide-react'
 
-const typeColors: Record<AgendaItem['type'], string> = {
-  plenary: 'bg-indigo/10 text-indigo border-indigo/20',
-  talk:    'bg-blue-50 text-blue-600 border-blue-100',
-  break:   'bg-slate-100 text-slate-500 border-slate-200',
-  social:  'bg-amber-50 text-amber-600 border-amber-100',
-  lecture: 'bg-purple-50 text-purple-600 border-purple-100',
-  tour:    'bg-teal-50 text-teal-600 border-teal-100',
-}
 
 export function AgendaRow({ item }: { item: AgendaItem }) {
   const isBreak = item.type === 'break'
@@ -31,11 +23,6 @@ export function AgendaRow({ item }: { item: AgendaItem }) {
       <div className={`flex-1 rounded-2xl p-5 md:p-6 transition-all duration-300 border ${isBreak ? 'bg-slate-50 border-slate-100' : 'bg-white border-transparent hover:border-indigo/10 hover:shadow-xl hover:shadow-indigo/5'}`}>
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wider ${typeColors[item.type]}`}>
-                {item.type}
-              </span>
-            </div>
             <h4 className={`text-base md:text-lg font-bold leading-tight mb-2 ${isBreak ? 'text-slate-500' : 'text-navy-800 group-hover:text-indigo transition-colors'}`}>
               {item.title}
             </h4>

@@ -9,8 +9,6 @@ export interface AgendaItem {
   location: string;
 }
 
-// ── Full 7-day agenda (home page section) ──────────────────────────────────
-
 export type AgendaItemType = 'session' | 'break' | 'social' | 'travel' | 'info'
 
 export interface FullAgendaItem {
@@ -41,7 +39,6 @@ export const agendaDays: AgendaDay[] = [
       { time: '16:00–16:25', en: 'Coffee Break',        mn: 'Кофе Завсарлага',      type: 'break' },
       { time: '16:25–17:45', en: 'Session 2',           mn: '2-р Хэлэлцүүлэг',     location: 'NUM – Academic Hall', speakers: 'Dr. Da Yu Tou · Prof. Xuhao Yuan · Dr. Benjamin Audurier · Dr. Patrick Robbe', type: 'session' },
       { time: '17:50',       en: 'Concluding Day',      mn: 'Өдрийн Хаалт',         type: 'info' },
-      { time: '19:30',       en: 'Reception Dinner',    mn: 'Хүлээн Авалтын Зоог',  location: 'Ulaanbaatar Hotel', type: 'social' },
     ],
   },
   {
@@ -53,8 +50,6 @@ export const agendaDays: AgendaDay[] = [
       { time: '14:00–15:30', en: 'Session 4',           mn: '4-р Хэлэлцүүлэг',     location: 'NUM – Academic Hall', speakers: 'Dr. Antonio Falabella · Prof. Barbara Sciascia · Dr. Saverio Mariani · Prof. Tim Gershon', type: 'session' },
       { time: '15:30',       en: 'Concluding Day',      mn: 'Өдрийн Хаалт',         type: 'info' },
       { time: '16:00–18:00', en: 'Public Lecture',      mn: 'Нийтийн Лекц',         location: 'Ulaanbaatar Hotel', speakers: 'Introduction · Mini lecture ×3 · Panel discussion (6 people)', type: 'session' },
-      { time: '18:00',       en: 'Break Time',          mn: 'Завсарлага',            type: 'break' },
-      { time: '19:00',       en: 'IPT Reception Dinner',mn: 'ИПТ Хүлээн Авалтын Зоог', location: 'Il Cavallo ресторант', type: 'social' },
     ],
   }
 ]
@@ -118,24 +113,6 @@ export const agenda: AgendaItem[] = [
     type: 'plenary', 
     location: 'МУИС' 
   },
-  { 
-    day: 1, 
-    date: 'June 8', 
-    time: '19:30', 
-    title: 'Reception Dinner', 
-    title_mn: 'Reception Dinner', 
-    type: 'social', 
-    location: 'TBA' 
-  },
-  { 
-    day: 1, 
-    date: 'June 8', 
-    time: '22:00', 
-    title: 'Free Time / Hotel', 
-    title_mn: 'Чөлөөт цаг / Hotel', 
-    type: 'social', 
-    location: 'Hotel' 
-  },
 
   // Day 2 — June 9 (Tue)
   { 
@@ -194,23 +171,5 @@ export const agenda: AgendaItem[] = [
     title_mn: 'Чөлөөт цаг', 
     type: 'break', 
     location: 'TBA' 
-  },
-  { 
-    day: 2, 
-    date: 'June 9', 
-    time: '19:00', 
-    title: 'IPT Reception Dinner', 
-    title_mn: 'IPT Reception Dinner', 
-    type: 'social', 
-    location: 'Il Cavallo ресторант' 
-  },
-  { 
-    day: 2, 
-    date: 'June 9', 
-    time: '21:00', 
-    title: 'Free Time / Hotel', 
-    title_mn: 'Чөлөөт цаг / Hotel', 
-    type: 'social', 
-    location: 'Hotel' 
   },
 ];
