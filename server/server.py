@@ -483,20 +483,31 @@ def validate_ticket(
         
         db_ticket, attendee = result
 
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        if db_ticket.last_used_date == today:
+            # same-day re-entry — don't consume another day
+            return TicketVerification(
+                ticket_uuid=db_ticket.qr_code_data,
+                username=f"{attendee.firstname} {attendee.lastname}",
+                day_left=db_ticket.day_length - db_ticket.used_times,
+            )
+
         if db_ticket.used_times >= db_ticket.day_length:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Your ticket has expired"
             )
-        
+
         db_ticket.used_times += 1
-        
+        db_ticket.last_used_date = today
+
         session.add(db_ticket)
         session.commit()
         session.refresh(db_ticket)
 
         return TicketVerification(
-            ticket_uuid=db_ticket.qr_code_data, 
+            ticket_uuid=db_ticket.qr_code_data,
             username=f"{attendee.firstname} {attendee.lastname}",
             day_left=db_ticket.day_length - db_ticket.used_times,
         )
