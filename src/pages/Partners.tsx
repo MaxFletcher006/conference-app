@@ -55,8 +55,8 @@ export default function Partners() {
                       <div style={{
                         height: item.name === 'Ulaanbaatar Hotel' ? 96 : 72,
                         width: '100%', marginBottom: 24,
-                        display: 'flex', alignItems: 'center',
-                        background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 14px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: '#ffffff', borderRadius: 8, padding: '10px 14px',
                         overflow: 'hidden',
                       }}>
                         <img
@@ -64,7 +64,7 @@ export default function Partners() {
                           alt={item.name}
                           style={{
                             height: '100%', maxWidth: '100%',
-                            objectFit: 'contain', objectPosition: 'left',
+                            objectFit: 'contain', objectPosition: 'center',
                           }}
                         />
                       </div>

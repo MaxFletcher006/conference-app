@@ -79,7 +79,7 @@ export function Footer() {
                 style={{
                   height: 56, width: 140, opacity: 0.55, transition: 'opacity 0.3s',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '8px 12px',
+                  background: '#ffffff', borderRadius: 8, padding: '8px 12px',
                   border: '1px solid rgba(255,255,255,0.07)',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.opacity = '1')}

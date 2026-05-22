@@ -146,7 +146,7 @@ export default function Home() {
                 href={p.url !== '#' ? p.url : undefined}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ height: 56, width: 130, opacity: 0.6, transition: 'opacity 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.07)' }}
+                style={{ height: 56, width: 130, opacity: 0.6, transition: 'opacity 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: 8, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.07)' }}
                 onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
                 onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
               >
