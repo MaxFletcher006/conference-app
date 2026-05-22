@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { Btn, Input, Select, Modal, toast, Spinner } from '../components/UI'
 
 
-const PRICE_PER_DAY = 15000 ;
+const PRICE_PER_DAY = 10000 ;
 
 
 // ── Translations ──────────────────────────────────────────────────────────────
