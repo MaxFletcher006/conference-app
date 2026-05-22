@@ -503,6 +503,12 @@ def validate_ticket(
             detail="Internal server error"
         )
 
+@app.get("/test/qr/{ticket_uuid}")
+async def test_qr_generate(ticket_uuid: str, current_user: dict = Depends(require_role("admin", "supervisor", "staff"))):
+    FRONT_URL = os.getenv("FRONT_URL", "")
+    qr_buffer = await asyncio.to_thread(generate_qr_buffer, f"{FRONT_URL}/validate/{ticket_uuid}")
+    return Response(content=qr_buffer.getvalue(), media_type="image/png")
+
 @app.post("/ticket/validation", response_model=TicketValidation)
 def ticket_validation(session: SessionDep, val_ticket: TicketValidation, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
     ticket_info = Validation.model_validate(val_ticket)
