@@ -44,7 +44,7 @@ export const pub = {
     // agenda
     agendaEyebrow:  'Full Programme',
     agendaTitle:    'Conference Schedule',
-    agendaLead:     '8–14 June 2026 · Ulaanbaatar, Mongolia',
+    agendaLead:     '8–9 June 2026 · Ulaanbaatar, Mongolia',
     // partners
     partnersLabel:  'Supported by Leading Institutions',
     // cta
@@ -172,7 +172,7 @@ export const pub = {
     // agenda
     agendaEyebrow:  'Хурлын хөтөлбөр',
     agendaTitle:    'Хурлын Хуваарь',
-    agendaLead:     '2026 оны 6-р сарын 8–14 · Улаанбаатар, Монгол',
+    agendaLead:     '2026 оны 6-р сарын 8–9 · Улаанбаатар, Монгол',
     // partners
     partnersLabel:  'Байгууллагуудын дэмжлэгтэйгээр',
     // cta
