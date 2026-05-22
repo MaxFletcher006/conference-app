@@ -21,7 +21,7 @@ export const partners: Organization[] = [
   {
     name: 'Science Development Accelerator',
     logo: '/logos/Science Development Accelerator Logo.jpg',
-    url:  'https://sciencedev.edu.mn',
+    url:  'https://sciencedev.org',
     role: 'Organizer',
     role_mn: 'Зохион байгуулагч',
     desc_mn: 'Шинжлэх Ухааны Хөгжлийн Хурдасгуур ТББ нь Монгол Улсад шинжлэх ухаан, боловсрол, өндөр технологийн судалгааг дэмжин хөгжүүлэх зорилго бүхий байгууллага. Монголын залуу судлаачдыг CERN зэрэг дэлхийн тэргүүлэгч байгууллагуудтай холбодог.',
