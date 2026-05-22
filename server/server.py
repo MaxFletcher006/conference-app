@@ -497,7 +497,8 @@ def validate_ticket(
         return TicketVerification(
             ticket_uuid=db_ticket.qr_code_data,
             username=f"{attendee.firstname} {attendee.lastname}",
-            day_left=db_ticket.day_length - db_ticket.used_times,
+            entry_day=db_ticket.day_length,
+            used_times=db_ticket.used_times,
         )
 
     except HTTPException:

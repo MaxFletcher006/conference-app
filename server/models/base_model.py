@@ -75,6 +75,7 @@ class TicketVerification(BaseModel):
     ticket_uuid: str 
     username: str 
     day_left: int 
+    used_times: int
 
 class TicketValidation(BaseModel):
     ticket_uuid: str 

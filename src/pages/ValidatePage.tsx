@@ -34,7 +34,7 @@ export default function ValidatePage() {
         .then(async (data) => {
           setResult(data)
 
-          if (user && data.day_left >= 0) {
+          if (user) {
             try {
               await ticketValidation({
                 ticket_uuid: ticket_uuid,
@@ -53,7 +53,8 @@ export default function ValidatePage() {
     return () => clearTimeout(timer)
   }, [authLoading, user, ticket_uuid])
 
-  const isValid = result !== null && result.day_left > 0
+  const dayLeft = result ? result.entry_day - result.used_times : 0
+  const isValid = result !== null && result.used_times < result.entry_day
 
   const formatValidationTime = () => {
     const now = new Date()
@@ -147,10 +148,11 @@ export default function ValidatePage() {
             {/* Rows */}
             <div style={{ padding: 26 }}>
               <Row label="Attendee" value={result.username} />
+              <Row label="Entry days" value={String(result.entry_day)} />
               <Row
                 label="Days remaining"
-                value={String(result.day_left)}
-                accent={result.day_left === 0 ? 'var(--red)' : 'var(--green)'}
+                value={String(dayLeft)}
+                accent={dayLeft === 0 ? 'var(--red)' : 'var(--green)'}
               />
               <Row label="Ticket UUID" value={ticket_uuid || '—'} mono />
               <Row label="Validated at" value={new Date().toLocaleString()} />

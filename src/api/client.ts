@@ -108,7 +108,8 @@ export interface ResetPasswordPayload {
 export interface TicketVerification {
   ticket_uuid: string
   username: string
-  day_left: number
+  entry_day: number
+  used_times: number
 }
 
 export interface TicketValidation {
