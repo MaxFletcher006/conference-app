@@ -39,7 +39,7 @@ export default function ValidatePage() {
               await ticketValidation({
                 ticket_uuid: ticket_uuid,
                 user_id: user.id,
-                validated_user: `${user.firstname} ${user.lastname}`,
+                validated_user: data.username,
                 validation_time: formatValidationTime(),
               })
             } catch {

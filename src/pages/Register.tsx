@@ -12,6 +12,7 @@ export default function Register() {
   const [form, setForm] = useState({
     firstname: '', lastname: '', email: '', password: '', phone_number: '', role: 'attendee',
   })
+  const [confirmPassword, setConfirmPassword] = useState('')
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSubmit = async (e: FormEvent) => {
@@ -38,6 +39,11 @@ export default function Register() {
     setError(
       'Password must be at least 8 characters long and include uppercase and lowercase letters.'
     )
+    return
+  }
+
+  if (form.password !== confirmPassword) {
+    setError('Passwords do not match.')
     return
   }
 
@@ -118,6 +124,8 @@ export default function Register() {
               onChange={e => set('phone_number', e.target.value)} placeholder="99112233" required />
             <Input label="Password" type="password" value={form.password}
               onChange={e => set('password', e.target.value)} placeholder="••••••••" required />
+            <Input label="Re-type password" type="password" value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" required />
 
             <p style={{ fontSize: 13, color: '#94a3b8', marginTop: '-8px' }}>
               Password must contain at least 8 characters, at least one uppercase letter, and atleast one lowercase letter.
