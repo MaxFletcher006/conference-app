@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext'
 import { Btn, Input, Select, Modal, toast, Spinner } from '../components/UI'
 
 
-const PRICE_PER_DAY = Number(import.meta.env.VITE_TICKET_PRICE) || 50;
+const PRICE_PER_DAY = Number(import.meta.env.VITE_TICKET_PRICE) || 10000;
 
 // ── Translations ──────────────────────────────────────────────────────────────
 
