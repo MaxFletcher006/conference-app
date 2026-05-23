@@ -154,16 +154,16 @@ export const speakers: Speaker[] = [
     slug: 'enkhbat-tsedenbaljir', initials: 'ET',
     name: 'Dr. Enkhbat Tsedenbaljir', title: 'Head of High Energy Physics Division',
     institution: 'Mongolian Academy of Science, IPT', country: 'Mongolia', flag: '🇲🇳',
-    specialty: 'Theoretical and High Energy Physics Laboratory, IPT',
+    specialty: '',
     bio_mn: `ШУА-ийн ФТХ-ийн Онол ба Их энергийн физикийн салбарын эрхлэгч.`,
     bio_en: `Head of the Theoretical and High Energy Physics Division at IPT, Mongolia.`,
     photo: '/speakers/enkhbat.png'
   },
   {
     slug: 'baasansuren-batsukh', initials: 'BB',
-    name: 'Dr. Baasansuren Batsukh', title: 'Head of LHCb Research Team',
-    institution: 'Mongolian Academy of Science, IPT', country: 'Mongolia', flag: '🇲🇳',
-    specialty: 'Head of LHCb group at IPT; Mongolia–CERN liaison',
+    name: 'Dr. Baasansuren Batsukh', title: 'Head of LHCb Research Laboratory',
+    institution: '', country: 'Mongolia', flag: '🇲🇳',
+    specialty: 'Mongolian Academy of Science, IPT',
     bio_mn: `ФТХ-ийн LHCb судалгааны багийн ахлагч бөгөөд Монгол–CERN хамтын ажиллагааны гол холбоос. Монгол Улсыг LHCb туршилтад оруулах, Монголын залуу физикчдийг LHCb хамтын ажиллагаатай холбох ажлыг санаачлан удирдсан.`,
     bio_en: `Head of the LHCb group at IPT and the primary Mongolia–CERN liaison. Pioneered Mongolia's participation in LHCb and connects Mongolian physicists with CERN research groups.`,
     photo: '/speakers/baasansuren1.png'
