@@ -15,6 +15,7 @@ export default function TicketValidationsPage() {
   }, [])
 
   const filtered = validations.filter(v =>
+    v.attendee_name.toLowerCase().includes(search.toLowerCase()) ||
     v.validated_user.toLowerCase().includes(search.toLowerCase()) ||
     v.ticket_uuid.toLowerCase().includes(search.toLowerCase())
   )
@@ -93,7 +94,6 @@ export default function TicketValidationsPage() {
                 const isToday = v.validation_time?.startsWith(todayStr)
                 return [
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {/* Avatar circle */}
                     <div style={{
                       width: 32, height: 32, borderRadius: '50%',
                       background: 'rgba(56,189,248,0.12)',
@@ -103,10 +103,10 @@ export default function TicketValidationsPage() {
                       flexShrink: 0,
                       fontFamily: 'var(--font-mono)',
                     }}>
-                      {v.validated_user?.charAt(0).toUpperCase()}
+                      {(v.attendee_name ?? v.validated_user)?.charAt(0).toUpperCase()}
                     </div>
                     <span style={{ fontWeight: 600, fontSize: 15, color: '#ffffff' }}>
-                      {v.validated_user}
+                      {v.attendee_name ?? v.validated_user}
                     </span>
                   </div>,
 

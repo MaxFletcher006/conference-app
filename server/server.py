@@ -532,10 +532,11 @@ def get_validations(session: SessionDep, current_user: dict = Depends(require_ro
     validations = session.exec(select(Validation)).all()
     result = []
     for v in validations:
-        attendee = session.get(User, v.user_id)
+        ticket = session.exec(select(Ticket).where(Ticket.qr_code_data == v.ticket_uuid)).first()
+        attendee = session.get(User, ticket.user_id) if ticket else None
         result.append(TicketValidation(
             ticket_uuid=v.ticket_uuid,
-            user_id=v.user_id,
+            user_id=ticket.user_id if ticket else v.user_id,
             validated_user=v.validated_user,
             validation_time=v.validation_time,
             attendee_name=f"{attendee.firstname} {attendee.lastname}" if attendee else "Unknown",
@@ -547,13 +548,14 @@ def get_validations_full(session: SessionDep, current_user: dict = Depends(requi
     validations = session.exec(select(Validation)).all()
     result = []
     for v in validations:
-        attendee = session.get(User, v.user_id)
+        ticket = session.exec(select(Ticket).where(Ticket.qr_code_data == v.ticket_uuid)).first()
+        attendee = session.get(User, ticket.user_id) if ticket else None
         result.append({
             "val_id": v.val_id,
             "ticket_uuid": v.ticket_uuid,
             "validated_user": f"{attendee.firstname} {attendee.lastname}" if attendee else "Unknown",
             "staff_name": v.validated_user,
-            "staff_id": v.user_id,
+            "staff_id": ticket.user_id if ticket else v.user_id,
             "validation_time": v.validation_time,
         })
     return result

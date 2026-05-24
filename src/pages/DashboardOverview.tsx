@@ -224,21 +224,21 @@ export default function DashboardOverview() {
     const fetchAll = async () => {
       try {
         if (user?.role === 'admin' || user?.role === 'supervisor') {
-          const [u, e, q, t, ts, vals] = await Promise.all([
+          const [u, e, q, t, ts] = await Promise.all([
             getAllUsers(), getAllEvents(), getAllQuestions(),
-            getTotalTickets(), getTicketSummary(), getValidations()
+            getTotalTickets(), getTicketSummary()
           ])
           setUsers(u)
           setEvents(e)
           setQuestions(q)
           setTotalTickets(t)
           setTicketedUserIds(new Set(ts.user_ids))
-          setValidations(vals)
+          getValidations().then(setValidations).catch(() => {})
         } else if (user?.role === 'staff') {
-          const [e, q, vals] = await Promise.all([getAllEvents(), getAllQuestions(), getValidations()])
+          const [e, q] = await Promise.all([getAllEvents(), getAllQuestions()])
           setEvents(e)
           setQuestions(q)
-          setValidations(vals)
+          getValidations().then(setValidations).catch(() => {})
         }
       } catch { }
       setLoading(false)

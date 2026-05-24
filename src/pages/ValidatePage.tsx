@@ -33,13 +33,12 @@ export default function ValidatePage() {
       validateTicket(ticket_uuid)
         .then(async (data) => {
           setResult(data)
-
           if (user) {
             try {
               await ticketValidation({
                 ticket_uuid: ticket_uuid,
                 user_id: data.user_id,
-                validated_user: data.username,
+                validated_user: `${user.firstname} ${user.lastname}`,
                 validation_time: formatValidationTime(),
               })
             } catch {
@@ -52,6 +51,7 @@ export default function ValidatePage() {
 
     return () => clearTimeout(timer)
   }, [authLoading, user, ticket_uuid])
+  
 
   const dayLeft = result ? result.entry_day - result.used_times : 0
   const isValid = result !== null

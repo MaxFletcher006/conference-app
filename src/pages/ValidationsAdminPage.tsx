@@ -32,7 +32,6 @@ export default function ValidationsAdminPage() {
   return (
     <Page>
       <SectionHeader title="Ticket Validations" />
-
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 32 }}>
         <StatMini label="Total Scans" value={validations.length} color="var(--blue)" />
         <StatMini label="Today" value={todayCount} color="var(--yellow)" />

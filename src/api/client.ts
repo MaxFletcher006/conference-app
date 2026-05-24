@@ -118,6 +118,7 @@ export interface TicketValidation {
   user_id: number
   validated_user: string
   validation_time: string
+  attendee_name?: string
 }
 
 // ─── API FUNCTIONS ────────────────────────────────────────────────────────────
