@@ -553,9 +553,9 @@ def get_validations_full(session: SessionDep, current_user: dict = Depends(requi
         result.append({
             "val_id": v.val_id,
             "ticket_uuid": v.ticket_uuid,
-            "validated_user": f"{attendee.firstname} {attendee.lastname}" if attendee else "Unknown",
-            "staff_name": v.validated_user,
-            "staff_id": ticket.user_id if ticket else v.user_id,
+            "validated_user": v.validated_user,        
+            "staff_name": v.validated_user,            
+            "staff_id": v.user_id,                     
             "validation_time": v.validation_time,
         })
     return result
