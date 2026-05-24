@@ -509,7 +509,7 @@ def validate_ticket(
         )
 
 @app.post("/ticket/validation", response_model=TicketValidation)
-def ticket_validation(session: SessionDep, val_ticket: TicketValidation, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
+def ticket_validation(session: SessionDep, val_ticket: TicketValidation, current_user: dict = Depends(require_role("staff"))):
     ticket_info = Validation.model_validate(val_ticket)
 
     if not ticket_info:
