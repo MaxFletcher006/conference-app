@@ -75,7 +75,7 @@ class PasswordReset(BaseModel):
 class TicketVerification(BaseModel):
     ticket_uuid: str
     username: str
-    user_id: str 
+    user_id: int
     entry_day: int
     used_times: int
 
