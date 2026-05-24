@@ -140,9 +140,6 @@ def get_user(
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-    
-# @app.get("/user/ticket")
-# def is_user_have_ticket():
 
 
 @app.post("/register", response_model=UserReturn)
@@ -497,6 +494,7 @@ def validate_ticket(
         return TicketVerification(
             ticket_uuid=db_ticket.qr_code_data,
             username=f"{attendee.firstname} {attendee.lastname}",
+            user_id=db_ticket.user_id,
             entry_day=db_ticket.day_length,
             used_times=db_ticket.used_times,
         )
@@ -509,12 +507,6 @@ def validate_ticket(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail="Internal server error"
         )
-
-@app.get("/test/qr/{ticket_uuid}")
-async def test_qr_generate(ticket_uuid: str, current_user: dict = Depends(require_role("admin", "supervisor", "staff"))):
-    FRONT_URL = os.getenv("FRONT_URL", "")
-    qr_buffer = await asyncio.to_thread(generate_qr_buffer, f"{FRONT_URL}/validate/{ticket_uuid}")
-    return Response(content=qr_buffer.getvalue(), media_type="image/png")
 
 @app.post("/ticket/validation", response_model=TicketValidation)
 def ticket_validation(session: SessionDep, val_ticket: TicketValidation, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
@@ -535,9 +527,9 @@ def ticket_validation(session: SessionDep, val_ticket: TicketValidation, current
         print(f'Error occured: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/ticket/get-validations", response_model=List[TicketValidation])
-def get_validations(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
-    return session.exec(select(Validation)).all()
+@app.get("/ticket/get-validations", response_model=list[TicketValidation])
+def get_validations(session: SessionDep):
+    return session.exec(select(Validation.validated_user, User.firstname, User.lastname, Validation.validation_time).where(User.id == Validation.user_id)).all()
 
 @app.get("/ticket/get-validations-full")
 def get_validations_full(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor"))):

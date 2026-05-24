@@ -38,7 +38,7 @@ export default function ValidatePage() {
             try {
               await ticketValidation({
                 ticket_uuid: ticket_uuid,
-                user_id: user.id,
+                user_id: data.user_id,
                 validated_user: data.username,
                 validation_time: formatValidationTime(),
               })

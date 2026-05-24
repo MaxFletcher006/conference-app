@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from models.model import User, Validation
 
 class UserModel(BaseModel):
     firstname: str 
@@ -74,13 +75,14 @@ class PasswordReset(BaseModel):
 class TicketVerification(BaseModel):
     ticket_uuid: str
     username: str
+    user_id: str 
     entry_day: int
     used_times: int
 
 class TicketValidation(BaseModel):
-    ticket_uuid: str 
-    user_id: int 
     validated_user: str 
+    firstname: str 
+    lastname: str
     validation_time: str 
 
 class InvoiceModel(BaseModel):
