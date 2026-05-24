@@ -528,20 +528,31 @@ def ticket_validation(session: SessionDep, val_ticket: TicketValidation, current
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/ticket/get-validations", response_model=list[TicketValidation])
-def get_validations(session: SessionDep):
-    return session.exec(select(Validation.validated_user, User.firstname, User.lastname, Validation.validation_time).where(User.id == Validation.user_id)).all()
+def get_validations(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "staff"))):
+    validations = session.exec(select(Validation)).all()
+    result = []
+    for v in validations:
+        attendee = session.get(User, v.user_id)
+        result.append(TicketValidation(
+            ticket_uuid=v.ticket_uuid,
+            user_id=v.user_id,
+            validated_user=v.validated_user,
+            validation_time=v.validation_time,
+            attendee_name=f"{attendee.firstname} {attendee.lastname}" if attendee else "Unknown",
+        ))
+    return result
 
 @app.get("/ticket/get-validations-full")
 def get_validations_full(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor"))):
     validations = session.exec(select(Validation)).all()
     result = []
     for v in validations:
-        staff = session.get(User, v.user_id)
+        attendee = session.get(User, v.user_id)
         result.append({
             "val_id": v.val_id,
             "ticket_uuid": v.ticket_uuid,
-            "validated_user": v.validated_user,
-            "staff_name": f"{staff.firstname} {staff.lastname}" if staff else "Unknown",
+            "validated_user": f"{attendee.firstname} {attendee.lastname}" if attendee else "Unknown",
+            "staff_name": v.validated_user,
             "staff_id": v.user_id,
             "validation_time": v.validation_time,
         })

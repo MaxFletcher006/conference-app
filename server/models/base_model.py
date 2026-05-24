@@ -84,6 +84,7 @@ class TicketValidation(BaseModel):
     user_id: int
     validated_user: str
     validation_time: str
+    attendee_name: str = ""
 
 class InvoiceModel(BaseModel):
     user_id: int
