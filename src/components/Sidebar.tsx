@@ -45,8 +45,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside style={{
-      width: 400,
+    <aside className="sidebar-panel" style={{
       minHeight: '100vh',
       background: 'var(--bg-2)',
       borderRight: '1px solid var(--border)',
@@ -56,20 +55,21 @@ export default function Sidebar() {
       top: 0,
       left: 0,
       bottom: 0,
+      overflow: 'hidden',
     }}>
       {/* Logo */}
-      <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, color: '#ffffff', marginBottom: 2 , fontWeight: '200', textAlign: 'center'}}>
+      <div style={{ padding: '24px 16px 20px', borderBottom: '1px solid var(--border)' }}>
+        <div className="sidebar-brand" style={{ fontFamily: 'var(--font-mono)', fontSize: 20, color: '#ffffff', marginBottom: 2, fontWeight: '200', textAlign: 'center' }}>
           MONGOLIA - CERN LHCb 2026
         </div>
       </div>
 
       {/* User info */}
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 20, fontWeight: 500, color: '#ffffff', marginBottom: 2, textAlign: 'center' }}>
+      <div style={{ padding: '16px 16px', borderBottom: '1px solid var(--border)' }}>
+        <div className="sidebar-name" style={{ fontSize: 20, fontWeight: 500, color: '#ffffff', marginBottom: 2, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {user.firstname} {user.lastname}
         </div>
-        <div style={{
+        <div className="sidebar-role" style={{
           fontSize: 18, color: '#ffffff',
           fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
           letterSpacing: '0.06em',
@@ -80,12 +80,13 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, padding: '12px 10px', width: '100%' }}>
+      <nav style={{ flex: 1, padding: '12px 8px', width: '100%' }}>
         {items.map(item => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === '/dashboard'}
+            className="sidebar-link"
             style={({ isActive }) => ({
               display: 'block',
               padding: '8px 10px',
@@ -97,6 +98,9 @@ export default function Sidebar() {
               marginBottom: 2,
               transition: 'all 0.15s',
               textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             })}
           >
             {item.label}
@@ -105,12 +109,13 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <div style={{ padding: '12px 10px', borderTop: '1px solid var(--border)' }}>
+      <div style={{ padding: '12px 8px', borderTop: '1px solid var(--border)' }}>
         <button
           onClick={handleLogout}
+          className="sidebar-signout"
           style={{
-            width: '100%',          
-            textAlign: 'center',       
+            width: '100%',
+            textAlign: 'center',
             padding: '8px 10px',
             borderRadius: 'var(--radius)',
             background: 'none',

@@ -36,7 +36,6 @@ export default function DashboardLayout() {
       <main
         className="dashboard-main"
         style={{
-          marginLeft: 240,
           flex: 1,
           minHeight: '100vh',
           background: 'transparent',

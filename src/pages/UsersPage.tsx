@@ -86,19 +86,22 @@ export default function UsersPage() {
     e.preventDefault()
     if (!editTarget) return
     setEditingUser(true)
+    const targetId = editTarget.id
+    const isAdminTarget = editTarget.role === 'admin'
     try {
-      // Strip password entirely if blank — don't send empty string to API
       const payload: Partial<UserCreatePayload> = { ...editForm }
       if (!payload.password) delete payload.password
+      // Never send role when editing an admin — the select is hidden and
+      // sending role:'admin' can trip server-side role-change guards.
+      if (isAdminTarget) delete payload.role
 
-      const updated = await updateUser(editTarget.id, payload)
+      const updated = await updateUser(targetId, payload)
       setUsers(u => u.map(x => x.id === updated.id ? updated : x))
-      toast(`User ${updated.firstname} updated`)
       closeEditModal()
+      toast(`User ${updated.firstname} updated`)
     } catch (err: any) {
       toast(err?.response?.data?.detail || 'Update failed', 'err')
     } finally {
-      // Always runs — prevents permanent loading/black screen on error
       setEditingUser(false)
     }
   }
@@ -221,7 +224,7 @@ export default function UsersPage() {
     <div
       className="modal-overlay fade-in"
       style={overlayStyle}
-      onMouseDown={e => { if (e.target === e.currentTarget) closeEditModal() }}
+      onMouseDown={e => { if (e.target === e.currentTarget && !editingUser) closeEditModal() }}
     >
       <div className="modal-inner fade-up" style={innerStyle}>
         <form onSubmit={handleEditUser} style={formStyle}>
@@ -285,7 +288,7 @@ export default function UsersPage() {
           />
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
-            <Btn variant="ghost" type="button" onClick={closeEditModal}>
+            <Btn variant="ghost" type="button" onClick={closeEditModal} disabled={editingUser}>
               Cancel
             </Btn>
             <Btn type="submit" loading={editingUser}>Save changes</Btn>
@@ -296,7 +299,9 @@ export default function UsersPage() {
     document.body
   ) : null
 
-  const tableHeaders = ['Name', 'Email', 'Phone Number', 'Role','Edit','Delete']
+  const tableHeaders = isAdmin
+    ? ['Name', 'Email', 'Phone Number', 'Role', 'Actions']
+    : ['Name', 'Email', 'Phone Number', 'Role']
 
   return (
     <Page>

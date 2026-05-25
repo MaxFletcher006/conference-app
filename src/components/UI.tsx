@@ -260,7 +260,7 @@ export function Divider() {
 // ─── PAGE WRAPPER ─────────────────────────────────────────────────────────────
 export function Page({ children, style }: { children: ReactNode; style?: React.CSSProperties }) {
   return (
-    <div className="fade-up" style={{
+    <div className="fade-up page-content" style={{
       maxWidth: 1100, margin: '0 auto', padding: '32px 24px', ...style,
     }}>
       {children}
@@ -271,7 +271,7 @@ export function Page({ children, style }: { children: ReactNode; style?: React.C
 // ─── SECTION HEADER ───────────────────────────────────────────────────────────
 export function SectionHeader({ title, action }: { title: string; action?: ReactNode }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
       <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
         {title}
       </h2>

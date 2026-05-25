@@ -128,8 +128,41 @@
 }
 
 /* ── SIDEBAR / DASHBOARD RESPONSIVE ── */
+:root {
+  --sidebar-w: 400px;
+}
+@media (max-width: 1200px) {
+  :root { --sidebar-w: 280px; }
+}
+@media (max-width: 900px) {
+  :root { --sidebar-w: 220px; }
+}
+
 .sidebar-desktop { display: flex; }
 .mobile-bottom-nav { display: none; }
+
+.sidebar-panel {
+  width: var(--sidebar-w);
+}
+
+.dashboard-main {
+  margin-left: var(--sidebar-w);
+}
+
+@media (max-width: 1200px) {
+  .sidebar-panel .sidebar-brand  { font-size: 14px !important; }
+  .sidebar-panel .sidebar-name   { font-size: 16px !important; }
+  .sidebar-panel .sidebar-role   { font-size: 13px !important; }
+  .sidebar-panel .sidebar-link   { font-size: 15px !important; }
+  .sidebar-panel .sidebar-signout{ font-size: 15px !important; }
+}
+@media (max-width: 900px) {
+  .sidebar-panel .sidebar-brand  { font-size: 12px !important; }
+  .sidebar-panel .sidebar-name   { font-size: 14px !important; }
+  .sidebar-panel .sidebar-role   { font-size: 12px !important; }
+  .sidebar-panel .sidebar-link   { font-size: 13px !important; }
+  .sidebar-panel .sidebar-signout{ font-size: 13px !important; }
+}
 
 @media (max-width: 768px) {
   .sidebar-desktop   { display: none !important; }
@@ -178,6 +211,21 @@
   .footer-brand {
     grid-column: span 1 !important;
   }
+}
+
+/* ── DASHBOARD PAGE / TABLE RESPONSIVE ── */
+.page-content {
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .page-content {
+    padding: 20px 14px !important;
+  }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── ATTENDEE PAGE RESPONSIVE ── */
