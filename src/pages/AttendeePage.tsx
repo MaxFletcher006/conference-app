@@ -56,6 +56,7 @@ const T = {
     moderator:       'Moderator',
     // ticket status
     ticketPurchased: '✓ Ticket Purchased',
+    noTicketToast:   'Purchase a ticket first to submit questions.',
     // date
     weekdays:        ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
   },
@@ -101,6 +102,7 @@ const T = {
     moderator:       'Дарга',
     // ticket status
     ticketPurchased: '✓ Тасалбар авсан',
+    noTicketToast:   'Асуулт тавихын тулд эхлээд тасалбар авна уу.',
     // date
     weekdays:        ['Ням','Даваа','Мягмар','Лхагва','Пүрэв','Баасан','Бямба'],
   },
@@ -213,6 +215,11 @@ export default function AttendeePage() {
     setPurchasingTicket(false)
   }
 
+  const handleOpenQuestionModal = () => {
+    if (!hasTicket) { toast(t.noTicketToast, 'err'); return }
+    setQuestionModal(true)
+  }
+
   const handleAddQuestion = async (e: FormEvent) => {
     e.preventDefault()
     if (!user || !eventId) return
@@ -321,7 +328,7 @@ export default function AttendeePage() {
         {/* Action cards */}
         <div className="action-card-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 48 }}>
           <ActionCard icon="🎫" title={t.buyTicket} desc={t.buyDesc} color="var(--blue)"   dimColor="var(--blue-dim)"   onClick={handleOpenTicketModal} />
-          <ActionCard icon="💬" title={t.askQ}      desc={t.askDesc}  color="var(--purple)" dimColor="var(--purple-dim)" onClick={() => setQuestionModal(true)} />
+          <ActionCard icon="💬" title={t.askQ}      desc={t.askDesc}  color="var(--purple)" dimColor="var(--purple-dim)" onClick={handleOpenQuestionModal} />
           <ActionCard icon="📋" title={t.myQ}       desc={t.myQDesc}  color="var(--green)"  dimColor="var(--green-dim)"  onClick={handleOpenMyQuestions} />
         </div>
 
