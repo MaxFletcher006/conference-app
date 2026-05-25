@@ -20,7 +20,6 @@ const T = {
     signOut:         'Sign out',
     portal:          '◈ ATTENDEE PORTAL',
     welcome:         'Welcome,',
-    subtitle:        'High Energy Physics Conference · Mongolia 2026',
     buyTicket:       'Purchase Ticket',
     buyDesc:         'Get your QR-code entry ticket delivered by email',
     askQ:            'Ask a Question',
@@ -50,6 +49,13 @@ const T = {
     // invoice
     totalPrice:      (n: number) => `Total: ₮${(n * PRICE_PER_DAY).toLocaleString()}`,
     invoiceToast:    'Payment link opened — complete payment and check your email for your ticket.',
+    // public lecture
+    publicLecture:   'Public Lecture',
+    programme:       'Programme',
+    speakers:        'Speakers & Panelists',
+    moderator:       'Moderator',
+    // ticket status
+    ticketPurchased: '✓ Ticket Purchased',
     // date
     weekdays:        ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
   },
@@ -88,12 +94,40 @@ const T = {
     // invoice
     totalPrice:      (n: number) => `Нийт: ₮${(n * PRICE_PER_DAY).toLocaleString()}`,
     invoiceToast:    'Төлбөрийн линк нээгдлээ — төлбөрөө хийгээд тасалбараа и-мэйлээс шалгана уу.',
+    // public lecture
+    publicLecture:   'Нийтийн Лекц',
+    programme:       'Хөтөлбөр',
+    speakers:        'Илтгэгчид ба Хэлэлцүүлэгчид',
+    moderator:       'Дарга',
+    // ticket status
+    ticketPurchased: '✓ Тасалбар авсан',
     // date
     weekdays:        ['Ням','Даваа','Мягмар','Лхагва','Пүрэв','Баасан','Бямба'],
   },
 }
 
 type Lang = 'en' | 'mn'
+
+const PROGRAMME = [
+  { time: '16:00–16:05', item: 'Opening and welcome' },
+  { time: '16:05–16:10', item: 'Introduction of speakers' },
+  { time: '16:10–16:30', item: 'Mini Lecture 1: CERN, the Large Hadron Collider, and the Big Questions of the Universe — Prof. Vincenzo Vagnoni' },
+  { time: '16:30–16:50', item: 'Mini Lecture 2: The LHCb Experiment: Matter, Antimatter, and Hidden Clues of Nature — Dr. Patrick Robbe' },
+  { time: '16:50–17:10', item: "Mini Lecture 3: Mongolia's Pathway to International Science, Technology, and Education — Prof. Jianchun Wang" },
+  { time: '17:10–17:15', item: 'Transition to panel discussion' },
+  { time: '17:15–17:55', item: 'Panel Discussion: CERN, LHCb, and Opportunities for Mongolia' },
+  { time: '17:55–18:00', item: 'Closing remarks and group photo' },
+]
+
+const SPEAKERS = [
+  { name: 'Prof. Vincenzo Vagnoni', affiliation: 'INFN Bologna, Italy — Current Spokesperson of the LHCb Collaboration' },
+  { name: 'Prof. Tim Gershon',      affiliation: 'University of Warwick, United Kingdom' },
+  { name: 'Dr. Patrick Robbe',      affiliation: 'IJCLab / IN2P3, France' },
+  { name: 'Prof. Barbara Sciascia', affiliation: 'INFN Frascati, Italy' },
+  { name: 'Prof. Jianchun Wang',    affiliation: 'Institute of High Energy Physics, Chinese Academy of Sciences, China' },
+  { name: 'Prof. Tomasz Skwarnicki',affiliation: 'Syracuse University, United States' },
+  { name: 'Dr. Baasansuren Batsukh',affiliation: 'Institute of Physics and Technology, Mongolia', moderator: true },
+]
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -118,11 +152,16 @@ export default function AttendeePage() {
   const [myQuestions, setMyQuestions] = useState<Question[]>([])
   const [loadingQuestions, setLoadingQuestions] = useState(false)
 
+  const [hasTicket, setHasTicket] = useState(false)
+
   useEffect(() => {
     getAllEvents()
       .then(setEvents)
       .catch(() => {})
       .finally(() => setLoading(false))
+    checkUserTicket()
+      .then(({ has_ticket }) => setHasTicket(has_ticket))
+      .catch(() => {})
   }, [])
 
   const formatLocalDateTime = (date = new Date()) => {
@@ -163,6 +202,7 @@ export default function AttendeePage() {
       if (result.invoice_url) {
         window.open(result.invoice_url, '_blank', 'noopener,noreferrer')
         setTicketModal(false)
+        setHasTicket(true)
         toast(t.invoiceToast)
       } else {
         toast(result.error || 'Failed to create invoice', 'err')
@@ -276,7 +316,6 @@ export default function AttendeePage() {
           <h1 style={{ fontSize: 36, fontWeight: 700, letterSpacing: '-0.03em', color: '#ffffff', marginBottom: 6 }}>
             {t.welcome} {user?.firstname}
           </h1>
-          <p style={{ color: '#ffffff', fontSize: 16 }}>{t.subtitle}</p>
         </div>
 
         {/* Action cards */}
@@ -323,12 +362,78 @@ export default function AttendeePage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {items.map(e => <EventRow key={e.id} event={e} variant={isToday ? 'today' : isPast ? 'past' : 'upcoming'} events={events} />)}
+                  {items.map(e => <EventRow key={e.id} event={e} variant={isToday ? 'today' : isPast ? 'past' : 'upcoming'} events={events} hasTicket={hasTicket} ticketLabel={t.ticketPurchased} />)}
                 </div>
               </section>
             )
           })
         )}
+
+        {/* ── Public Lecture ── */}
+        <section style={{ marginBottom: 48 }}>
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 14, marginBottom: 24 }}>
+            <div style={{ width: 3, borderRadius: 2, background: 'var(--blue)', flexShrink: 0 }} />
+            <div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--blue)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 6 }}>
+                {t.publicLecture}
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#ffffff', marginBottom: 8 }}>
+                Exploring the Universe with the LHCb Experiment
+              </div>
+              <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 14, color: 'var(--text-2)', fontFamily: 'var(--font-mono)' }}>
+                <span>📅 Tuesday, 9 June 2026</span>
+                <span>🕓 16:00–18:00</span>
+                <span>📍 Ulaanbaatar Hotel, Ulaanbaatar, Mongolia</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Programme table */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
+              {t.programme}
+            </div>
+            <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+              {PROGRAMME.map((row, i) => (
+                <div key={i} style={{
+                  display: 'flex', gap: 16, padding: '12px 20px',
+                  borderBottom: i < PROGRAMME.length - 1 ? '1px solid var(--border)' : 'none',
+                  background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
+                }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--blue)', whiteSpace: 'nowrap', minWidth: 110, paddingTop: 1 }}>
+                    {row.time}
+                  </div>
+                  <div style={{ fontSize: 14, color: '#ffffff', lineHeight: 1.6 }}>{row.item}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Speakers */}
+          <div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
+              {t.speakers}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+              {SPEAKERS.map((s, i) => (
+                <div key={i} style={{
+                  background: 'var(--bg-2)', border: '1px solid var(--border-2)',
+                  borderRadius: 'var(--radius)', padding: '12px 16px',
+                }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#ffffff', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    {s.name}
+                    {s.moderator && (
+                      <span style={{ fontSize: 11, color: 'var(--yellow)', fontFamily: 'var(--font-mono)', background: 'var(--yellow-dim)', borderRadius: 4, padding: '1px 6px', letterSpacing: '0.06em' }}>
+                        {t.moderator}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}>{s.affiliation}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* ── Ticket modal ── */}
@@ -469,39 +574,52 @@ function ActionCard({ icon, title, desc, color, dimColor, onClick }: {
   )
 }
 
-function EventRow({ event: e, variant }: { event: Event; variant: 'today' | 'upcoming' | 'past'; events: Event[] }) {
+function EventRow({ event: e, variant, hasTicket, ticketLabel }: { event: Event; variant: 'today' | 'upcoming' | 'past'; events: Event[]; hasTicket: boolean; ticketLabel: string }) {
   const accentColor = variant === 'today' ? 'var(--yellow)' : variant === 'upcoming' ? 'var(--blue)' : 'var(--text-3)'
   const isPast = variant === 'past'
   return (
     <div style={{
-      background: 'var(--bg-2)', border: `1px solid ${isPast ? 'var(--border)' : 'var(--border-2)'}`,
-      borderRadius: 'var(--radius-lg)', padding: '18px 22px', opacity: isPast ? 0.55 : 1, transition: 'all 0.2s',
+      background: 'var(--bg-2)', border: `1px solid ${hasTicket ? 'var(--green)33' : isPast ? 'var(--border)' : 'var(--border-2)'}`,
+      borderRadius: 'var(--radius-lg)', overflow: 'hidden', opacity: isPast ? 0.55 : 1, transition: 'all 0.2s',
     }}>
-      <div className="event-row-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 5, color: isPast ? 'var(--text-2)' : '#ffffff' }}>{e.topic}</div>
-          {e.agenda && <div style={{ fontSize: 15, color: '#ffffff', marginBottom: 8, lineHeight: 1.5 }}>{e.agenda}</div>}
-          {e.speaker && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8, background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px' }}>
-              <span style={{ fontSize: 13 }}>🎤</span>
-              <span style={{ fontSize: 14, color: accentColor, fontFamily: 'var(--font-mono)' }}>{e.speaker}</span>
+      <div style={{ padding: '18px 22px' }}>
+        <div className="event-row-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 5, color: isPast ? 'var(--text-2)' : '#ffffff' }}>{e.topic}</div>
+            {e.agenda && <div style={{ fontSize: 15, color: '#ffffff', marginBottom: 8, lineHeight: 1.5 }}>{e.agenda}</div>}
+            {e.speaker && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8, background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px' }}>
+                <span style={{ fontSize: 13 }}>🎤</span>
+                <span style={{ fontSize: 14, color: accentColor, fontFamily: 'var(--font-mono)' }}>{e.speaker}</span>
+              </div>
+            )}
+            <div style={{ fontSize: 15, color: '#ffffff', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <span>📍 {e.location}</span>
+              <span>🏛 {e.building}, Room {e.room}</span>
             </div>
-          )}
-          <div style={{ fontSize: 15, color: '#ffffff', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <span>📍 {e.location}</span>
-            <span>🏛 {e.building}, Room {e.room}</span>
+          </div>
+          <div className="event-row-time" style={{ marginLeft: 24, textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 600, color: accentColor, marginBottom: 4 }}>{e.start_time} – {e.end_time}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: '#ffffff' }}>{e.date}</div>
+            {variant === 'today' && (
+              <div style={{ marginTop: 6, display: 'inline-block', background: 'var(--yellow-dim)', color: 'var(--yellow)', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
+                TODAY
+              </div>
+            )}
           </div>
         </div>
-        <div className="event-row-time" style={{ marginLeft: 24, textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 600, color: accentColor, marginBottom: 4 }}>{e.start_time} – {e.end_time}</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: '#ffffff' }}>{e.date}</div>
-          {variant === 'today' && (
-            <div style={{ marginTop: 6, display: 'inline-block', background: 'var(--yellow-dim)', color: 'var(--yellow)', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
-              TODAY
-            </div>
-          )}
-        </div>
       </div>
+      {hasTicket && (
+        <div style={{
+          background: 'var(--green-dim)', borderTop: '1px solid var(--green)33',
+          padding: '8px 22px',
+          display: 'flex', alignItems: 'center', gap: 8,
+          fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600,
+          color: 'var(--green)', letterSpacing: '0.06em',
+        }}>
+          {ticketLabel}
+        </div>
+      )}
     </div>
   )
 }
