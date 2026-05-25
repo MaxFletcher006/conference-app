@@ -195,8 +195,8 @@ export const pub = {
     boardMember:     'Зөвлөлийн Гишүүн',
     // partners
     partnersEyebrow:   'Хамтын Ажиллагаа',
-    partnersPageTitle: 'Манай Түншүүд & Зохион Байгуулагчид',
-    partnersPageDesc:  'LHCb 2026 хурал нь ТББ, их дээд сургуулиуд болон олон улсын судалгааны байгууллагуудын хамтарсан хүчин чармайлтаар боломжтой болж байна.',
+    partnersPageTitle: 'Хурлын түншүүд ба зохион байгуулагчид',
+    partnersPageDesc:  'Mongolia - CERN LHCb 2026 хурал нь төрийн бус байгууллагууд, академик байгууллагууд болон олон улсын судалгааны төвүүдийн хамтын хүчин чармайлтын үр дүнд хэрэгжиж байна.',
     partnersGroups: [
       { role: 'Organizer',           title: 'Зохион Байгуулагчид' },
       { role: 'Scientific Partner',  title: 'Шинжлэх Ухааны Түншүүд' },
