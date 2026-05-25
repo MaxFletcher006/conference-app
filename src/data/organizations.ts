@@ -72,4 +72,13 @@ export const partners: Organization[] = [
     desc_mn: 'Улаанбаатар зочид буудал нь Монголын анхны орчин үеийн зочид буудлуудын нэг бөгөөд Mongolia - CERN LHCb 2026 хурлын олон нийтийн лекц болон зочдыг хүлээн авах түншээр ажиллаж байна.',
     desc_en: 'Ulaanbaatar Hotel is one of Mongolia\'s first modern hotels. It serves as the official hospitality partner for Mongolia - CERN LHCb 2026, hosting the public lectures and guest receptions.',
   },
+  {
+    name: 'Gemnet LLC',
+    logo: '/logos/gemnet_logo.png',
+    url:  'https://gemnet.mn',
+    role: 'Powered by',
+    role_mn: 'Дэмжин ажиллагч',
+    desc_mn: 'ЖемНэт ХХК нь 2008 оны 8-р сард Олон улсын болон Орон нутгийн мэдээлэл, холбооны сүлжээний чиглэлээр ажиллах зорилготойгоор байгуулагдсан, МОНГОЛЫН ҮНДЭСНИЙ МЭДЭЭЛЭЛ ХОЛБООНЫ СҮЛЖЭЭНИЙ АНХНЫ ХУВИЙН КОМПАНИ юм.',
+    desc_en: 'Gemnet LLC is established in August 2008 to operate in the field of international and local information and communication networks and is the FIRST NATIONAL INFORMATION COMMUNICATION NETWORK OF MONGOLIA.',
+  },
 ];
