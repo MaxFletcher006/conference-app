@@ -831,22 +831,22 @@ async def mail_service(type: str, db_event: Event, email: List[EmailSchema]):
         banner_color = "#16a34a"
         status_emoji = "🟢"
         status_text = "New Event Announced"
-        intro_text = f"We are excited to announce a new session has been added to the CERN LHCb Mongolia 2026 conference programme. Mark your calendar and don't miss this opportunity to engage with world leading physicists."
+        intro_text = f"We are excited to announce a new session has been added to the Mongolia - CERN LHCb  2026 conference programme. Mark your calendar and don't miss this opportunity to engage with world leading physicists."
     elif status == "UPDATED":
         banner_color = "#2563eb"
         status_emoji = "🔵"
         status_text = "Event Updated"
-        intro_text = f"An event in the CERN LHCb Mongolia 2026 conference programme has been updated. Please review the latest details below and update your schedule accordingly."
+        intro_text = f"An event in the Mongolia - CERN LHCb  2026 conference programme has been updated. Please review the latest details below and update your schedule accordingly."
     elif status == "CANCELLED":
         banner_color = "#dc2626"
         status_emoji = "🔴"
         status_text = "Event Cancelled"
-        intro_text = f"We regret to inform you that the following session has been cancelled from the CERN LHCb Mongolia 2026 conference programme. We apologize for any inconvenience this may cause."
+        intro_text = f"We regret to inform you that the following session has been cancelled from the Mongolia - CERN LHCb  2026 conference programme. We apologize for any inconvenience this may cause."
     else:
         banner_color = "#38bdf8"
         status_emoji = "📢"
         status_text = "Event Announcement"
-        intro_text = "Please see the latest update regarding the CERN LHCb Mongolia 2026 conference programme below."
+        intro_text = "Please see the latest update regarding the Mongolia - CERN LHCb  2026 conference programme below."
 
     html_body = f"""
     <!DOCTYPE html>
@@ -1117,7 +1117,7 @@ async def mail_service(type: str, db_event: Event, email: List[EmailSchema]):
                         letter-spacing:0.06em;
                         ">
                         AUTOMATED NOTIFICATION — DO NOT REPLY<br>
-                        © 2026 CERN LHCb MONGOLIA CONFERENCE
+                        © MONGOLIA - CERN LHCb 2026 CONFERENCE
                         </p>
                     </td>
                     </tr>
@@ -1248,7 +1248,7 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int) -> str:
           </td></tr>
         </table>
         <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:0 40px;"><div style="height:2px;border-radius:2px;background:linear-gradient(90deg,#38bdf8,#f472b6,#34d399);opacity:0.3;"></div></td></tr></table>
-        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:24px 40px;text-align:center;"><p style="margin:0;font-size:12px;font-family:'Courier New',monospace;color:#334155;letter-spacing:0.06em;">AUTOMATED NOTIFICATION — DO NOT REPLY<br>© 2026 CERN LHCb MONGOLIA CONFERENCE</p></td></tr></table>
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:24px 40px;text-align:center;"><p style="margin:0;font-size:12px;font-family:'Courier New',monospace;color:#334155;letter-spacing:0.06em;">AUTOMATED NOTIFICATION — DO NOT REPLY<br>© MONGOLIA - CERN LHCb 2026 CONFERENCE</p></td></tr></table>
       </td></tr>
     </table>
   </td></tr>
@@ -1500,7 +1500,7 @@ async def send_reset_email(email: str, token: str):
                         letter-spacing:0.06em;
                         ">
                         AUTOMATED NOTIFICATION — DO NOT REPLY<br>
-                        © 2026 CERN LHCb MONGOLIA CONFERENCE
+                        © 2026 MONGOLIA - CERN LHCb 2026 CONFERENCE
                         </p>
                     </td>
                     </tr>
