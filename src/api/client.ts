@@ -121,6 +121,20 @@ export interface TicketValidation {
   attendee_name?: string
 }
 
+// ─── ERROR HELPER ─────────────────────────────────────────────────────────────
+// FastAPI 422 returns detail as an array of {type,loc,msg,input} objects.
+// Passing that array to React children crashes with error #31.
+export const apiErr = (err: any, fallback = 'Request failed'): string => {
+  const detail = err?.response?.data?.detail
+  if (Array.isArray(detail)) {
+    const msgs = detail.map((d: any) => (typeof d === 'string' ? d : d?.msg ?? String(d)))
+    return msgs.filter(Boolean).join('; ') || fallback
+  }
+  if (typeof detail === 'string' && detail) return detail
+  if (detail && typeof detail === 'object' && typeof detail.msg === 'string') return detail.msg
+  return fallback
+}
+
 // ─── API FUNCTIONS ────────────────────────────────────────────────────────────
 
 export const serverTest = () => client.get<{ message: string }>('/').then(r => r.data)

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   getAllEvents, addQuestion, getQuestionsByUser,
   createInvoice, checkUserTicket,
-  Event, Question,
+  Event, Question, apiErr,
 } from '../api/client'
 
 import { useAuth } from '../context/AuthContext'
@@ -210,7 +210,7 @@ export default function AttendeePage() {
         toast(result.error || 'Failed to create invoice', 'err')
       }
     } catch (err: any) {
-      toast(err?.response?.data?.detail || 'Invoice creation failed', 'err')
+      toast(apiErr(err, 'Invoice creation failed'), 'err')
     }
     setPurchasingTicket(false)
   }
@@ -232,7 +232,7 @@ export default function AttendeePage() {
       setEventId('')
       if (myQuestions.length > 0 || myQuestionsModal) fetchMyQuestions()
     } catch (err: any) {
-      toast(err?.response?.data?.detail || 'Submission failed', 'err')
+      toast(apiErr(err, 'Submission failed'), 'err')
     }
     setSubmittingQ(false)
   }

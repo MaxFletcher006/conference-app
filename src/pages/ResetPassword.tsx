@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { resetPassword } from '../api/client'
+import { resetPassword, apiErr } from '../api/client'
 import { Input, Btn, toast } from '../components/UI'
 import ColliderBackground from '../components/ColliderBackground'
 import LeftPanel from '../components/LeftPanel'
@@ -36,7 +36,7 @@ export default function ResetPassword() {
       toast('Password reset successful!')
       setTimeout(() => navigate('/login'), 3000)
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Something went wrong. Try again.')
+      setError(apiErr(err, 'Something went wrong. Try again.'))
     } finally {
       setLoading(false)
     }

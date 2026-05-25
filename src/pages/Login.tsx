@@ -2,7 +2,7 @@ import { useState, FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth, isDashboardRole } from '../context/AuthContext'
 import { Input, Btn, toast } from '../components/UI'
-import { forgotPassword } from '../api/client'
+import { forgotPassword, apiErr } from '../api/client'
 import ColliderBackground from '../components/ColliderBackground'
 import LeftPanel from '../components/LeftPanel'
 
@@ -81,7 +81,7 @@ export default function Login() {
       toast(`Welcome back, ${user.firstname}`)
       navigate(isDashboardRole(user.role) ? '/dashboard' : '/home', { replace: true })
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Login failed')
+      setError(apiErr(err, 'Login failed'))
     } finally {
       setLoading(false)
     }

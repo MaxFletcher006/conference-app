@@ -1,8 +1,9 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { getAllUsers, deleteUser, register, updateUser, User, UserCreatePayload } from '../api/client'
+import { getAllUsers, deleteUser, register, updateUser, User, UserCreatePayload, apiErr } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { Page, SectionHeader, Card, Table, Badge, Btn, Input, Select, Modal, toast } from '../components/UI'
+
 
 const emptyStaffForm = (): UserCreatePayload => ({
   firstname: '',
@@ -66,7 +67,7 @@ export default function UsersPage() {
       toast('User deleted')
       setUsers(u => u.filter(x => x.id !== id))
     } catch (err: any) {
-      toast(err?.response?.data?.detail || 'Delete failed', 'err')
+      toast(apiErr(err, 'Delete failed'), 'err')
     }
   }
 
@@ -100,7 +101,7 @@ export default function UsersPage() {
       closeEditModal()
       toast(`User ${updated.firstname} updated`)
     } catch (err: any) {
-      toast(err?.response?.data?.detail || 'Update failed', 'err')
+      toast(apiErr(err, 'Update failed'), 'err')
     } finally {
       setEditingUser(false)
     }
@@ -116,7 +117,7 @@ export default function UsersPage() {
       setShowAddModal(false)
       setStaffForm(emptyStaffForm())
     } catch (err: any) {
-      toast(err?.response?.data?.detail || 'Failed to create staff', 'err')
+      toast(apiErr(err, 'Failed to create staff'), 'err')
     } finally {
       setAddingStaff(false)
     }

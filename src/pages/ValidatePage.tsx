@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { validateTicket, ticketValidation, TicketVerification } from '../api/client'
+import { validateTicket, ticketValidation, TicketVerification, apiErr } from '../api/client'
 import { useAuth, isDashboardRole } from '../context/AuthContext'
 import { Spinner } from '../components/UI'
 

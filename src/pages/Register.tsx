@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { register } from '../api/client'
+import { register, apiErr } from '../api/client'
 import { Input, Btn, toast } from '../components/UI'
 import ColliderBackground from '../components/ColliderBackground'
 import LeftPanel from '../components/LeftPanel'
@@ -54,7 +54,7 @@ export default function Register() {
     toast('Account created — please sign in')
     navigate('/login')
   } catch (err: any) {
-    setError(err?.response?.data?.detail || 'Registration failed')
+    setError(apiErr(err, 'Registration failed'))
   } finally {
     setLoading(false)
   }

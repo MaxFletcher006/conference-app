@@ -245,7 +245,7 @@ export function ToastContainer() {
           whiteSpace: 'nowrap',
           boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
         }}>
-          {t.type === 'ok' ? '✓ ' : '✗ '}{t.msg}
+          {t.type === 'ok' ? '✓ ' : '✗ '}{String(t.msg)}
         </div>
       ))}
     </div>

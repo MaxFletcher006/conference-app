@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { getAllEvents, createEvent, updateEvent, deleteEvent, getAllUsers, Event, EventPayload, User } from '../api/client'
+import { getAllEvents, createEvent, updateEvent, deleteEvent, getAllUsers, Event, EventPayload, User, apiErr } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { Page, SectionHeader, Card, Table, Btn, Input, Select, Modal, toast } from '../components/UI'
 
@@ -74,7 +74,7 @@ export default function EventsPage() {
       }
       setShowModal(false)
     } catch (err: any) {
-      toast(err?.response?.data?.detail || 'Failed to save event', 'err')
+      toast(apiErr(err, 'Failed to save event'), 'err')
     }
     setSaving(false)
   }
