@@ -11,7 +11,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
 from models.model import User, Event, Ticket, MailList, Question, Validation, Transaction, create_db_and_tables, get_session, engine
-from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel, UserUpdate
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from gmail_sender import send_email
