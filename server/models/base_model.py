@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 from models.model import User, Validation
 
 class UserModel(BaseModel):
@@ -91,3 +92,11 @@ class InvoiceModel(BaseModel):
     username: str
     amount: int
     days: int
+
+class UserUpdate(BaseModel):
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+    role: Optional[str] = None
+    phone_number: Optional[str] = None

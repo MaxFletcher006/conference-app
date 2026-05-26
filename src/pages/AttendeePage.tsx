@@ -112,9 +112,9 @@ type Lang = 'en' | 'mn'
 const PROGRAMME = [
   { time: '16:00–16:05', item: 'Opening and welcome' },
   { time: '16:05–16:10', item: 'Introduction of speakers' },
-  { time: '16:10–16:30', item: 'Lecture 1: Prof. Vincenzo Vagnoni' },
-  { time: '16:30–16:50', item: "Lecture 2: Prof. Jianchun Wang" },
-  { time: '16:50–17:10', item: 'Lecture 3: Dr. Patrick Robbe' },
+  { time: '16:10–16:30', item: 'Lecture 1: Prof. Vincenzo Vagnoni - CERN, the Large Hadron Collider, and the Big Questions of the Universe' },
+  { time: '16:30–16:50', item: "Lecture 2: Prof. Jianchun Wang - Future of High Energy Physics, CEPC" },
+  { time: '16:50–17:10', item: 'Lecture 3: Dr. Patrick Robbe - The LHCb Experiment: Matter, Antimatter, and Hidden Clues of Nature' },
   { time: '17:10–17:15', item: 'Transition to panel discussion' },
   { time: '17:15–17:55', item: 'Panel Discussion: CERN, LHCb, and Opportunities for Mongolia' },
   { time: '17:55–18:00', item: 'Closing remarks and group photo' },
@@ -393,6 +393,33 @@ export default function AttendeePage() {
               </div>
             </div>
           </div>
+
+          {/* English warning */}
+          <div
+              style={{
+                marginTop: 14,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'rgba(59,130,246,0.10)',
+                border: '1px solid rgba(59,130,246,0.22)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                fontSize: 14,
+                color: '#dbeafe',
+                lineHeight: 1.6,
+                flexWrap: 'wrap',
+                marginBottom: '30px',
+              }}
+            >
+              <span style={{ fontSize: 16 }}>🌐</span>
+
+              <span>
+                {lang === 'mn'
+                  ? 'Бүх илтгэл, хэлэлцүүлэг Англи хэл дээр явагдана гэдгийг анхаарна уу.'
+                  : 'Please noted all lectures and panel discussions will be conducted in English.'}
+              </span>
+            </div>
 
           {/* Programme table */}
           <div style={{ marginBottom: 24 }}>

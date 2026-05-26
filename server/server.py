@@ -295,10 +295,13 @@ def logout(response: Response):
     response.delete_cookie(SESSION_COOKIE)
     return {"message": "Logged out"}
 
-
 @app.put("/user/{id}", response_model=UserReturn)
-def update_user(session: SessionDep, id: int, current_user: UserModel, user_info: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
-
+def update_user(
+    id: int,
+    current_user: UserUpdate, 
+    session: Session = Depends(get_session),
+    user_info: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))
+):
     try:
         user = session.get(User, id)
 
@@ -309,6 +312,7 @@ def update_user(session: SessionDep, id: int, current_user: UserModel, user_info
             )
 
         data = current_user.model_dump(exclude_unset=True)
+
         if "password" in data:
             hashed_password = bcrypt.hashpw(
                 data["password"].encode("utf-8"),
@@ -323,14 +327,14 @@ def update_user(session: SessionDep, id: int, current_user: UserModel, user_info
         session.add(user)
         session.commit()
         session.refresh(user)
+
         return user
-    
+
     except HTTPException:
         raise
 
     except Exception as e:
         session.rollback()
-
         print(f"Error: {e}")
 
         raise HTTPException(

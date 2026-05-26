@@ -12,6 +12,62 @@ export default function Home() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg)' }}>
 
+      {/* ── Conference Banner ── */}
+      <section style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+        <img
+          src="/banners/conf_banner_template.png"
+          alt="Mongolia - CERN LHCb 2026 Conference"
+          style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 750, objectPosition: 'center bottom' }}
+        />
+        {/* Left-to-right dark gradient for text readability */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'linear-gradient(to right, rgba(8,8,16,0.82) 0%, rgba(8,8,16,0.5) 55%, transparent 100%)',
+        }} />
+        {/* Bottom fade into page */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'linear-gradient(to bottom, transparent 55%, var(--bg) 100%)',
+        }} />
+
+        {/* Text + button overlay */}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
+          <div className="max-w-[1240px] mx-auto px-6 md:px-12" style={{ width: '100%' }}>
+          <div style={{ maxWidth: 580 }}>
+            <span style={{
+              display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
+              letterSpacing: '0.15em', textTransform: 'uppercase', color: '#a5b0ff', marginBottom: 18,
+            }}>
+              {t.bannerEyebrow}
+            </span>
+            <h1 style={{
+              fontSize: 'clamp(1.9rem, 4.8vw, 3.6rem)', fontWeight: 800,
+              color: '#ffffff', lineHeight: 1.1, marginBottom: 18, letterSpacing: '-0.02em',
+              whiteSpace: 'pre-line',
+            }}>
+              {t.eventTitle}
+            </h1>
+            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', marginBottom: 36, lineHeight: 1.6 }}>
+              {t.eventDetails[1].text}&nbsp;·&nbsp;{t.eventDetails[0].text}
+            </p>
+            <Link to="/register">
+              <button
+                style={{
+                  height: 52, padding: '0 36px', fontSize: 15, fontWeight: 700,
+                  background: '#5260d9', color: '#ffffff', border: 'none',
+                  borderRadius: 12, cursor: 'pointer', transition: 'opacity 0.2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+              >
+                {t.registerBtn}
+              </button>
+            </Link>
+          </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Hero ── */}
       <section style={{
         position: 'relative', height: '85vh', minHeight: 600,

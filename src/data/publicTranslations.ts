@@ -1,7 +1,7 @@
 export const pub = {
   en: {
     // nav
-    nav: { home: 'Home', about: 'About', partners: 'Partners', speakers: 'Speakers', contact: 'Contact', register: 'Register' },
+    nav: { home: 'Home', about: 'About', partners: 'Partners', speakers: 'Speakers', contact: 'Contact', register: 'Register', login: 'Login', meetCern: 'Meet with CERN' },
     // home hero
     badge:      'Science Development Accelerator NGO',
     heroTitle:  'Mongolia Meets\nGlobal Frontier \nHigh Energy Physics',
@@ -40,7 +40,9 @@ export const pub = {
     ],
     regSoon:        'Registration opening soon',
     countdown:      'Countdown to Launch',
+    bannerEyebrow:  'International Science Conference',
     registerBtn:    'Register Now',
+    loginBtn:       'Login',
     // agenda
     agendaEyebrow:  'Full Programme',
     agendaTitle:    'Conference Schedule',
@@ -130,7 +132,7 @@ export const pub = {
   },
   mn: {
     // nav
-    nav: { home: 'Нүүр', about: 'Бидний Тухай', partners: 'Түншүүд', speakers: 'Илтгэгчид', contact: 'Холбоо Барих', register: 'Бүртгүүлэх' },
+    nav: { home: 'Нүүр', about: 'Бидний Тухай', partners: 'Түншүүд', speakers: 'Илтгэгчид', contact: 'Холбоо Барих', register: 'Бүртгүүлэх', login: 'Нэвтрэх', meetCern: 'CERN-тэй Танилцах' },
     // home hero
     badge:      'Шинжлэх Ухааны Хөгжлийн Хурдасгуур ТББ',
     heroTitle:  'Дэлхийн \n Шинжлэх ухаан \nМонголд',
@@ -169,7 +171,9 @@ export const pub = {
     ],
     regSoon:        'Бүртгэл тун удахгүй',
     countdown:      'Хурал эхэлтэл:',
+    bannerEyebrow:  'Олон улсын эрдэм шинжилгээний хурал',
     registerBtn:    'Бүртгүүлэх',
+    loginBtn:       'Нэвтрэх',
     // agenda
     agendaEyebrow:  'Хурлын хөтөлбөр',
     agendaTitle:    'Хурлын Хуваарь',
