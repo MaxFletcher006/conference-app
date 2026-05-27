@@ -79,7 +79,8 @@ export default function Home() {
 
       {/* ── Hero ── */}
       <section style={{
-        position: 'relative', height: '85vh', minHeight: 600,
+        position: 'relative', minHeight: 'max(85vh, 600px)',
+        padding: 'clamp(72px, 10vh, 140px) 0',
         display: 'flex', alignItems: 'center', overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.75 }}>
