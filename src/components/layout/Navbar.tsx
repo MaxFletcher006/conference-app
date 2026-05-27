@@ -27,9 +27,9 @@ export function Navbar() {
           borderBottom: '1px solid var(--border)',
         }}
       >
-        <div className="max-w-[1240px] mx-auto px-6 md:px-12 h-16 flex items-center">
+        <div className="max-w-[1240px] mx-auto px-4 md:px-12 h-16 flex items-center gap-3">
           {/* Logo */}
-          <div className="w-[260px] flex-shrink-0">
+          <div className="flex-shrink-0 min-w-0">
             <Link to="/" className="flex items-center gap-3">
               <div className="relative h-10 w-10 flex-shrink-0">
                 <img
@@ -39,7 +39,7 @@ export function Navbar() {
                 />
               </div>
 
-              <div className="flex flex-col leading-none">
+              <div className="hidden xs:flex flex-col leading-none">
                 <span className="font-bold text-sm tracking-tight text-white uppercase">
                   Science Development
                 </span>
@@ -71,7 +71,7 @@ export function Navbar() {
           </div>
 
           {/* Right side */}
-          <div className="flex items-center justify-end gap-3 w-[260px] flex-shrink-0">
+          <div className="flex items-center justify-end gap-3 ml-auto flex-shrink-0">
             {/* Language toggle */}
             <div
               style={{

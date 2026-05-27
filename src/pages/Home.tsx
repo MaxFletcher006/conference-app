@@ -13,57 +13,66 @@ export default function Home() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* ── Conference Banner ── */}
-      <section style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+      <section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+        {/* Image as absolute background so section height is controlled by min-h */}
         <img
           src="/banners/conf_banner_template.png"
           alt="Mongolia - CERN LHCb 2026 Conference"
-          style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 750, objectPosition: 'center bottom' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center bottom' }}
         />
-        {/* Left-to-right dark gradient for text readability */}
+        {/* Base dark overlay — keeps text readable at all widths */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'linear-gradient(to right, rgba(8,8,16,0.82) 0%, rgba(8,8,16,0.5) 55%, transparent 100%)',
+          background: 'rgba(8,8,16,0.45)',
+        }} />
+        {/* Left-to-right gradient for extra contrast behind the text column */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'linear-gradient(to right, rgba(8,8,16,0.75) 0%, rgba(8,8,16,0.4) 60%, transparent 100%)',
         }} />
         {/* Bottom fade into page */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'linear-gradient(to bottom, transparent 55%, var(--bg) 100%)',
+          background: 'linear-gradient(to bottom, transparent 50%, var(--bg) 100%)',
         }} />
 
         {/* Text + button overlay */}
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
-          <div className="max-w-[1240px] mx-auto px-6 md:px-12" style={{ width: '100%' }}>
-          <div style={{ maxWidth: 580 }}>
-            <span style={{
-              display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
-              letterSpacing: '0.15em', textTransform: 'uppercase', color: '#a5b0ff', marginBottom: 18,
-            }}>
-              {t.bannerEyebrow}
-            </span>
-            <h1 style={{
-              fontSize: 'clamp(1.9rem, 4.8vw, 3.6rem)', fontWeight: 800,
-              color: '#ffffff', lineHeight: 1.1, marginBottom: 18, letterSpacing: '-0.02em',
-              whiteSpace: 'pre-line',
-            }}>
-              {t.eventTitle}
-            </h1>
-            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', marginBottom: 36, lineHeight: 1.6 }}>
-              {t.eventDetails[1].text}&nbsp;·&nbsp;{t.eventDetails[0].text}
-            </p>
-            <Link to="/register">
-              <button
-                style={{
-                  height: 52, padding: '0 36px', fontSize: 15, fontWeight: 700,
-                  background: '#5260d9', color: '#ffffff', border: 'none',
-                  borderRadius: 12, cursor: 'pointer', transition: 'opacity 0.2s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-              >
-                {t.registerBtn}
-              </button>
-            </Link>
-          </div>
+          <div className="max-w-[1240px] mx-auto px-6 md:px-12 w-full">
+            <div style={{ maxWidth: 580 }}>
+              <span style={{
+                display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
+                letterSpacing: '0.15em', textTransform: 'uppercase', color: '#a5b0ff',
+                marginBottom: 'clamp(8px, 2vw, 18px)',
+              }}>
+                {t.bannerEyebrow}
+              </span>
+              <h1 style={{
+                fontSize: 'clamp(1.45rem, 4.8vw, 3.6rem)', fontWeight: 800,
+                color: '#ffffff', lineHeight: 1.15, marginBottom: 'clamp(8px, 2vw, 18px)',
+                letterSpacing: '-0.02em', whiteSpace: 'pre-line',
+              }}>
+                {t.eventTitle}
+              </h1>
+              <p className="hidden sm:block" style={{ fontSize: 15, color: 'rgba(255,255,255,0.65)', marginBottom: 'clamp(16px, 3vw, 36px)', lineHeight: 1.6 }}>
+                {t.eventDetails[1].text}&nbsp;·&nbsp;{t.eventDetails[0].text}
+              </p>
+              <Link to="/register" className="block sm:inline-block">
+                <button
+                  className="w-full sm:w-auto"
+                  style={{
+                    height: 'clamp(42px, 6vw, 52px)', padding: '0 clamp(20px, 4vw, 36px)',
+                    fontSize: 15, fontWeight: 700,
+                    background: '#5260d9', color: '#ffffff', border: 'none',
+                    borderRadius: 12, cursor: 'pointer', transition: 'opacity 0.2s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                >
+                  {t.registerBtn}
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

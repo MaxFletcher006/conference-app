@@ -667,19 +667,27 @@ async def byl_webhook(session: SessionDep, request: Request, background_tasks: B
             match_days = re.search(r"DAYS:(\d+)", description)
             day_length = 1
 
-            new_transaction = Transaction(
-                user_id=extracted_user_id,
-                amount=invoice_object.get("amount"),
-                transaction_id=invoice_object.get("id"),
-                created_at=invoice_object.get("created_at"),
-                description=description,
-                url=invoice_object.get("url"),
-            )
-            session.add(new_transaction)
-            session.commit()
-            print(f"Transaction saved for user {extracted_user_id}")
+            invoice_id = invoice_object.get("id")
+            existing_tx = session.exec(
+                select(Transaction).where(Transaction.transaction_id == invoice_id)
+            ).first()
 
-            background_tasks.add_task(_issue_ticket, extracted_user_id, day_length)
+            if existing_tx:
+                print(f"Duplicate webhook for transaction {invoice_id}, skipping")
+            else:
+                new_transaction = Transaction(
+                    user_id=extracted_user_id,
+                    amount=invoice_object.get("amount"),
+                    transaction_id=invoice_id,
+                    created_at=invoice_object.get("created_at"),
+                    description=description,
+                    url=invoice_object.get("url"),
+                )
+                session.add(new_transaction)
+                session.commit()
+                print(f"Transaction saved for user {extracted_user_id}")
+
+                background_tasks.add_task(_issue_ticket, extracted_user_id, day_length)
 
     return Response(content="Webhook received!", media_type="text/plain")
 
