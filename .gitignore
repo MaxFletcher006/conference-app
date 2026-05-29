@@ -223,8 +223,12 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-#SQLite 
+#SQLite
 *.db
 *.db-journal
 *.db-shm
 *.db-wal
+
+# Google OAuth secrets
+credentials.json
+token.json
