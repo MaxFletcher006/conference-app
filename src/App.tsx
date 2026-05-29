@@ -31,6 +31,7 @@ import QRScanPage from './pages/QRScanPage'
 import TicketValidationsPage from './pages/TicketValidationsPage'
 import ValidationsAdminPage from './pages/ValidationsAdminPage'
 import TransactionsPage from './pages/TransactionsPage'
+import TicketsPage from './pages/TicketsPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -119,6 +120,7 @@ function AppRoutes() {
         <Route path="questions"     element={<QuestionsPage />} />
         <Route path="validations"   element={<ValidationsAdminPage />} />
         <Route path="transactions"  element={<TransactionsPage />} />
+        <Route path="tickets"       element={<TicketsPage />} />
       </Route>
 
       <Route element={<DashboardLayout />}>

@@ -587,6 +587,51 @@ def tickets_summary(session: SessionDep, current_user: dict = Depends(require_ro
     tickets = session.exec(select(Ticket)).all()
     return {"user_ids": list(set(t.user_id for t in tickets))}
 
+@app.get("/admin/tickets")
+def get_all_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    tickets = session.exec(select(Ticket)).all()
+    result = []
+    for t in tickets:
+        user = session.get(User, t.user_id)
+        result.append({
+            "id": t.id,
+            "user_id": t.user_id,
+            "name": t.name,
+            "day_length": t.day_length,
+            "used_times": t.used_times,
+            "qr_code_data": t.qr_code_data,
+            "firstname": user.firstname if user else "Unknown",
+            "lastname": user.lastname if user else "Unknown",
+            "email": user.email if user else "",
+        })
+    return result
+
+@app.post("/admin/ticket/issue/{user_id}")
+async def admin_issue_ticket(
+    user_id: int,
+    session: SessionDep,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(require_role("admin", "supervisor")),
+):
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    background_tasks.add_task(_issue_ticket, user_id, 1)
+    return {"message": f"Ticket will be issued and emailed to {user.email}"}
+
+@app.delete("/admin/ticket/{user_id}")
+def admin_delete_ticket(
+    user_id: int,
+    session: SessionDep,
+    current_user: dict = Depends(require_role("admin", "supervisor")),
+):
+    ticket = session.exec(select(Ticket).where(Ticket.user_id == user_id)).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    session.delete(ticket)
+    session.commit()
+    return {"message": "Ticket deleted"}
+
 @app.get("/tickets")
 def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
     return session.exec(select(func.count()).select_from(Validation)).one()
@@ -1219,55 +1264,216 @@ async def _issue_ticket(user_id: int, day_length: int):
 
 def _build_ticket_email(firstname: str, lastname: str, day_length: int) -> str:
     days_label = f"{day_length} Day{'s' if day_length > 1 else ''}"
+
     return f"""<!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
 <body style="margin:0;padding:0;background-color:#060911;font-family:'Segoe UI',Arial,sans-serif;">
+
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#060911;padding:40px 0;">
-  <tr><td align="center">
-    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;">
-      <tr><td align="center" style="padding-bottom:24px;">
-        <span style="display:inline-block;font-family:'Courier New',monospace;font-size:13px;letter-spacing:0.15em;color:#38bdf8;border:1px solid rgba(56,189,248,0.3);background:rgba(56,189,248,0.07);padding:6px 16px;border-radius:4px;">CERN LHCb — MONGOLIA 2026</span>
-      </td></tr>
-      <tr><td style="background:rgba(6,10,22,0.95);border:1px solid rgba(56,189,248,0.16);border-radius:16px;overflow:hidden;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr><td style="background:linear-gradient(135deg,#0f172a 0%,#0c1a3a 50%,#0f172a 100%);padding:40px 40px 36px;border-bottom:1px solid rgba(56,189,248,0.16);text-align:center;">
-            <div style="width:12px;height:12px;border-radius:50%;background:#38bdf8;box-shadow:0 0 20px 6px rgba(56,189,248,0.6);margin:0 auto 20px;display:block;"></div>
-            <h1 style="margin:0 0 10px;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;line-height:1.2;">Event Ticket Confirmed</h1>
-            <p style="margin:0;font-size:14px;color:#94a3b8;font-family:'Courier New',monospace;letter-spacing:0.08em;">HIGH ENERGY PHYSICS CONFERENCE · ULAANBAATAR</p>
-          </td></tr>
-        </table>
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr><td style="padding:36px 40px;">
-            <p style="margin:0 0 8px;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.12em;">PARTICIPANT</p>
-            <h2 style="margin:0 0 24px;font-size:22px;font-weight:700;color:#ffffff;">{firstname} {lastname}</h2>
-            <p style="margin:0 0 28px;font-size:15px;color:#94a3b8;line-height:1.7;">Your conference ticket has been successfully generated. Please find your QR code attached to this email and present it at the entrance for verification.</p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+  <tr>
+    <td align="center">
+
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;">
+
+        <tr>
+          <td align="center" style="padding-bottom:24px;">
+            <span style="display:inline-block;font-family:'Courier New',monospace;font-size:13px;letter-spacing:0.15em;color:#38bdf8;border:1px solid rgba(56,189,248,0.3);background:rgba(56,189,248,0.07);padding:6px 16px;border-radius:4px;">
+              CERN LHCb — MONGOLIA 2026
+            </span>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="background:rgba(6,10,22,0.95);border:1px solid rgba(56,189,248,0.16);border-radius:16px;overflow:hidden;">
+
+            <!-- HEADER -->
+            <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td width="33%" style="padding-right:8px;"><div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.14);border-radius:10px;padding:16px;text-align:center;"><div style="font-size:20px;margin-bottom:6px;">🎟️</div><div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">TYPE</div><div style="font-size:13px;color:#ffffff;font-weight:600;margin-top:4px;">Conference Pass</div></div></td>
-                <td width="33%" style="padding:0 4px;"><div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.14);border-radius:10px;padding:16px;text-align:center;"><div style="font-size:20px;margin-bottom:6px;">📅</div><div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">DURATION</div><div style="font-size:13px;color:#ffffff;font-weight:600;margin-top:4px;">{days_label}</div></div></td>
-                <td width="33%" style="padding-left:8px;"><div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.14);border-radius:10px;padding:16px;text-align:center;"><div style="font-size:20px;margin-bottom:6px;">✅</div><div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">STATUS</div><div style="font-size:13px;color:#34d399;font-weight:600;margin-top:4px;">Confirmed</div></div></td>
+                <td style="background:linear-gradient(135deg,#0f172a 0%,#0c1a3a 50%,#0f172a 100%);padding:40px 40px 36px;border-bottom:1px solid rgba(56,189,248,0.16);text-align:center;">
+
+                  <div style="width:12px;height:12px;border-radius:50%;background:#38bdf8;box-shadow:0 0 20px 6px rgba(56,189,248,0.6);margin:0 auto 20px;display:block;"></div>
+
+                  <h1 style="margin:0 0 10px;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;line-height:1.2;">
+                    Event Ticket Confirmed
+                  </h1>
+
+                  <p style="margin:0;font-size:14px;color:#94a3b8;font-family:'Courier New',monospace;letter-spacing:0.08em;">
+                    HIGH ENERGY PHYSICS CONFERENCE · ULAANBAATAR
+                  </p>
+
+                </td>
               </tr>
             </table>
-            <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.18);border-left:3px solid #38bdf8;border-radius:0 10px 10px 0;padding:16px 20px;margin-bottom:28px;">
-              <p style="margin:0 0 6px;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.08em;">📌 IMPORTANT</p>
-              <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6;">Each QR code ticket is valid for the number of days selected at purchase. The QR code will be scanned once per day at the entrance.</p>
-            </div>
-            <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:18px 20px;margin-bottom:28px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">🔗 Your QR code ticket is attached as a <strong style="color:#94a3b8;">PNG image</strong>. Download and save it to your phone for easy access at the venue.</p>
-            </div>
-            <p style="margin:0;font-size:14px;color:#64748b;line-height:1.7;">We look forward to seeing you at the conference.<br><span style="color:#94a3b8;font-weight:600;">CERN LHCb — Mongolia 2026 Event Team</span></p>
-          </td></tr>
-        </table>
-        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:0 40px;"><div style="height:2px;border-radius:2px;background:linear-gradient(90deg,#38bdf8,#f472b6,#34d399);opacity:0.3;"></div></td></tr></table>
-        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:24px 40px;text-align:center;"><p style="margin:0;font-size:12px;font-family:'Courier New',monospace;color:#334155;letter-spacing:0.06em;">AUTOMATED NOTIFICATION — DO NOT REPLY<br>© MONGOLIA - CERN LHCb 2026 CONFERENCE</p></td></tr></table>
-      </td></tr>
-    </table>
-  </td></tr>
-</table>
-</body>
-</html>"""
 
+            <!-- BODY -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:36px 40px;">
+
+                  <p style="margin:0 0 8px;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.12em;">
+                    PARTICIPANT
+                  </p>
+
+                  <h2 style="margin:0 0 24px;font-size:22px;font-weight:700;color:#ffffff;">
+                    {firstname} {lastname}
+                  </h2>
+
+                  <p style="margin:0 0 28px;font-size:15px;color:#94a3b8;line-height:1.7;">
+                    Your conference ticket has been successfully generated.
+                    Please find your QR code attached to this email and present it
+                    at the entrance for verification.
+                  </p>
+
+                  <!-- INFO CARDS -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                    <tr>
+
+                      <td width="33%" style="padding-right:8px;">
+                        <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.14);border-radius:10px;padding:16px;text-align:center;">
+                          <div style="font-size:20px;margin-bottom:6px;">🎟️</div>
+                          <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">
+                            TYPE
+                          </div>
+                          <div style="font-size:13px;color:#ffffff;font-weight:600;margin-top:4px;">
+                            Conference Pass
+                          </div>
+                        </div>
+                      </td>
+
+                      <td width="33%" style="padding:0 4px;">
+                        <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.14);border-radius:10px;padding:16px;text-align:center;">
+                          <div style="font-size:20px;margin-bottom:6px;">📅</div>
+                          <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">
+                            DURATION
+                          </div>
+                          <div style="font-size:13px;color:#ffffff;font-weight:600;margin-top:4px;">
+                            {days_label}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td width="33%" style="padding-left:8px;">
+                        <div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.14);border-radius:10px;padding:16px;text-align:center;">
+                          <div style="font-size:20px;margin-bottom:6px;">✅</div>
+                          <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">
+                            STATUS
+                          </div>
+                          <div style="font-size:13px;color:#34d399;font-weight:600;margin-top:4px;">
+                            Confirmed
+                          </div>
+                        </div>
+                      </td>
+
+                    </tr>
+                  </table>
+
+                  <!-- IMPORTANT -->
+                  <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.18);border-left:3px solid #38bdf8;border-radius:0 10px 10px 0;padding:16px 20px;margin-bottom:28px;">
+
+                    <p style="margin:0 0 6px;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.08em;">
+                      📌 IMPORTANT
+                    </p>
+
+                    <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6;">
+                      Each QR code ticket is valid for the number of days selected
+                      at purchase. The QR code will be scanned once per day at the entrance.
+                    </p>
+
+                  </div>
+
+                  <!-- EVENT INFO -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                    <tr>
+                      <td style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.18);border-radius:12px;padding:22px;">
+
+                        <p style="margin:0 0 12px;font-size:13px;font-family:'Courier New',monospace;color:#f59e0b;letter-spacing:0.08em;">
+                          📍 EVENT INFORMATION
+                        </p>
+
+                        <p style="margin:0 0 14px;font-size:15px;color:#e2e8f0;line-height:1.8;">
+                          <strong>Conference Venue:</strong> Ulaanbaatar Hotel — Conference Hall<br>
+                          <strong>Date:</strong> June 9, 2026<br>
+                          <strong>Time:</strong> 16:00 — 18:00
+                        </p>
+
+                        <div style="height:1px;background:rgba(255,255,255,0.08);margin:18px 0;"></div>
+
+                        <p style="margin:0 0 12px;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.08em;">
+                          📍 ХУРЛЫН МЭДЭЭЛЭЛ
+                        </p>
+
+                        <p style="margin:0;font-size:15px;color:#94a3b8;line-height:1.8;">
+                          <strong style="color:#e2e8f0;">Байршил:</strong> Улаанбаатар Зочид Буудал — Хурлын танхим<br>
+                          <strong style="color:#e2e8f0;">Огноо:</strong> 2026 оны 6 сарын 9<br>
+                          <strong style="color:#e2e8f0;">Цаг:</strong> 16:00 — 18:00
+                        </p>
+
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- QR INFO -->
+                  <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:18px 20px;margin-bottom:28px;text-align:center;">
+
+                    <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">
+                      🔗 Your QR code ticket is attached as a
+                      <strong style="color:#94a3b8;">PNG image</strong>.
+                      Download and save it to your phone for easy access at the venue.
+                    </p>
+
+                  </div>
+
+                  <p style="margin:0;font-size:14px;color:#64748b;line-height:1.7;">
+                    We look forward to seeing you at the conference.<br>
+                    <span style="color:#94a3b8;font-weight:600;">
+                      CERN LHCb — Mongolia 2026 Event Team
+                    </span>
+                  </p>
+
+                </td>
+              </tr>
+            </table>
+
+            <!-- GRADIENT LINE -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:0 40px;">
+                  <div style="height:2px;border-radius:2px;background:linear-gradient(90deg,#38bdf8,#f472b6,#34d399);opacity:0.3;"></div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- FOOTER -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:24px 40px;text-align:center;">
+
+                  <p style="margin:0;font-size:12px;font-family:'Courier New',monospace;color:#334155;letter-spacing:0.06em;">
+                    AUTOMATED NOTIFICATION — DO NOT REPLY<br>
+                    © MONGOLIA - CERN LHCb 2026 CONFERENCE
+                  </p>
+
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
+"""
 
 def generate_qr_buffer(data: str):
     qr = qrcode.QRCode(

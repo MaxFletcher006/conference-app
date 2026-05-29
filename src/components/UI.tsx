@@ -160,6 +160,8 @@ const badgeColors: Record<string, { bg: string; color: string }> = {
   attendee:   { bg: '#1f1f1f', color: '#a1a1aa' },
   valid:      { bg: '#166534', color: '#4ade80' },
   expired:    { bg: '#7f1d1d', color: '#f87171' },
+  active:     { bg: '#14532d', color: '#4ade80' },
+  exhausted:  { bg: '#7f1d1d', color: '#f87171' },
 }
 
 export function Badge({ label }: { label: string }) {

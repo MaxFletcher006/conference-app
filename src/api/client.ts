@@ -223,3 +223,24 @@ export const createInvoice = (payload: InvoicePayload) =>
 
 export const checkUserTicket = () =>
   client.get<{ has_ticket: boolean }>('/ticket/check').then(r => r.data)
+
+export interface TicketAdmin {
+  id: string
+  user_id: number
+  name: string
+  day_length: number
+  used_times: number
+  qr_code_data: string
+  firstname: string
+  lastname: string
+  email: string
+}
+
+export const getAllTickets = () =>
+  client.get<TicketAdmin[]>('/admin/tickets').then(r => r.data)
+
+export const adminIssueTicket = (userId: number) =>
+  client.post<{ message: string }>(`/admin/ticket/issue/${userId}`).then(r => r.data)
+
+export const adminDeleteTicket = (userId: number) =>
+  client.delete<{ message: string }>(`/admin/ticket/${userId}`).then(r => r.data)
