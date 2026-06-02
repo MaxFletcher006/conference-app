@@ -4,6 +4,7 @@ import { partners } from '@/data/organizations'
 import { useLang } from '@/context/LanguageContext'
 import { pub } from '@/data/publicTranslations'
 import { HomeAgendaSection } from '@/components/HomeAgendaSection'
+import { BookDownload } from '@/components/BookDownload'
 
 export default function Home() {
   const { lang } = useLang()
@@ -178,6 +179,9 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            <BookDownload />
+
           </div>
 
           <div style={{ background: 'var(--bg-3)', borderRadius: 24, padding: '48px 40px', border: '1px solid var(--border-2)', boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
