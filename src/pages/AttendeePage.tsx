@@ -48,13 +48,14 @@ const T = {
     close:           'Close',
     // invoice
     totalPrice:      (n: number) => `Total: ₮${(n * PRICE_PER_DAY).toLocaleString()}`,
-    invoiceToast:    'Payment link opened — complete payment and check your email for your ticket.',
+    invoiceToast:    'Payment link opened — complete the payment to receive your ticket by email.',
     // public lecture
     publicLecture:   'Public Lecture',
     programme:       'Programme',
     speakers:        'Speakers & Panelists',
     moderator:       'Moderator',
     // ticket support
+    spamNotice:      'Please check your spam folder as the ticket may have ended up there.',
     ticketSupport:   'If you have any problems purchasing tickets, please contact',
     // ticket status
     ticketPurchased: '✓ Ticket Purchased',
@@ -95,13 +96,14 @@ const T = {
     close:           'Хаах',
     // invoice
     totalPrice:      (n: number) => `Нийт: ₮${(n * PRICE_PER_DAY).toLocaleString()}`,
-    invoiceToast:    'Төлбөрийн линк нээгдлээ — төлбөрөө хийгээд тасалбараа и-мэйлээс шалгана уу.',
+    invoiceToast:    'Төлбөрийн линк нээгдлээ — төлбөрөө хийснээр тасалбар и-мэйл рүү таны илгээгдэнэ.',
     // public lecture
     publicLecture:   'Нийтийн Лекц',
     programme:       'Хөтөлбөр',
     speakers:        'Илтгэгчид ба Хэлэлцүүлэгчид',
     moderator:       'Дарга',
     // ticket support
+    spamNotice:      'Тасалбар спам фолдерт орсон байх боломжтой тул спам фолдероо шалгаарай.',
     ticketSupport:   'Хэрэв танд тасалбар авахтай асуудал гарвал дараах хаягаар холбогдоно уу:',
     // ticket status
     ticketPurchased: '✓ Тасалбар авсан',
@@ -498,6 +500,15 @@ export default function AttendeePage() {
               {t.ticketSentTo}{' '}
               <span style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)' }}>{user?.email}</span>
             </p>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.22)',
+              borderRadius: 8, padding: '9px 13px',
+              fontSize: 14, color: '#fef08a', lineHeight: 1.5,
+            }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>📂</span>
+              <span>{t.spamNotice}</span>
+            </div>
             <div style={{
               background: 'var(--bg-3)', border: '1px solid var(--border-2)',
               borderRadius: 'var(--radius)', padding: '12px 16px',
