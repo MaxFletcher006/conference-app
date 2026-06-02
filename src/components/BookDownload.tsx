@@ -24,8 +24,8 @@ export function BookDownload() {
         {t.colorBookLabel}
       </p>
       <a
-        href="/documents/LHCb_color_book.pdf"
-        download="LHCb_color_book.pdf"
+        href={`/documents/LHCb_color_book_${lang}.pdf`}
+        download={`LHCb_color_book_${lang}.pdf`}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 10, justifyContent: 'center',
           height: 52, padding: '0 32px',

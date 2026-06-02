@@ -54,6 +54,8 @@ const T = {
     programme:       'Programme',
     speakers:        'Speakers & Panelists',
     moderator:       'Moderator',
+    // ticket support
+    ticketSupport:   'If you have any problems purchasing tickets, please contact',
     // ticket status
     ticketPurchased: '✓ Ticket Purchased',
     noTicketToast:   'Purchase a ticket first to submit questions.',
@@ -99,6 +101,8 @@ const T = {
     programme:       'Хөтөлбөр',
     speakers:        'Илтгэгчид ба Хэлэлцүүлэгчид',
     moderator:       'Дарга',
+    // ticket support
+    ticketSupport:   'Хэрэв танд тасалбар авахтай асуудал гарвал дараах хаягаар холбогдоно уу:',
     // ticket status
     ticketPurchased: '✓ Тасалбар авсан',
     noTicketToast:   'Асуулт тавихын тулд эхлээд тасалбар авна уу.',
@@ -329,6 +333,24 @@ export default function AttendeePage() {
           <ActionCard icon="🎫" title={t.buyTicket} desc={t.buyDesc} color="var(--blue)"   dimColor="var(--blue-dim)"   onClick={handleOpenTicketModal} />
           <ActionCard icon="💬" title={t.askQ}      desc={t.askDesc}  color="var(--purple)" dimColor="var(--purple-dim)" onClick={handleOpenQuestionModal} />
           <ActionCard icon="📋" title={t.myQ}       desc={t.myQDesc}  color="var(--green)"  dimColor="var(--green-dim)"  onClick={handleOpenMyQuestions} />
+        </div>
+
+        {/* Ticket support notice */}
+        <div style={{
+          marginBottom: 40,
+          display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+          background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.18)',
+          borderRadius: 10, padding: '10px 16px',
+          fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6,
+        }}>
+          <span style={{ fontSize: 16 }}>✉️</span>
+          <span>{t.ticketSupport}</span>
+          <a
+            href="mailto:cernmongolia2026@gmail.com"
+            style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)', textDecoration: 'none' }}
+          >
+            cernmongolia2026@gmail.com
+          </a>
         </div>
 
         {/* Events */}

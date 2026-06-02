@@ -81,7 +81,7 @@ class Transaction(SQLModel, table=True):
     url: str = Field(index=True)
     
 
-engine = create_engine(DB_URL)
+engine = create_engine(DB_URL, pool_pre_ping=True, pool_recycle=1800)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
