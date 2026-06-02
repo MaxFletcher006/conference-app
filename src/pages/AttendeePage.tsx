@@ -207,7 +207,6 @@ export default function AttendeePage() {
       if (result.invoice_url) {
         window.open(result.invoice_url, '_blank', 'noopener,noreferrer')
         setTicketModal(false)
-        setHasTicket(true)
         toast(t.invoiceToast)
       } else {
         toast(result.error || 'Failed to create invoice', 'err')
