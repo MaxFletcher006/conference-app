@@ -488,8 +488,8 @@ export default function AttendeePage() {
               </div>
             </div>
             <div className="announcements-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              display: 'flex',
+              flexDirection: 'column',
               gap: 12,
             }}>
               {posts.map(p => (
