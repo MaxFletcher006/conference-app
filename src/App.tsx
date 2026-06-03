@@ -32,6 +32,7 @@ import TicketValidationsPage from './pages/TicketValidationsPage'
 import ValidationsAdminPage from './pages/ValidationsAdminPage'
 import TransactionsPage from './pages/TransactionsPage'
 import TicketsPage from './pages/TicketsPage'
+import PostsPage from './pages/PostsPage'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -117,6 +118,7 @@ function AppRoutes() {
         <Route index element={<DashboardOverview />} />
         <Route path="users"         element={<UsersPage />} />
         <Route path="events"        element={<EventsPage />} />
+        <Route path="posts"         element={<PostsPage />} />
         <Route path="questions"     element={<QuestionsPage />} />
         <Route path="validations"   element={<ValidationsAdminPage />} />
         <Route path="transactions"  element={<TransactionsPage />} />

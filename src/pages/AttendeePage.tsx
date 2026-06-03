@@ -2,8 +2,8 @@ import { useEffect, useState, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   getAllEvents, addQuestion, getQuestionsByUser,
-  createInvoice, checkUserTicket,
-  Event, Question, apiErr,
+  createInvoice, checkUserTicket, getAllPosts,
+  Event, Question, Post, apiErr,
 } from '../api/client'
 
 import { useAuth } from '../context/AuthContext'
@@ -60,6 +60,9 @@ const T = {
     // ticket status
     ticketPurchased: '✓ Ticket Purchased',
     noTicketToast:   'Purchase a ticket first to submit questions.',
+    // announcements
+    announcements:   'Announcements',
+    noAnnouncements: '— No announcements yet —',
     // date
     weekdays:        ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
   },
@@ -98,16 +101,19 @@ const T = {
     totalPrice:      (n: number) => `Нийт: ₮${(n * PRICE_PER_DAY).toLocaleString()}`,
     invoiceToast:    'Төлбөрийн линк нээгдлээ — төлбөрөө хийснээр тасалбар и-мэйл рүү таны илгээгдэнэ.',
     // public lecture
-    publicLecture:   'Нийтийн Лекц',
+    publicLecture:   'Олон Нийтийн Лекц',
     programme:       'Хөтөлбөр',
     speakers:        'Илтгэгчид ба Хэлэлцүүлэгчид',
-    moderator:       'Дарга',
+    moderator:       'Модератор',
     // ticket support
     spamNotice:      'Тасалбар спам фолдерт орсон байх боломжтой тул спам фолдероо шалгаарай.',
     ticketSupport:   'Хэрэв танд тасалбар авахтай асуудал гарвал дараах хаягаар холбогдоно уу:',
     // ticket status
     ticketPurchased: '✓ Тасалбар авсан',
     noTicketToast:   'Асуулт тавихын тулд эхлээд тасалбар авна уу.',
+    // announcements
+    announcements:   'Мэдэгдэлүүд',
+    noAnnouncements: '— Мэдэгдэл байхгүй байна —',
     // date
     weekdays:        ['Ням','Даваа','Мягмар','Лхагва','Пүрэв','Баасан','Бямба'],
   },
@@ -146,6 +152,7 @@ export default function AttendeePage() {
 
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
+  const [posts, setPosts] = useState<Post[]>([])
 
   const [ticketModal, setTicketModal] = useState(false)
   const [purchasingTicket, setPurchasingTicket] = useState(false)
@@ -160,6 +167,7 @@ export default function AttendeePage() {
   const [loadingQuestions, setLoadingQuestions] = useState(false)
 
   const [hasTicket, setHasTicket] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(true)
 
   useEffect(() => {
     getAllEvents()
@@ -168,6 +176,9 @@ export default function AttendeePage() {
       .finally(() => setLoading(false))
     checkUserTicket()
       .then(({ has_ticket }) => setHasTicket(has_ticket))
+      .catch(() => {})
+    getAllPosts()
+      .then(setPosts)
       .catch(() => {})
   }, [])
 
@@ -259,61 +270,170 @@ export default function AttendeePage() {
       <div className="nebula nebula-1" />
       <div className="nebula nebula-2" />
 
+      {/* ── Welcome overlay ── */}
+      {showWelcome && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 300,
+          background: 'rgba(6,9,17,0.80)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px',
+        }}>
+          <div style={{
+            background: 'var(--bg-2)',
+            border: '1px solid var(--border-2)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '32px 28px',
+            maxWidth: 520, width: '100%',
+            maxHeight: '90vh', overflowY: 'auto',
+            display: 'flex', flexDirection: 'column', gap: 20,
+            boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
+          }}>
+            {/* Badge */}
+            <div style={{ textAlign: 'center' }}>
+              <span style={{
+                display: 'inline-block',
+                fontFamily: 'var(--font-mono)', fontSize: 12,
+                color: 'var(--blue)', letterSpacing: '0.15em',
+                border: '1px solid rgba(82,96,217,0.35)',
+                background: 'rgba(82,96,217,0.08)',
+                borderRadius: 4, padding: '5px 14px',
+              }}>
+                MONGOLIA — CERN LHCb 2026
+              </span>
+            </div>
+
+            {/* Title */}
+            <div>
+              <h2 style={{
+                margin: 0, fontSize: 20, fontWeight: 700,
+                color: '#ffffff', lineHeight: 1.4, textAlign: 'center',
+              }}>
+               Тавтай морил 👋
+              </h2>
+            </div>
+
+            {/* Info blocks */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+              {/* Ticket required */}
+              <div style={{
+                background: 'rgba(251,191,36,0.07)',
+                border: '1px solid rgba(251,191,36,0.22)',
+                borderLeft: '3px solid var(--yellow)',
+                borderRadius: '0 8px 8px 0',
+                padding: '12px 14px',
+                fontSize: 14, color: '#fef3c7', lineHeight: 1.7,
+              }}>
+                2026 оны 06 сарын 09-ны 16:00 цагийн Олон нийтийн лекц нь 10,000 ₮-ийн төлбөртэй тул лекцэнд оролцохын тулд эхлээд тасалбараа худалдан авах ёстойг анхаараарай.
+              </div>
+
+              {/* How to buy */}
+              <div style={{
+                background: 'rgba(82,96,217,0.07)',
+                border: '1px solid rgba(82,96,217,0.2)',
+                borderLeft: '3px solid var(--blue)',
+                borderRadius: '0 8px 8px 0',
+                padding: '12px 14px',
+                fontSize: 14, color: '#e0e7ff', lineHeight: 1.7,
+              }}>
+                Тасалбар худалдан авахыг хүсвэл "Тасалбар Авах / Purchase Ticket" товчин дээр дарж, төлбөрийн цонхонд төлбөрөө хийснээр тасалбар таны и-мэйл хаяг руу илгээгдэнэ.
+              </div>
+
+              {/* Spam notice */}
+              <div style={{
+                background: 'rgba(74,222,128,0.06)',
+                border: '1px solid rgba(74,222,128,0.18)',
+                borderLeft: '3px solid var(--green)',
+                borderRadius: '0 8px 8px 0',
+                padding: '12px 14px',
+                fontSize: 14, color: '#d1fae5', lineHeight: 1.7,
+              }}>
+                Тасалбар таны и-мэйлийн спам фолдер луу орсон байж болзошгүй тул тасалбар ирээгүй байвал эхлээд спам фолдероо шалгаарай.
+              </div>
+
+              {/* Contact */}
+              <div style={{ fontSize: 14, color: 'var(--text-3)', lineHeight: 1.7, textAlign: 'center' }}>
+                Тасалбар болон вэбтэй холбоотой асуулт гарвал:{' '}
+                <a
+                  href="mailto:cernmongolia2026@gmail.com"
+                  style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+                >
+                  cernmongolia2026@gmail.com
+                </a>
+              </div>
+            </div>
+
+            {/* Continue button */}
+            <button
+              onClick={() => setShowWelcome(false)}
+              style={{
+                width: '100%', padding: '12px',
+                background: 'var(--blue)', border: 'none',
+                borderRadius: 'var(--radius)', cursor: 'pointer',
+                color: '#ffffff', fontSize: 15, fontWeight: 700,
+                fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
+                transition: 'opacity 0.2s',
+              }}
+              onMouseOver={e => (e.currentTarget.style.opacity = '0.85')}
+              onMouseOut={e => (e.currentTarget.style.opacity = '1')}
+            >
+              Үргэлжлүүлэх
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Nav ── */}
-      <nav className="attendee-nav" style={{
+      <nav style={{
         position: 'sticky', top: 0, zIndex: 50,
         borderBottom: '1px solid var(--border)',
         background: 'rgba(8,8,16,0.85)', backdropFilter: 'blur(20px)',
-        padding: '0 32px', height: 60,
+        padding: '0 24px', height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'relative',
       }}>
-        <div className="attendee-brand" style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, overflow: 'hidden' }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-            background: 'var(--blue)', boxShadow: '0 0 12px var(--blue)',
-            animation: 'dashPulse 2.5s ease-in-out infinite',
-          }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: '#ffffff', letterSpacing: '0.1em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {t.brand}
-          </span>
+        {/* Language toggle */}
+        <div style={{ display: 'flex', borderRadius: 8, border: '1px solid var(--border-2)', overflow: 'hidden' }}>
+          {(['en', 'mn'] as Lang[]).map((l) => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              style={{
+                padding: '5px 14px', border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.06em', textTransform: 'uppercase',
+                background: lang === l ? 'var(--blue)' : 'transparent',
+                color: lang === l ? '#ffffff' : 'var(--text-3)',
+                transition: 'all 0.15s',
+              }}
+            >
+              {l === 'en' ? 'EN' : 'МН'}
+            </button>
+          ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Language toggle */}
-          <div style={{
-            display: 'flex', borderRadius: 8,
-            border: '1px solid var(--border-2)', overflow: 'hidden',
-          }}>
-            {(['en', 'mn'] as Lang[]).map((l) => (
-              <button
-                key={l}
-                onClick={() => setLang(l)}
-                style={{
-                  padding: '5px 14px', border: 'none', cursor: 'pointer',
-                  fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)',
-                  letterSpacing: '0.06em', textTransform: 'uppercase',
-                  background: lang === l ? 'var(--blue)' : 'transparent',
-                  color: lang === l ? '#ffffff' : 'var(--text-3)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {l === 'en' ? 'EN' : 'МН'}
-              </button>
-            ))}
-          </div>
-          <span className="attendee-nav-user" style={{ fontSize: 15, color: '#ffffff' }}>
-            {user?.firstname} {user?.lastname}
-          </span>
-          <button
-            onClick={handleLogout}
-            style={{
-              background: 'transparent', border: '1px solid var(--border-2)',
-              borderRadius: 'var(--radius)', padding: '6px 14px',
-              color: '#ffffff', fontSize: 15, cursor: 'pointer', transition: 'all 0.2s',
-            }}
-          >
-            {t.signOut}
-          </button>
-        </div>
+
+        {/* Name — centered absolutely */}
+        <span style={{
+          position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+          fontSize: 14, color: 'var(--text-3)', fontFamily: 'var(--font-mono)',
+          pointerEvents: 'none',
+        }}>
+          {user?.firstname} {user?.lastname}
+        </span>
+
+        {/* Sign out */}
+        <button
+          onClick={handleLogout}
+          style={{
+            background: 'transparent', border: '1px solid var(--border-2)',
+            borderRadius: 'var(--radius)', padding: '6px 14px',
+            color: '#ffffff', fontSize: 14, cursor: 'pointer', transition: 'all 0.2s',
+          }}
+        >
+          {t.signOut}
+        </button>
       </nav>
 
       {/* ── Content ── */}
@@ -353,6 +473,54 @@ export default function AttendeePage() {
             cernmongolia2026@gmail.com
           </a>
         </div>
+
+        {/* Announcements */}
+        {posts.length > 0 && (
+          <section style={{ marginBottom: 48 }}>
+            <div style={{ display: 'flex', alignItems: 'stretch', gap: 14, marginBottom: 16 }}>
+              <div style={{ width: 3, borderRadius: 2, background: 'var(--purple)', flexShrink: 0 }} />
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 13,
+                color: 'var(--purple)', letterSpacing: '0.15em',
+                textTransform: 'uppercase', alignSelf: 'center',
+              }}>
+                {t.announcements}
+              </div>
+            </div>
+            <div className="announcements-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 12,
+            }}>
+              {posts.map(p => (
+                <div
+                  key={p.id}
+                  style={{
+                    background: 'var(--bg-2)',
+                    border: '1px solid rgba(124,58,237,0.22)',
+                    borderLeft: '3px solid var(--purple)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '16px 18px',
+                    display: 'flex', flexDirection: 'column', gap: 8,
+                  }}
+                >
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#ffffff', lineHeight: 1.4 }}>
+                    {p.header}
+                  </div>
+                  <div style={{
+                    fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6,
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                  }}>
+                    {p.body}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                    🕒 {new Date(p.time).toLocaleDateString(lang === 'mn' ? 'mn-MN' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Events */}
         {loading ? (

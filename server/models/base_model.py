@@ -29,13 +29,18 @@ class EventModel(BaseModel):
     building: str 
     room: str 
 
-'''
-class PostModel(BaseModel):
-    user_id: int
-    time: str  
-    header: str 
+class PostCreate(BaseModel):
+    header: str
     body: str
-'''
+    staff_only: bool = False
+
+class PostReturn(BaseModel):
+    id: int
+    user_id: int | None
+    time: str
+    header: str
+    body: str
+    staff_only: bool
 
 class QuestionModel(BaseModel):
     user_id: int 

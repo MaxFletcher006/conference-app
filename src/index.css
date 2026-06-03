@@ -231,22 +231,36 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* ── MOBILE MORE DRAWER ── */
+.more-drawer {
+  display: none;
+}
+@media (max-width: 768px) {
+  .more-drawer {
+    display: block;
+    position: fixed;
+    bottom: 64px; left: 0; right: 0;
+    z-index: 99;
+    background: rgba(10, 10, 22, 0.98);
+    border: 1px solid var(--border-2);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    padding: 16px 12px 12px;
+  }
+  .more-drawer-link {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 8px 12px; border: none; background: none;
+    color: var(--text-3); font-size: 10px;
+    font-family: var(--font-mono); letter-spacing: 0.04em;
+    text-decoration: none; cursor: pointer; transition: color 0.2s;
+    min-width: 64px; border-radius: 8px;
+  }
+  .more-drawer-link:hover,
+  .more-drawer-link.active { color: var(--blue); }
+}
+
 /* ── ATTENDEE PAGE RESPONSIVE ── */
 @media (max-width: 640px) {
-  .attendee-nav {
-    padding: 8px 12px !important;
-    height: auto !important;
-    min-height: 52px;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .attendee-nav .attendee-brand span {
-    font-size: 11px !important;
-    letter-spacing: 0.05em !important;
-  }
-  .attendee-nav-user {
-    display: none !important;
-  }
   .attendee-page-content {
     padding: 20px 14px !important;
   }
@@ -268,6 +282,9 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
+  }
+  .announcements-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 

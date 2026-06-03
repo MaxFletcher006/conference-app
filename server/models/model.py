@@ -30,14 +30,13 @@ class Event(SQLModel, table=True):
     building: str | None = Field(index=True)
     room: str | None = Field(index=True)
 
-'''
 class Post(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="user.id")
+    user_id: int | None = Field(default=None, foreign_key="user.id", ondelete="SET NULL")
     time: str = Field(index=True)
     header: str
-    body: str 
-'''
+    body: str
+    staff_only: bool = Field(default=False)
 
 class Ticket(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)

@@ -10,8 +10,8 @@ from starlette.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
-from models.model import User, Event, Ticket, MailList, Question, Validation, Transaction, create_db_and_tables, get_session, engine
-from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel, UserUpdate
+from models.model import User, Event, Post, Ticket, MailList, Question, Validation, Transaction, create_db_and_tables, get_session, engine
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel, UserUpdate, PostCreate, PostReturn
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from gmail_sender import send_email
@@ -634,7 +634,7 @@ def admin_delete_ticket(
 
 @app.get("/tickets")
 def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
-    return session.exec(select(func.count()).select_from(Validation)).one()
+    return len(session.exec(select(Ticket)).all())
 
 @app.get("/ticket/check")
 def check_user_ticket(session: SessionDep, current_user: dict = Depends(require_role("attendee"))):
@@ -738,86 +738,64 @@ async def byl_webhook(session: SessionDep, request: Request, background_tasks: B
 
 # ---- POST FUNCTIONS ---- #
 
-'''
-@app.get("/all-posts", response_model=List[PostModel])
-def get_all_post(session: SessionDep):
+@app.get("/all-posts", response_model=List[PostReturn])
+def get_all_posts(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "attendee"))):
     try:
-        return session.exec(select(Post)).all()
+        return session.exec(select(Post).order_by(Post.time.desc())).all()
     except Exception as e:
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")
-    
-@app.post("/create-post")
-async def create_post(session: SessionDep, data: PostModel):
-    db_post = Post.model_validate(data)
 
-    try: 
+@app.post("/create-post", response_model=PostReturn)
+async def create_post(session: SessionDep, data: PostCreate, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    db_post = Post(
+        user_id=current_user.get("user_id"),
+        time=now,
+        header=data.header,
+        body=data.body,
+        staff_only=data.staff_only,
+    )
+    try:
         session.add(db_post)
         session.commit()
         session.refresh(db_post)
 
-        email_list = get_mail_list(session=session)
-        await publish_post(type="created", db_post=db_post, email_list=email_list)
+        if data.staff_only:
+            recipients = session.exec(
+                select(User).where(User.role.in_(["staff", "supervisor", "admin"]))
+            ).all()
+        else:
+            recipients = session.exec(
+                select(User).where(User.role == "attendee")
+            ).all()
+        email_list = [EmailSchema(email=u.email) for u in recipients]
 
-        return {"message": "Post successfully added"}
-    
+        await publish_post(db_post=db_post, email_list=email_list)
+
+        return db_post
     except Exception as e:
         session.rollback()
         print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail="Error occured")
+        raise HTTPException(status_code=500, detail="Error occurred")
 
-@app.put("/update-post/{post_id}")
-async def update_post(post_id: int, data: PostModel, session: SessionDep):
+@app.delete("/delete-post/{post_id}")
+async def delete_post(post_id: int, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
     try:
         db_post = session.get(Post, post_id)
         if not db_post:
             raise HTTPException(status_code=404, detail="Post not found")
-
-        update_data = data.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(db_post, key, value)
-
-        session.add(db_post)
-        session.commit()
-        session.refresh(db_post)
-
-        email_list = get_mail_list(session=session)
-        await publish_post(type="updated", db_post=db_post, email_list=email_list)
-
-        return {"message": "Post successfully updated"}
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        session.rollback()
-        print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-@app.delete("/cancel-post/{post_id}")
-async def cancel_post(post_id: int, session: SessionDep):
-    try:
-        db_post = session.get(Post, post_id)
-        if not db_post:
-            raise HTTPException(status_code=404, detail="Post not found")
-
-        email_list = get_mail_list(session=session)
-        await publish_post(type="cancelled", db_post=db_post, email_list=email_list)
 
         session.delete(db_post)
         session.commit()
-
-        return {"message": "Post successfully cancelled"}
+        return {"message": "Post deleted successfully"}
 
     except HTTPException:
         raise
-
     except Exception as e:
         session.rollback()
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
-'''
     
 # ---- QUESTION FUNCTIONS ---- #
 
@@ -1212,6 +1190,176 @@ async def publish_event(type: str, db_event: Event, email_list: List[EmailSchema
             await mail_service(type=type, db_event=db_event, email=email_list)
         case "cancelled":
             await mail_service(type=type, db_event=db_event, email=email_list)
+
+async def post_mail_service(db_post: Post, email: List[EmailSchema]):
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin:0;padding:0;background-color:#060911;font-family:'Segoe UI',Arial,sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#060911;padding:40px 0;">
+        <tr>
+        <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;">
+
+            <!-- TOP BADGE -->
+            <tr>
+                <td align="center" style="padding-bottom:24px;">
+                <span style="
+                    display:inline-block;
+                    font-family:'Courier New',monospace;
+                    font-size:13px;
+                    letter-spacing:0.15em;
+                    color:#38bdf8;
+                    border:1px solid rgba(56,189,248,0.3);
+                    background:rgba(56,189,248,0.07);
+                    padding:6px 16px;
+                    border-radius:4px;
+                ">MONGOLIA - CERN LHCb 2026</span>
+                </td>
+            </tr>
+
+            <!-- MAIN CARD -->
+            <tr>
+                <td style="
+                background:rgba(6,10,22,0.95);
+                border:1px solid rgba(56,189,248,0.16);
+                border-radius:16px;
+                overflow:hidden;
+                ">
+
+                <!-- HEADER -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                    <td style="
+                        background:linear-gradient(135deg,#0f172a 0%,#0c1a3a 50%,#0f172a 100%);
+                        padding:40px 40px 36px;
+                        border-bottom:1px solid #7c3aed33;
+                        text-align:center;
+                    ">
+                        <div style="
+                        width:12px;height:12px;border-radius:50%;
+                        background:#7c3aed;
+                        box-shadow:0 0 20px 6px #7c3aed99;
+                        margin:0 auto 20px;
+                        display:block;
+                        "></div>
+
+                        <h1 style="
+                        margin:0 0 10px;
+                        font-size:26px;
+                        font-weight:700;
+                        color:#ffffff;
+                        letter-spacing:-0.02em;
+                        line-height:1.2;
+                        ">{db_post.header}</h1>
+                    </td>
+                    </tr>
+                </table>
+
+                <!-- BODY -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                    <td style="padding:36px 40px;">
+
+                        <div style="
+                        background:rgba(255,255,255,0.02);
+                        border:1px solid rgba(255,255,255,0.07);
+                        border-left:3px solid #7c3aed;
+                        border-radius:0 10px 10px 0;
+                        padding:20px 22px;
+                        margin-bottom:28px;
+                        font-size:15px;
+                        color:#94a3b8;
+                        line-height:1.8;
+                        white-space:pre-line;
+                        ">{db_post.body}</div>
+
+                        <div style="
+                        background:rgba(56,189,248,0.05);
+                        border:1px solid rgba(56,189,248,0.18);
+                        border-left:3px solid #38bdf8;
+                        border-radius:0 10px 10px 0;
+                        padding:16px 20px;
+                        margin-bottom:28px;
+                        ">
+                        <p style="
+                            margin:0 0 6px;
+                            font-size:13px;
+                            font-family:'Courier New',monospace;
+                            color:#38bdf8;
+                            letter-spacing:0.08em;
+                        ">📌 STAY UPDATED</p>
+                        <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6;">
+                            Check the conference portal regularly for the latest updates
+                            and announcements from the CERN Mongolia 2026 team.
+                        </p>
+                        </div>
+
+                        <p style="margin:0;font-size:13px;color:#475569;font-family:'Courier New',monospace;">
+                        Posted: {db_post.time} UTC
+                        </p>
+
+                    </td>
+                    </tr>
+                </table>
+
+                <!-- ENERGY BAR -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                    <td style="padding:0 40px;">
+                        <div style="
+                        height:2px;
+                        border-radius:2px;
+                        background:linear-gradient(90deg,#38bdf8,#f472b6,#34d399);
+                        opacity:0.3;
+                        "></div>
+                    </td>
+                    </tr>
+                </table>
+
+                <!-- FOOTER -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                    <td style="padding:24px 40px;text-align:center;">
+                        <p style="
+                        margin:0;
+                        font-size:12px;
+                        font-family:'Courier New',monospace;
+                        color:#334155;
+                        letter-spacing:0.06em;
+                        ">
+                        AUTOMATED NOTIFICATION — DO NOT REPLY<br>
+                        © MONGOLIA - CERN LHCb 2026 CONFERENCE
+                        </p>
+                    </td>
+                    </tr>
+                </table>
+
+                </td>
+            </tr>
+
+            </table>
+        </td>
+        </tr>
+    </table>
+
+    </body>
+    </html>
+    """
+    recipients = [entry.email for entry in email]
+    await send_email(
+        to=recipients,
+        subject="Шинэ зарлал | New Announcement - Mongolia - CERN LHCb 2026",
+        html_body=html_body
+    )
+
+async def publish_post(db_post: Post, email_list: List[EmailSchema]):
+    await post_mail_service(db_post=db_post, email=email_list)
 
 async def _issue_ticket(user_id: int, day_length: int):
     with Session(engine) as session:

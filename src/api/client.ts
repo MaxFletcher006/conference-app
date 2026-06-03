@@ -37,9 +37,24 @@ export interface Event {
   room: string
 }
 
+export interface Post {
+  id: number
+  user_id: number | null
+  time: string
+  header: string
+  body: string
+  staff_only: boolean
+}
+
+export interface PostPayload {
+  header: string
+  body: string
+  staff_only: boolean
+}
+
 export interface Question {
   user_id: number
-  event_id: number      
+  event_id: number
   question: string
   time: string
 }
@@ -244,3 +259,12 @@ export const adminIssueTicket = (userId: number) =>
 
 export const adminDeleteTicket = (userId: number) =>
   client.delete<{ message: string }>(`/admin/ticket/${userId}`).then(r => r.data)
+
+export const getAllPosts = () =>
+  client.get<Post[]>('/all-posts').then(r => r.data)
+
+export const createPost = (payload: PostPayload) =>
+  client.post<Post>('/create-post', payload).then(r => r.data)
+
+export const deletePost = (postId: number) =>
+  client.delete<{ message: string }>(`/delete-post/${postId}`).then(r => r.data)

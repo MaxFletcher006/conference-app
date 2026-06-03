@@ -182,7 +182,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, animation: 'fadeIn 0.15s ease',
+      zIndex: 1000, animation: 'fadeIn 0.15s ease', padding: 16,
     }}>
       <div style={{
         background: 'var(--bg-2)', border: '1px solid var(--border)',
