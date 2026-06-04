@@ -277,4 +277,4 @@ export interface StaffTicketPayload {
 }
 
 export const staffCreateTicket = (payload: StaffTicketPayload) =>
-  client.post<{ message: string }>('/staff/ticket/create', payload).then(r => r.data)
+  client.post<{ invoice_url?: string; email?: string; error?: string }>('/staff/ticket/create', payload).then(r => r.data)

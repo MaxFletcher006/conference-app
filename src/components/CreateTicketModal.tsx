@@ -15,9 +15,14 @@ export default function CreateTicketModal({ onClose }: { onClose: () => void }) 
     e.preventDefault()
     setLoading(true)
     try {
-      await staffCreateTicket(form)
-      toast('Ticket issued — email sent to attendee', 'ok')
-      onClose()
+      const result = await staffCreateTicket(form)
+      if (result.invoice_url) {
+        window.open(result.invoice_url, '_blank', 'noopener,noreferrer')
+        toast(`Payment link opened — ticket will be emailed to ${result.email} after payment`)
+        onClose()
+      } else {
+        toast(result.error ?? 'Failed to create invoice', 'err')
+      }
     } catch (err) {
       toast(apiErr(err, 'Failed to create ticket'), 'err')
     } finally {
@@ -65,7 +70,7 @@ export default function CreateTicketModal({ onClose }: { onClose: () => void }) 
             Issue Conference Pass
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5 }}>
-            Enter the attendee's details. A ticket will be generated and emailed to them.
+            Enter the attendee's details. A payment link will open — the ticket is emailed after payment.
           </p>
         </div>
 
@@ -99,7 +104,17 @@ export default function CreateTicketModal({ onClose }: { onClose: () => void }) 
             </div>
           ))}
 
-          <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+          {/* Price display — same as AttendeePage */}
+          <div style={{
+            background: 'var(--bg-3)', border: '1px solid var(--border-2)',
+            borderRadius: 'var(--radius)', padding: '12px 16px',
+            fontFamily: 'var(--font-mono)', fontSize: 15,
+            color: 'var(--blue)', letterSpacing: '0.05em',
+          }}>
+            Total: ₮10,000
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <button
               type="button"
               onClick={onClose}
@@ -125,7 +140,7 @@ export default function CreateTicketModal({ onClose }: { onClose: () => void }) 
                 opacity: loading ? 0.7 : 1,
               }}
             >
-              {loading ? 'Issuing...' : 'Issue Ticket'}
+              {loading ? 'Creating...' : 'Open Payment Link'}
             </button>
           </div>
         </form>

@@ -636,13 +636,13 @@ def admin_delete_ticket(
 async def staff_create_ticket(
     data: StaffTicketCreate,
     session: SessionDep,
-    background_tasks: BackgroundTasks,
     current_user: dict = Depends(require_role("admin", "supervisor", "staff")),
 ):
     existing_user = session.exec(select(User).where(User.email == data.email)).first()
 
     if existing_user:
         user_id = existing_user.id
+        username = f"{existing_user.firstname} {existing_user.lastname}"
     else:
         random_password = str(uuid4()).replace("-", "")[:16]
         hashed = bcrypt.hashpw(random_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
@@ -666,13 +666,44 @@ async def staff_create_ticket(
         session.add(new_mail_entry)
         session.commit()
         user_id = new_user.id
+        username = f"{data.firstname} {data.lastname}"
 
     existing_ticket = session.exec(select(Ticket).where(Ticket.user_id == user_id)).first()
     if existing_ticket:
         raise HTTPException(status_code=409, detail="This attendee already has a ticket")
 
-    background_tasks.add_task(_issue_ticket, user_id, 1)
-    return {"message": f"Ticket will be issued and emailed to {data.email}"}
+    if not BYL_URL or not BYL_TOKEN:
+        raise HTTPException(status_code=503, detail="Payment service not configured")
+
+    headers = {
+        "Authorization": f"Bearer {BYL_TOKEN}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    invoice_payload = {
+        "amount": 10000,
+        "description": f"ID:{user_id} | NAME:{username}",
+        "auto_advance": True,
+    }
+
+    try:
+        async with httpx.AsyncClient() as http:
+            response = await http.post(
+                f"{BYL_URL}/api/v1/projects/{BYL_PROJECT_ID}/invoices",
+                headers=headers,
+                json=invoice_payload,
+            )
+            if not response.is_success:
+                raise HTTPException(status_code=502, detail="Failed to create invoice")
+            result = response.json()
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=502, detail=f"Payment service unreachable: {str(e)}")
+
+    invoice_url = result.get("data", {}).get("url")
+    if not invoice_url:
+        raise HTTPException(status_code=502, detail="Invoice URL not found in response")
+
+    return {"invoice_url": invoice_url, "email": data.email}
 
 @app.get("/tickets")
 def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
