@@ -11,7 +11,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
 from models.model import User, Event, Post, Ticket, MailList, Question, Validation, Transaction, create_db_and_tables, get_session, engine
-from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel, UserUpdate, PostCreate, PostReturn
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel, UserUpdate, PostCreate, PostReturn, StaffTicketCreate
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from gmail_sender import send_email
@@ -631,6 +631,48 @@ def admin_delete_ticket(
     session.delete(ticket)
     session.commit()
     return {"message": "Ticket deleted"}
+
+@app.post("/staff/ticket/create")
+async def staff_create_ticket(
+    data: StaffTicketCreate,
+    session: SessionDep,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(require_role("admin", "supervisor", "staff")),
+):
+    existing_user = session.exec(select(User).where(User.email == data.email)).first()
+
+    if existing_user:
+        user_id = existing_user.id
+    else:
+        random_password = str(uuid4()).replace("-", "")[:16]
+        hashed = bcrypt.hashpw(random_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        new_user = User(
+            firstname=data.firstname,
+            lastname=data.lastname,
+            email=data.email,
+            phone_number=data.phone_number,
+            password=hashed,
+            role="attendee",
+        )
+        session.add(new_user)
+        try:
+            session.commit()
+            session.refresh(new_user)
+        except IntegrityError:
+            session.rollback()
+            raise HTTPException(status_code=409, detail="Email already registered")
+
+        new_mail_entry = MailList(user_id=new_user.id, email=new_user.email)
+        session.add(new_mail_entry)
+        session.commit()
+        user_id = new_user.id
+
+    existing_ticket = session.exec(select(Ticket).where(Ticket.user_id == user_id)).first()
+    if existing_ticket:
+        raise HTTPException(status_code=409, detail="This attendee already has a ticket")
+
+    background_tasks.add_task(_issue_ticket, user_id, 1)
+    return {"message": f"Ticket will be issued and emailed to {data.email}"}
 
 @app.get("/tickets")
 def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):

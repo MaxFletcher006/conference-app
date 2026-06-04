@@ -268,3 +268,13 @@ export const createPost = (payload: PostPayload) =>
 
 export const deletePost = (postId: number) =>
   client.delete<{ message: string }>(`/delete-post/${postId}`).then(r => r.data)
+
+export interface StaffTicketPayload {
+  firstname: string
+  lastname: string
+  phone_number: string
+  email: string
+}
+
+export const staffCreateTicket = (payload: StaffTicketPayload) =>
+  client.post<{ message: string }>('/staff/ticket/create', payload).then(r => r.data)

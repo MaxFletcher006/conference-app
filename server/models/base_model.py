@@ -105,3 +105,9 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     role: Optional[str] = None
     phone_number: Optional[str] = None
+
+class StaffTicketCreate(BaseModel):
+    firstname: str
+    lastname: str
+    phone_number: str
+    email: EmailStr

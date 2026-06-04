@@ -1,27 +1,28 @@
 import { useState } from 'react'
 import { Outlet, Navigate, NavLink, useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import CreateTicketModal from '../components/CreateTicketModal'
 import { useAuth, isDashboardRole } from '../context/AuthContext'
 import { Spinner } from '../components/UI'
 
-// Primary tabs shown in the bottom bar (4 slots + More/Signout)
+// Primary tabs shown in the bottom bar
 const PRIMARY_NAV: Record<string, { to: string; label: string; icon: string; end?: boolean }[]> = {
   admin: [
-    { to: '/dashboard',        label: 'Overview',  icon: '📊', end: true },
-    { to: '/dashboard/events', label: 'Events',    icon: '📅' },
-    { to: '/dashboard/posts',  label: 'Posts',     icon: '📢' },
-    { to: '/scan',             label: 'Scan',      icon: '📷' },
+    { to: '/dashboard',        label: 'Overview', icon: '📊', end: true },
+    { to: '/dashboard/events', label: 'Events',   icon: '📅' },
+    { to: '/dashboard/posts',  label: 'Posts',    icon: '📢' },
+    { to: '/scan',             label: 'Scan',     icon: '📷' },
   ],
   supervisor: [
-    { to: '/dashboard',        label: 'Overview',  icon: '📊', end: true },
-    { to: '/dashboard/events', label: 'Events',    icon: '📅' },
-    { to: '/dashboard/posts',  label: 'Posts',     icon: '📢' },
-    { to: '/scan',             label: 'Scan',      icon: '📷' },
+    { to: '/dashboard',        label: 'Overview', icon: '📊', end: true },
+    { to: '/dashboard/events', label: 'Events',   icon: '📅' },
+    { to: '/dashboard/posts',  label: 'Posts',    icon: '📢' },
+    { to: '/scan',             label: 'Scan',     icon: '📷' },
   ],
   staff: [
-    { to: '/dashboard',           label: 'Overview',   icon: '📊', end: true },
-    { to: '/dashboard/questions', label: 'Questions',  icon: '💬' },
-    { to: '/scan',                label: 'Scan',       icon: '📷' },
+    { to: '/dashboard',           label: 'Overview',  icon: '📊', end: true },
+    { to: '/dashboard/questions', label: 'Questions', icon: '💬' },
+    { to: '/scan',                label: 'Scan',      icon: '📷' },
   ],
 }
 
@@ -47,6 +48,7 @@ export default function DashboardLayout() {
   const { user, loading, logout } = useAuth()
   const navigate = useNavigate()
   const [moreOpen, setMoreOpen] = useState(false)
+  const [createTicketOpen, setCreateTicketOpen] = useState(false)
 
   if (loading) return (
     <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
@@ -66,6 +68,7 @@ export default function DashboardLayout() {
   const primaryItems = PRIMARY_NAV[role] ?? PRIMARY_NAV.staff
   const moreItems = MORE_NAV[role] ?? []
   const hasMore = moreItems.length > 0
+  const canCreateTicket = ['admin', 'supervisor', 'staff'].includes(user.role)
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
@@ -82,16 +85,17 @@ export default function DashboardLayout() {
       <main
         className="dashboard-main"
         style={{
-          flex: 1,
-          minHeight: '100vh',
+          flex: 1, minHeight: '100vh',
           background: 'transparent',
-          position: 'relative',
-          zIndex: 1,
+          position: 'relative', zIndex: 1,
           overflowY: 'auto',
         }}
       >
         <Outlet />
       </main>
+
+      {/* Create Ticket modal (mobile) */}
+      {createTicketOpen && <CreateTicketModal onClose={() => setCreateTicketOpen(false)} />}
 
       {/* "More" drawer backdrop */}
       {moreOpen && (
@@ -105,7 +109,7 @@ export default function DashboardLayout() {
       )}
 
       {/* "More" drawer — slides up above the bottom nav (mobile only) */}
-      {hasMore && (
+      {(hasMore || canCreateTicket) && (
         <div
           className="more-drawer"
           style={{
@@ -125,6 +129,18 @@ export default function DashboardLayout() {
                 {item.label}
               </NavLink>
             ))}
+
+            {canCreateTicket && (
+              <button
+                className="more-drawer-link"
+                onClick={() => { setMoreOpen(false); setCreateTicketOpen(true) }}
+                style={{ color: 'var(--blue)' }}
+              >
+                <span className="nav-icon">🎟️</span>
+                Create Ticket
+              </button>
+            )}
+
             <button
               className="more-drawer-link"
               onClick={() => { setMoreOpen(false); handleLogout() }}
@@ -150,18 +166,30 @@ export default function DashboardLayout() {
           </NavLink>
         ))}
 
-        {hasMore ? (
+        {/* Staff: no More drawer → show Create Ticket + Sign out directly */}
+        {!hasMore && canCreateTicket ? (
+          <>
+            <button onClick={() => setCreateTicketOpen(true)} style={{ color: 'var(--blue)' }}>
+              <span className="nav-icon">🎟️</span>
+              Ticket
+            </button>
+            <button onClick={handleLogout}>
+              <span className="nav-icon">🚪</span>
+              Sign out
+            </button>
+          </>
+        ) : !hasMore ? (
+          <button onClick={handleLogout}>
+            <span className="nav-icon">🚪</span>
+            Sign out
+          </button>
+        ) : (
           <button
             onClick={() => setMoreOpen(v => !v)}
             style={{ color: moreOpen ? 'var(--blue)' : undefined }}
           >
             <span className="nav-icon">{moreOpen ? '✕' : '•••'}</span>
             More
-          </button>
-        ) : (
-          <button onClick={handleLogout}>
-            <span className="nav-icon">🚪</span>
-            Sign out
           </button>
         )}
       </nav>
