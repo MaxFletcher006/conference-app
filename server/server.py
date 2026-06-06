@@ -554,12 +554,13 @@ def get_validations_full(session: SessionDep, current_user: dict = Depends(requi
     for v in validations:
         ticket = session.exec(select(Ticket).where(Ticket.qr_code_data == v.ticket_uuid)).first()
         attendee = session.get(User, ticket.user_id) if ticket else None
+        attendee_name = f"{attendee.firstname} {attendee.lastname}" if attendee else "Unknown"
         result.append({
             "val_id": v.val_id,
             "ticket_uuid": v.ticket_uuid,
-            "validated_user": v.validated_user,        
-            "staff_name": v.validated_user,            
-            "staff_id": v.user_id,                     
+            "validated_user": attendee_name,
+            "staff_name": v.validated_user,
+            "staff_id": v.user_id,
             "validation_time": v.validation_time,
         })
     return result

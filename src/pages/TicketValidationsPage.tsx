@@ -15,7 +15,7 @@ export default function TicketValidationsPage() {
   }, [])
 
   const filtered = validations.filter(v =>
-    v.attendee_name.toLowerCase().includes(search.toLowerCase()) ||
+    (v.attendee_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
     v.validated_user.toLowerCase().includes(search.toLowerCase()) ||
     v.ticket_uuid.toLowerCase().includes(search.toLowerCase())
   )
@@ -89,10 +89,27 @@ export default function TicketValidationsPage() {
         ) : (
           <div className="table-wrapper">
             <Table
-              headers={['Attendee', 'Ticket UUID', 'Validated At']}
+              headers={['Staff', 'Attendee', 'Ticket UUID', 'Scanned At']}
               rows={filtered.map((v, i) => {
                 const isToday = v.validation_time?.startsWith(todayStr)
                 return [
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: '50%',
+                      background: 'rgba(74,222,128,0.12)',
+                      border: '1px solid rgba(74,222,128,0.2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, fontWeight: 700, color: 'var(--green)',
+                      flexShrink: 0,
+                      fontFamily: 'var(--font-mono)',
+                    }}>
+                      {v.validated_user?.charAt(0).toUpperCase()}
+                    </div>
+                    <span style={{ fontWeight: 600, fontSize: 15, color: '#ffffff' }}>
+                      {v.validated_user}
+                    </span>
+                  </div>,
+
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{
                       width: 32, height: 32, borderRadius: '50%',
@@ -103,10 +120,10 @@ export default function TicketValidationsPage() {
                       flexShrink: 0,
                       fontFamily: 'var(--font-mono)',
                     }}>
-                      {(v.attendee_name ?? v.validated_user)?.charAt(0).toUpperCase()}
+                      {(v.attendee_name ?? '?').charAt(0).toUpperCase()}
                     </div>
-                    <span style={{ fontWeight: 600, fontSize: 15, color: '#ffffff' }}>
-                      {v.attendee_name ?? v.validated_user}
+                    <span style={{ fontSize: 15, color: 'var(--text-2)' }}>
+                      {v.attendee_name ?? '—'}
                     </span>
                   </div>,
 
