@@ -156,6 +156,7 @@ export default function AttendeePage() {
 
   const [ticketModal, setTicketModal] = useState(false)
   const [purchasingTicket, setPurchasingTicket] = useState(false)
+  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null)
 
   const [questionModal, setQuestionModal] = useState(false)
   const [eventId, setEventId] = useState('')
@@ -218,9 +219,7 @@ export default function AttendeePage() {
         days,
       })
       if (result.invoice_url) {
-        window.open(result.invoice_url, '_blank', 'noopener,noreferrer')
-        setTicketModal(false)
-        toast(t.invoiceToast)
+        setInvoiceUrl(result.invoice_url)
       } else {
         toast(result.error || 'Failed to create invoice', 'err')
       }
@@ -662,34 +661,74 @@ export default function AttendeePage() {
 
       {/* ── Ticket modal ── */}
       {ticketModal && (
-        <Modal title={t.ticketTitle} onClose={() => setTicketModal(false)}>
-          <form onSubmit={handlePurchaseTicket} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontSize: 16, color: '#ffffff', lineHeight: 1.6 }}>
-              {t.ticketSentTo}{' '}
-              <span style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)' }}>{user?.email}</span>
-            </p>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.22)',
-              borderRadius: 8, padding: '9px 13px',
-              fontSize: 14, color: '#fef08a', lineHeight: 1.5,
-            }}>
-              <span style={{ fontSize: 16, flexShrink: 0 }}>📂</span>
-              <span>{t.spamNotice}</span>
+        <Modal title={t.ticketTitle} onClose={() => { setTicketModal(false); setInvoiceUrl(null) }}>
+          {invoiceUrl ? (
+            /* ── Payment link ready — use <a> tag so mobile doesn't block it ── */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ fontSize: 15, color: '#ffffff', lineHeight: 1.6, margin: 0 }}>
+                {t.ticketSentTo}{' '}
+                <span style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)' }}>{user?.email}</span>
+              </p>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.22)',
+                borderRadius: 8, padding: '9px 13px',
+                fontSize: 14, color: '#fef08a', lineHeight: 1.5,
+              }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>📂</span>
+                <span>{t.spamNotice}</span>
+              </div>
+              <a
+                href={invoiceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => { setTicketModal(false); setInvoiceUrl(null); toast(t.invoiceToast) }}
+                style={{
+                  display: 'block', textAlign: 'center',
+                  padding: '14px 0',
+                  background: 'linear-gradient(135deg,#15803d,#16a34a)',
+                  border: '1px solid rgba(74,222,128,0.3)',
+                  borderRadius: 'var(--radius)', color: '#fff',
+                  fontSize: 15, fontWeight: 700,
+                  textDecoration: 'none', letterSpacing: '0.02em',
+                }}
+              >
+                {t.purchase} — {t.totalPrice(1)}
+              </a>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Btn variant="ghost" onClick={() => { setTicketModal(false); setInvoiceUrl(null) }}>{t.cancel}</Btn>
+              </div>
             </div>
-            <div style={{
-              background: 'var(--bg-3)', border: '1px solid var(--border-2)',
-              borderRadius: 'var(--radius)', padding: '12px 16px',
-              fontFamily: 'var(--font-mono)', fontSize: 16,
-              color: 'var(--blue)', letterSpacing: '0.05em',
-            }}>
-              {t.totalPrice(1)}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-              <Btn variant="ghost" type="button" onClick={() => setTicketModal(false)}>{t.cancel}</Btn>
-              <Btn type="submit" loading={purchasingTicket}>{t.purchase}</Btn>
-            </div>
-          </form>
+          ) : (
+            /* ── Form to confirm purchase ── */
+            <form onSubmit={handlePurchaseTicket} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p style={{ fontSize: 16, color: '#ffffff', lineHeight: 1.6 }}>
+                {t.ticketSentTo}{' '}
+                <span style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)' }}>{user?.email}</span>
+              </p>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.22)',
+                borderRadius: 8, padding: '9px 13px',
+                fontSize: 14, color: '#fef08a', lineHeight: 1.5,
+              }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>📂</span>
+                <span>{t.spamNotice}</span>
+              </div>
+              <div style={{
+                background: 'var(--bg-3)', border: '1px solid var(--border-2)',
+                borderRadius: 'var(--radius)', padding: '12px 16px',
+                fontFamily: 'var(--font-mono)', fontSize: 16,
+                color: 'var(--blue)', letterSpacing: '0.05em',
+              }}>
+                {t.totalPrice(1)}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+                <Btn variant="ghost" type="button" onClick={() => setTicketModal(false)}>{t.cancel}</Btn>
+                <Btn type="submit" loading={purchasingTicket}>{t.purchase}</Btn>
+              </div>
+            </form>
+          )}
         </Modal>
       )}
 
