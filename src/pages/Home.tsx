@@ -14,30 +14,25 @@ export default function Home() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* ── Conference Banner ── */}
-      <section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
-        {/* Image as absolute background so section height is controlled by min-h */}
+      {/*<section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
         <img
           src="/banners/conf_banner_template.png"
           alt="Mongolia - CERN LHCb 2026 Conference"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center bottom' }}
         />
-        {/* Base dark overlay — keeps text readable at all widths */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
           background: 'rgba(8,8,16,0.45)',
         }} />
-        {/* Left-to-right gradient for extra contrast behind the text column */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
           background: 'linear-gradient(to right, rgba(8,8,16,0.75) 0%, rgba(8,8,16,0.4) 60%, transparent 100%)',
         }} />
-        {/* Bottom fade into page */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
           background: 'linear-gradient(to bottom, transparent 50%, var(--bg) 100%)',
         }} />
 
-        {/* Text + button overlay */}
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
           <div className="max-w-[1240px] mx-auto px-6 md:px-12 w-full">
             <div style={{ maxWidth: 580 }}>
@@ -76,7 +71,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section>*/}
 
       {/* ── Hero ── */}
       <section style={{
