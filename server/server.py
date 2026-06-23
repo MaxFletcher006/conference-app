@@ -1842,7 +1842,6 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
                         </p>
 
                         <p style="margin:0 0 14px;font-size:15px;color:#e2e8f0;line-height:1.8;">
-                          {f'<strong>📍 Location:</strong> {location}<br>' if location else ''}
                           <strong>📅 Date:</strong> {date_label}<br>
                           <strong>🎫 Ticket Price:</strong> {price_label}
                         </p>
