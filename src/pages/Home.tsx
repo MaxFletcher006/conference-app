@@ -19,8 +19,8 @@ export default function Home() {
       {/* ── Conference Banner ── */}
       <section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
         <img
-          src="/banners/conf_banner_template.png"
-          alt="Mongolia - CERN LHCb 2026 Conference"
+          src="/banners/summer_school_banner.png"
+          alt="ОНОЛЫН ФИЗИКИЙН ЗУНЫ СУРГУУЛЬ 2026"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center bottom' }}
         />
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'rgba(8,8,16,0.45)' }} />
