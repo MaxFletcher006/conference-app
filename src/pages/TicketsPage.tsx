@@ -16,6 +16,7 @@ export default function TicketsPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
+  const [eventFilter, setEventFilter] = useState<string>('all')
 
   const [showIssueModal, setShowIssueModal] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState('')
@@ -89,6 +90,20 @@ export default function TicketsPage() {
 
   const ticketedUserIds = new Set(tickets.map(t => t.user_id))
   const usersWithoutTicket = users.filter(u => !ticketedUserIds.has(u.id))
+
+  const eventOptions = Array.from(
+    new Map(
+      tickets
+        .filter(t => t.event_id != null)
+        .map(t => [t.event_id, t.event_name ?? `Event ${t.event_id}`])
+    ).entries()
+  )
+
+  const filteredTickets = eventFilter === 'all'
+    ? tickets
+    : eventFilter === 'none'
+      ? tickets.filter(t => t.event_id == null)
+      : tickets.filter(t => String(t.event_id) === eventFilter)
 
   const overlayStyle: React.CSSProperties = {
     position: 'fixed',
@@ -173,10 +188,22 @@ export default function TicketsPage() {
       <SectionHeader
         title="Tickets"
         action={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, color: '#ffffff' }}>
-              {tickets.length} issued
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <select
+              value={eventFilter}
+              onChange={e => setEventFilter(e.target.value)}
+              style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '7px 12px', color: '#ffffff', fontSize: 14, outline: 'none', fontFamily: 'var(--font-sans)' }}
+            >
+              <option value="all">All events ({tickets.length})</option>
+              {eventOptions.map(([id, name]) => (
+                <option key={id} value={String(id)}>
+                  {name} ({tickets.filter(t => t.event_id === id).length})
+                </option>
+              ))}
+              {tickets.some(t => t.event_id == null) && (
+                <option value="none">No event ({tickets.filter(t => t.event_id == null).length})</option>
+              )}
+            </select>
             <Btn onClick={() => setShowIssueModal(true)} style={{ fontSize: 16, padding: '7px 16px' }}>
               + Issue ticket
             </Btn>
@@ -192,8 +219,8 @@ export default function TicketsPage() {
         ) : (
           <div className="table-wrapper">
             <Table
-              headers={['Attendee', 'Email', 'Days', 'Used', 'Status', 'Actions']}
-              rows={tickets.map(t => {
+              headers={['Attendee', 'Email', 'Event', 'Days', 'Used', 'Status', 'Actions']}
+              rows={filteredTickets.map(t => {
                 const isLoading = actionLoading === t.user_id
                 const exhausted = t.used_times >= t.day_length
                 return [
@@ -202,6 +229,9 @@ export default function TicketsPage() {
                   </span>,
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-2)' }}>
                     {t.email}
+                  </span>,
+                  <span style={{ fontSize: 13, color: t.event_name ? 'var(--blue-text)' : 'var(--text-3)' }}>
+                    {t.event_name ?? '—'}
                   </span>,
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: '#ffffff' }}>
                     {t.day_length}

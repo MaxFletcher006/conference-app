@@ -677,9 +677,12 @@ def get_all_tickets(session: SessionDep, current_user: dict = Depends(require_ro
     result = []
     for t in tickets:
         user = session.get(User, t.user_id)
+        event = session.get(Event, t.event_id) if t.event_id else None
         result.append({
             "id": t.id,
             "user_id": t.user_id,
+            "event_id": t.event_id,
+            "event_name": event.event_name if event else None,
             "name": t.name,
             "day_length": t.day_length,
             "used_times": t.used_times,
@@ -1671,7 +1674,7 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
 
     await send_email(
         to=[email],
-        subject="CERN LHCb - Mongolia 2026 | Ticket",
+        subject=f"{ticket_name} | Ticket",
         html_body=_build_ticket_email(firstname, lastname, day_length, ticket_name, price,
                                       event_start_date, event_end_date, event_description),
         attachment_path=file_path,
@@ -1709,7 +1712,7 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
         <tr>
           <td align="center" style="padding-bottom:24px;">
             <span style="display:inline-block;font-family:'Courier New',monospace;font-size:13px;letter-spacing:0.15em;color:#38bdf8;border:1px solid rgba(56,189,248,0.3);background:rgba(56,189,248,0.07);padding:6px 16px;border-radius:4px;">
-              CERN LHCb — MONGOLIA 2026
+              {event_name.upper()}
             </span>
           </td>
         </tr>
@@ -1725,11 +1728,11 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
                   <div style="width:12px;height:12px;border-radius:50%;background:#38bdf8;box-shadow:0 0 20px 6px rgba(56,189,248,0.6);margin:0 auto 20px;display:block;"></div>
 
                   <h1 style="margin:0 0 10px;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;line-height:1.2;">
-                    Event Ticket Confirmed
+                    {event_name}
                   </h1>
 
                   <p style="margin:0;font-size:14px;color:#94a3b8;font-family:'Courier New',monospace;letter-spacing:0.08em;">
-                    HIGH ENERGY PHYSICS CONFERENCE · ULAANBAATAR
+                    TICKET CONFIRMED · {date_label.upper()}
                   </p>
 
                 </td>
@@ -1750,7 +1753,7 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
                   </h2>
 
                   <p style="margin:0 0 28px;font-size:15px;color:#94a3b8;line-height:1.7;">
-                    Your conference ticket has been successfully generated.
+                    Your ticket for <strong style="color:#ffffff;">{event_name}</strong> has been successfully generated.
                     Please find your QR code attached to this email and present it
                     at the entrance for verification.
                   </p>
@@ -1848,9 +1851,9 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
                   </div>
 
                   <p style="margin:0;font-size:14px;color:#64748b;line-height:1.7;">
-                    We look forward to seeing you at the conference.<br>
+                    We look forward to seeing you at the event.<br>
                     <span style="color:#94a3b8;font-weight:600;">
-                      CERN LHCb — Mongolia 2026 Event Team
+                      {event_name} — Organizing Team
                     </span>
                   </p>
 
@@ -1874,7 +1877,7 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
 
                   <p style="margin:0;font-size:12px;font-family:'Courier New',monospace;color:#334155;letter-spacing:0.06em;">
                     AUTOMATED NOTIFICATION — DO NOT REPLY<br>
-                    © MONGOLIA - CERN LHCb 2026 CONFERENCE
+                    © {event_name.upper()}
                   </p>
 
                 </td>

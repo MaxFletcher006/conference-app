@@ -309,6 +309,8 @@ export const checkUserTicket = () =>
 export interface TicketAdmin {
   id: string
   user_id: number
+  event_id: number | null
+  event_name: string | null
   name: string
   day_length: number
   used_times: number

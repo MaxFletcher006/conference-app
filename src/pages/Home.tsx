@@ -33,7 +33,7 @@ export default function Home() {
               <h1 style={{ fontSize: 'clamp(1.45rem, 4.8vw, 3.6rem)', fontWeight: 'bold', color: '#ffffff', lineHeight: 1.15, marginBottom: 'clamp(8px, 2vw, 18px)', letterSpacing: '-0.02em', whiteSpace: 'pre-line' }}>
                 ОНОЛЫН ФИЗИКИЙН ЗУНЫ СУРГУУЛЬ 2026
               </h1>
-              <p className="hidden sm:block" style={{ fontSize: 20, color: 'rgba(255,255,255,0.65)', marginBottom: 'clamp(16px, 3vw, 36px)', lineHeight: 1.6 }}>
+              <p style={{ fontSize: 'clamp(14px, 2.5vw, 20px)', color: 'rgba(255,255,255,0.65)', marginBottom: 'clamp(16px, 3vw, 36px)', lineHeight: 1.6 }}>
                 Шинжлэх Ухааны Академийн Физик Технологийн Хүрээлэн Европын Цөмийн Судалгааны Байгууллага (CERN)-ийн LHCb Хамтын ажиллагаанд хамтрагч гишүүнээр элссэнтэй холбоотойгоор Онолын физикийн зуны сургууль 2026 оны 6 сарын 29-нөөс 2026 оны 7 сарын 2-ны өдрүүдэд зохион байгуулагдах гэж байна. 
               </p>
               <Link to="/register" className="block sm:inline-block">
