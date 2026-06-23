@@ -973,6 +973,7 @@ def get_public_banners(session: SessionDep):
                 id=b.id,
                 event_id=b.event_id,
                 description=b.description,
+                image_url=b.image_url,
                 is_active=b.is_active,
                 created_at=b.created_at,
                 event_name=event.event_name if event else None,
@@ -997,6 +998,7 @@ def get_all_banners(session: SessionDep, current_user: dict = Depends(require_ro
                 id=b.id,
                 event_id=b.event_id,
                 description=b.description,
+                image_url=b.image_url,
                 is_active=b.is_active,
                 created_at=b.created_at,
                 event_name=event.event_name if event else None,
@@ -1015,6 +1017,7 @@ async def create_banner(data: BannerModel, session: SessionDep, current_user: di
     db_banner = Banner(
         event_id=data.event_id,
         description=data.description,
+        image_url=data.image_url,
         is_active=data.is_active,
         created_at=now,
     )
@@ -1027,6 +1030,7 @@ async def create_banner(data: BannerModel, session: SessionDep, current_user: di
             id=db_banner.id,
             event_id=db_banner.event_id,
             description=db_banner.description,
+            image_url=db_banner.image_url,
             is_active=db_banner.is_active,
             created_at=db_banner.created_at,
             event_name=event.event_name if event else None,
@@ -1047,6 +1051,7 @@ async def update_banner(banner_id: int, data: BannerModel, session: SessionDep, 
             raise HTTPException(status_code=404, detail="Banner not found")
         db_banner.event_id = data.event_id
         db_banner.description = data.description
+        db_banner.image_url = data.image_url
         db_banner.is_active = data.is_active
         session.add(db_banner)
         session.commit()
@@ -1056,6 +1061,7 @@ async def update_banner(banner_id: int, data: BannerModel, session: SessionDep, 
             id=db_banner.id,
             event_id=db_banner.event_id,
             description=db_banner.description,
+            image_url=db_banner.image_url,
             is_active=db_banner.is_active,
             created_at=db_banner.created_at,
             event_name=event.event_name if event else None,
