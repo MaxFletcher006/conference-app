@@ -83,11 +83,6 @@ export default function LeftPanel({ subtitle = 'Access the conference platform' 
       `}</style>
 
       <div className="lp-logos">
-        <img
-          src="/logos/conf_logo.png"
-          alt="Mongolia-CERN LHCb 2026"
-          className="lp-conf-logo"
-        />
         <div className="lp-divider" />
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img
@@ -102,45 +97,20 @@ export default function LeftPanel({ subtitle = 'Access the conference platform' 
         </div>
       </div>
 
-      <div className="lp-badge">MONGOLIA - CERN LHCb 2026</div>
-
       <h1 style={{
-        fontSize: 42, fontWeight: 700, lineHeight: 1.1,
+        fontSize: 58, fontWeight: 700, lineHeight: 1.1,
         letterSpacing: '-0.035em', color: '#eef4ff', marginBottom: 14,
       }}>
-        Public<br />
-        Lecture of<br />
-        <span style={{ color: '#38bdf8' }}>High Energy Physics</span>
+        Accelerating <br /> Science in<br />
+        <span style={{ color: '#38bdf8' }}>Mongolian Steppe.</span>
+
+        <br />
+        <br />
+
+        Join with us now
+        <br />
+        
       </h1>
-
-      <p style={{ fontSize: 15, color: '#a0b8cc', lineHeight: 1.7, marginBottom: 36 }}>
-        Ulaanbaatar, Mongolia · June 2026<br />
-        Accelerating Science in Mongol Steppe.
-      </p>
-
-      <div style={{ display: 'flex', gap: 16, marginBottom: 32 }}>
-        {[
-          { num: '14 TeV', label: 'COLLISION ENERGY' },
-          { num: '6+',     label: 'SPEAKERS' },
-          { num: '2 Days', label: 'PROGRAMME' },
-        ].map(s => (
-          <div className="lp-stat" key={s.label}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#ffffff' }}>{s.num}</div>
-            <div style={{ fontSize: 10, color: '#8aaabb', marginTop: 3, letterSpacing: '.05em' }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {[
-        { color: '#38bdf8', shadow: 'rgba(56,189,248,.55)', text: 'Keynotes from LHCb collaboration physicists' },
-        { color: '#34d399', shadow: 'rgba(52,211,153,.55)', text: 'Live Q&A with speakers during all sessions' },
-      ].map(item => (
-        <div key={item.text} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-          <div className="lp-dot" style={{ background: item.color, boxShadow: `0 0 7px 2px ${item.shadow}` }} />
-          <div style={{ fontSize: 14, color: '#c8dce8', lineHeight: 1.55 }}>{item.text}</div>
-        </div>
-      ))}
-
       <div className="lp-energy" />
     </div>
   )
