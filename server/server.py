@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import select, Session
 from typing import Annotated, List
 from contextlib import asynccontextmanager
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.exc import IntegrityError
 #from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from starlette.responses import JSONResponse
@@ -677,12 +677,15 @@ def get_all_tickets(session: SessionDep, current_user: dict = Depends(require_ro
     result = []
     for t in tickets:
         user = session.get(User, t.user_id)
-        event = session.get(Event, t.event_id) if t.event_id else None
+        event_name = None
+        if t.event_id:
+            row = session.execute(text("SELECT event_name FROM event WHERE id = :id"), {"id": t.event_id}).first()
+            event_name = row[0] if row else None
         result.append({
             "id": t.id,
             "user_id": t.user_id,
             "event_id": t.event_id,
-            "event_name": event.event_name if event else None,
+            "event_name": event_name,
             "name": t.name,
             "day_length": t.day_length,
             "used_times": t.used_times,
@@ -1632,15 +1635,22 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
         event_description: str | None = None
         event_location: str | None = None
         if event_id:
-            db_event = session.get(Event, event_id)
-            if db_event:
-                day_length = compute_day_length(db_event.start_date, db_event.end_date, db_event.include_weekends)
-                price = db_event.ticket_price
-                ticket_name = db_event.event_name
-                event_start_date = db_event.start_date
-                event_end_date = db_event.end_date
-                event_description = db_event.description
-                event_location = getattr(db_event, 'location', None)
+            row = session.execute(
+                text("SELECT event_name, description, start_date, end_date, ticket_price, include_weekends FROM event WHERE id = :id"),
+                {"id": event_id}
+            ).first()
+            if row:
+                ticket_name = row[0]
+                event_description = row[1]
+                event_start_date = row[2]
+                event_end_date = row[3]
+                price = float(row[4])
+                day_length = compute_day_length(row[2], row[3], row[5])
+                try:
+                    loc_row = session.execute(text("SELECT location FROM event WHERE id = :id"), {"id": event_id}).first()
+                    event_location = loc_row[0] if loc_row else None
+                except Exception:
+                    event_location = None
 
         existing = session.exec(
             select(Ticket).where(Ticket.user_id == user_id, Ticket.event_id == event_id)
