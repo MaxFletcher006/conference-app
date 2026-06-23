@@ -34,6 +34,7 @@ class AgendaModel(BaseModel):
     location: str
     building: str
     room: str
+    date: Optional[str] = None
     start_time: str
     end_time: str
 
@@ -43,6 +44,7 @@ class AgendaUpdate(BaseModel):
     location: Optional[str] = None
     building: Optional[str] = None
     room: Optional[str] = None
+    date: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
 

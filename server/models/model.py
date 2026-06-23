@@ -36,6 +36,7 @@ class Agenda(SQLModel, table=True):
     location: str | None = Field(default=None, index=True)
     building: str | None = Field(default=None, index=True)
     room: str | None = Field(default=None, index=True)
+    date: str | None = Field(default=None, index=True)
     start_time: str | None = Field(default=None)
     end_time: str | None = Field(default=None)
 
@@ -96,7 +97,12 @@ class Transaction(SQLModel, table=True):
     description: str = Field(index=True)
     url: str = Field(index=True)
     
-
+class Speakers(SQLModel, table=True):
+    speaker_id: int | None = Field(default=None, primary_key=True)
+    fullname: str = Field(index=True)
+    description: str = Field(index=True)
+    event_id: int = Field(index=True, foreign_key="event.id", ondelete="CASCADE")
+    is_moderator: bool = Field(default=False) 
 
 engine = create_engine(DB_URL, pool_pre_ping=True, pool_recycle=1800)
 

@@ -967,6 +967,8 @@ def get_public_banners(session: SessionDep):
         result = []
         for b in banners:
             event = session.get(Event, b.event_id) if b.event_id else None
+            if b.event_id and (not event or not event.is_active):
+                continue
             result.append(BannerReturn(
                 id=b.id,
                 event_id=b.event_id,
@@ -1600,11 +1602,13 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
         # Compute day_length and price from event
         day_length = 1
         price = 0.0
+        ticket_name = "Conference Pass"
         if event_id:
             db_event = session.get(Event, event_id)
             if db_event:
                 day_length = compute_day_length(db_event.start_date, db_event.end_date, db_event.include_weekends)
                 price = db_event.ticket_price
+                ticket_name = db_event.event_name
 
         existing = session.exec(
             select(Ticket).where(Ticket.user_id == user_id, Ticket.event_id == event_id)
@@ -1617,7 +1621,7 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
             new_ticket = Ticket(
                 user_id=user_id,
                 event_id=event_id,
-                name="Conference Pass",
+                name=ticket_name,
                 price=price,
                 day_length=day_length,
                 used_times=0,

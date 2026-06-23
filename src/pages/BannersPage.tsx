@@ -127,7 +127,7 @@ export default function BannersPage() {
               style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px', color: '#ffffff', fontSize: 15, outline: 'none', fontFamily: 'var(--font-sans)' }}
             >
               <option value="">— No linked event —</option>
-              {events.map(ev => (
+              {events.filter(ev => ev.is_active).map(ev => (
                 <option key={ev.id} value={ev.id}>{ev.event_name} ({ev.start_date})</option>
               ))}
             </select>

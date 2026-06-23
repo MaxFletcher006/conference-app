@@ -107,8 +107,8 @@ export default function LeftPanel({ subtitle = 'Access the conference platform' 
         <br />
         <br />
 
-        Join with us now
-        <br />
+        Join with Us now
+        <br />  
         
       </h1>
       <div className="lp-energy" />

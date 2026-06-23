@@ -25,6 +25,7 @@ const emptyAgendaForm = (event_id: number): AgendaPayload => ({
   location: '',
   building: '',
   room: '',
+  date: '',
   start_time: '',
   end_time: '',
 })
@@ -158,6 +159,7 @@ export default function EventsPage() {
       location: a.location ?? '',
       building: a.building ?? '',
       room: a.room ?? '',
+      date: a.date ?? '',
       start_time: a.start_time ?? '',
       end_time: a.end_time ?? '',
     })
@@ -318,7 +320,8 @@ export default function EventsPage() {
         <form onSubmit={handleAgendaSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Input label="Session Title / Topic" value={agendaForm.agenda} onChange={e => setAgendaForm(f => ({ ...f, agenda: e.target.value }))} required />
           <Input label="Speaker" value={agendaForm.speaker ?? ''} onChange={e => setAgendaForm(f => ({ ...f, speaker: e.target.value }))} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <Input label="Date" type="date" value={agendaForm.date ?? ''} onChange={e => setAgendaForm(f => ({ ...f, date: e.target.value }))} />
             <Input label="Start Time" type="time" value={agendaForm.start_time} onChange={e => setAgendaForm(f => ({ ...f, start_time: e.target.value }))} required />
             <Input label="End Time" type="time" value={agendaForm.end_time} onChange={e => setAgendaForm(f => ({ ...f, end_time: e.target.value }))} required />
           </div>
@@ -453,6 +456,7 @@ export default function EventsPage() {
                               <div style={{ fontSize: 14, fontWeight: 600, color: '#ffffff', marginBottom: 4 }}>{a.agenda}</div>
                               {a.speaker && <div style={{ fontSize: 13, color: 'var(--blue)', marginBottom: 4 }}>🎤 {a.speaker}</div>}
                               <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                                {a.date && <span>📅 {a.date}</span>}
                                 {a.start_time && a.end_time && <span>🕒 {a.start_time}–{a.end_time}</span>}
                                 {a.location && <span>📍 {a.location}</span>}
                                 {a.building && <span>🏛 {a.building}{a.room ? `, Room ${a.room}` : ''}</span>}

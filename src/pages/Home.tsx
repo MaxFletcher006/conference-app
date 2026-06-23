@@ -21,7 +21,7 @@ export default function Home() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* ── Conference Banner ── */}
-      <section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+      {/* <section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
         <img
           src="/banners/conf_banner_template.png"
           alt="Mongolia - CERN LHCb 2026 Conference"
@@ -78,7 +78,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ── Hero ── */}
       <section style={{

@@ -43,6 +43,7 @@ export interface Agenda {
   location?: string
   building?: string
   room?: string
+  date?: string
   start_time?: string
   end_time?: string
 }
@@ -122,6 +123,7 @@ export interface AgendaPayload {
   location: string
   building: string
   room: string
+  date?: string
   start_time: string
   end_time: string
 }
@@ -132,6 +134,7 @@ export interface AgendaUpdatePayload {
   location?: string
   building?: string
   room?: string
+  date?: string
   start_time?: string
   end_time?: string
 }
