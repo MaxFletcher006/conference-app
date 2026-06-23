@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent } from 'react'
+import { useEffect, useState, FormEvent, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   getAllBanners, createBanner, updateBanner, deleteBanner,
@@ -31,6 +31,13 @@ export default function BannersPage() {
   const [toggling, setToggling] = useState<number | null>(null)
 
   const canEdit = user?.role === 'admin' || user?.role === 'supervisor'
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImageFile = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = e => setForm(f => ({ ...f, image_url: e.target?.result as string }))
+    reader.readAsDataURL(file)
+  }
 
   const load = async () => {
     try {
@@ -118,24 +125,51 @@ export default function BannersPage() {
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Image URL */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <Input
-              label="Banner Photo URL"
-              value={form.image_url ?? ''}
-              onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
-              placeholder="https://..."
+          {/* Image upload */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 13, color: 'var(--text-2)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>BANNER PHOTO</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f) }}
             />
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={e => e.preventDefault()}
+              onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleImageFile(f) }}
+              style={{
+                border: `2px dashed ${form.image_url ? 'var(--border-2)' : 'var(--border)'}`,
+                borderRadius: 10, cursor: 'pointer', overflow: 'hidden',
+                minHeight: form.image_url ? 0 : 100,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'border-color 0.2s',
+              }}
+            >
+              {form.image_url ? (
+                <img
+                  src={form.image_url}
+                  alt="preview"
+                  style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}
+                />
+              ) : (
+                <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text-3)' }}>
+                  <div style={{ fontSize: 28, marginBottom: 8 }}>📷</div>
+                  <div style={{ fontSize: 13 }}>Click or drag & drop to upload</div>
+                  <div style={{ fontSize: 12, marginTop: 4, opacity: 0.6 }}>PNG, JPG, WebP</div>
+                </div>
+              )}
+            </div>
             {form.image_url && (
-              <img
-                src={form.image_url}
-                alt="preview"
-                style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }}
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                onLoad={e => { (e.target as HTMLImageElement).style.display = 'block' }}
-              />
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, image_url: '' }))}
+                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: '#ef4444', fontSize: 12, cursor: 'pointer', padding: 0 }}
+              >
+                ✕ Remove photo
+              </button>
             )}
-            <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Paste a public image URL (Google Drive, Imgur, etc.)</div>
           </div>
 
           {/* Event selector */}
