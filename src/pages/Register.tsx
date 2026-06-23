@@ -107,9 +107,6 @@ export default function Register() {
             PARTICIPANT ACCESS
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 700, color: '#ffffff', marginBottom: 4 }}>Create account</h1>
-          <p style={{ fontSize: 16, color: '#ffffff', marginBottom: 28 }}>
-            Join the high energy physics conference
-          </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div className="name-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

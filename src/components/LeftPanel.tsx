@@ -98,7 +98,7 @@ export default function LeftPanel({ subtitle = 'Access the conference platform' 
       </div>
 
       <h1 style={{
-        fontSize: 58, fontWeight: 700, lineHeight: 1.1,
+        fontSize: 65, fontWeight: 700, lineHeight: 1.1,
         letterSpacing: '-0.035em', color: '#eef4ff', marginBottom: 14,
       }}>
         Accelerating <br /> Science in<br />
@@ -106,10 +106,6 @@ export default function LeftPanel({ subtitle = 'Access the conference platform' 
 
         <br />
         <br />
-
-        Join with Us now
-        <br />  
-        
       </h1>
       <div className="lp-energy" />
     </div>
