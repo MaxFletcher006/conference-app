@@ -224,6 +224,7 @@ export const deleteUser = (id: number) => client.delete<{ message: string }>(`/u
 // Events (authenticated)
 export const getAllEvents = () => client.get<Event[]>('/all-events').then(r => r.data)
 export const getPublicEvents = () => client.get<Event[]>('/public/events').then(r => r.data)
+export const getPublicAllEvents = () => client.get<Event[]>('/public/all-events').then(r => r.data)
 export const getEvent = (id: number) => client.get<Event>(`/event/${id}`).then(r => r.data)
 export const createEvent = (payload: EventPayload) => client.post<Event>('/create-event', payload).then(r => r.data)
 export const updateEvent = (id: number, payload: Partial<EventPayload>) => client.put<Event>(`/event/${id}`, payload).then(r => r.data)

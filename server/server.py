@@ -410,6 +410,14 @@ def get_public_active_events(session: SessionDep):
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@app.get("/public/all-events", response_model=List[Event])
+def get_public_all_events(session: SessionDep):
+    try:
+        return session.exec(select(Event).order_by(Event.start_date)).all()
+    except Exception as e:
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/event/{id}", response_model=Event)
 def get_event(session: SessionDep, id: int):
     try:
@@ -803,7 +811,14 @@ def check_user_ticket(session: SessionDep, current_user: dict = Depends(require_
     }
 
 @app.post("/invoice")
-async def create_invoice(data: InvoiceModel, current_user: dict = Depends(require_role("attendee"))):
+async def create_invoice(session: SessionDep, data: InvoiceModel, current_user: dict = Depends(require_role("attendee"))):
+
+    if data.event_id:
+        existing_ticket = session.exec(
+            select(Ticket).where(Ticket.user_id == data.user_id, Ticket.event_id == data.event_id)
+        ).first()
+        if existing_ticket:
+            raise HTTPException(status_code=409, detail="You already have a ticket for this event")
 
     if not BYL_URL or not BYL_TOKEN:
         raise HTTPException(status_code=503, detail="Payment service not configured")
@@ -1609,12 +1624,18 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
         day_length = 1
         price = 0.0
         ticket_name = "Conference Pass"
+        event_start_date: str | None = None
+        event_end_date: str | None = None
+        event_description: str | None = None
         if event_id:
             db_event = session.get(Event, event_id)
             if db_event:
                 day_length = compute_day_length(db_event.start_date, db_event.end_date, db_event.include_weekends)
                 price = db_event.ticket_price
                 ticket_name = db_event.event_name
+                event_start_date = db_event.start_date
+                event_end_date = db_event.end_date
+                event_description = db_event.description
 
         existing = session.exec(
             select(Ticket).where(Ticket.user_id == user_id, Ticket.event_id == event_id)
@@ -1651,14 +1672,24 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
     await send_email(
         to=[email],
         subject="CERN LHCb - Mongolia 2026 | Ticket",
-        html_body=_build_ticket_email(firstname, lastname, day_length),
+        html_body=_build_ticket_email(firstname, lastname, day_length, ticket_name, price,
+                                      event_start_date, event_end_date, event_description),
         attachment_path=file_path,
     )
     print(f"Ticket issued and emailed to user {user_id}")
 
 
-def _build_ticket_email(firstname: str, lastname: str, day_length: int) -> str:
+def _build_ticket_email(firstname: str, lastname: str, day_length: int,
+                        event_name: str = "Conference Pass",
+                        price: float = 0.0,
+                        start_date: str | None = None,
+                        end_date: str | None = None,
+                        description: str | None = None) -> str:
     days_label = f"{day_length} Day{'s' if day_length > 1 else ''}"
+    price_label = f"₮{int(price):,}" if price else "—"
+    date_label = start_date or "—"
+    if end_date and end_date != start_date:
+        date_label += f" — {end_date}"
 
     return f"""<!DOCTYPE html>
 <html>
@@ -1735,7 +1766,7 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int) -> str:
                             TYPE
                           </div>
                           <div style="font-size:13px;color:#ffffff;font-weight:600;margin-top:4px;">
-                            Conference Pass
+                            {event_name}
                           </div>
                         </div>
                       </td>
@@ -1790,23 +1821,16 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int) -> str:
                           📍 EVENT INFORMATION
                         </p>
 
+                        <p style="margin:0 0 8px;font-size:16px;color:#ffffff;font-weight:700;line-height:1.4;">
+                          {event_name}
+                        </p>
+
                         <p style="margin:0 0 14px;font-size:15px;color:#e2e8f0;line-height:1.8;">
-                          <strong>Conference Venue:</strong> Ulaanbaatar Hotel — Conference Hall<br>
-                          <strong>Date:</strong> June 9, 2026<br>
-                          <strong>Time:</strong> 16:00 — 18:00
+                          <strong>Date:</strong> {date_label}<br>
+                          <strong>Ticket Price:</strong> {price_label}
                         </p>
 
-                        <div style="height:1px;background:rgba(255,255,255,0.08);margin:18px 0;"></div>
-
-                        <p style="margin:0 0 12px;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.08em;">
-                          📍 ХУРЛЫН МЭДЭЭЛЭЛ
-                        </p>
-
-                        <p style="margin:0;font-size:15px;color:#94a3b8;line-height:1.8;">
-                          <strong style="color:#e2e8f0;">Байршил:</strong> Улаанбаатар Зочид Буудал — Хурлын танхим<br>
-                          <strong style="color:#e2e8f0;">Огноо:</strong> 2026 оны 6 сарын 9<br>
-                          <strong style="color:#e2e8f0;">Цаг:</strong> 16:00 — 18:00
-                        </p>
+                        {f'<p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;">{description}</p>' if description else ''}
 
                       </td>
                     </tr>

@@ -10,14 +10,12 @@ const PRIMARY_NAV: Record<string, { to: string; label: string; icon: string; end
   admin: [
     { to: '/dashboard',          label: 'Overview', icon: '📊', end: true },
     { to: '/dashboard/events',   label: 'Events',   icon: '📅' },
-    { to: '/dashboard/banners',  label: 'Banners',  icon: '🖼️' },
     { to: '/dashboard/posts',    label: 'Posts',    icon: '📢' },
     { to: '/scan',               label: 'Scan',     icon: '📷' },
   ],
   supervisor: [
     { to: '/dashboard',          label: 'Overview', icon: '📊', end: true },
     { to: '/dashboard/events',   label: 'Events',   icon: '📅' },
-    { to: '/dashboard/banners',  label: 'Banners',  icon: '🖼️' },
     { to: '/dashboard/posts',    label: 'Posts',    icon: '📢' },
     { to: '/scan',               label: 'Scan',     icon: '📷' },
   ],
