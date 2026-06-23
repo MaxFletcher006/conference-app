@@ -1640,7 +1640,7 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
                 event_start_date = db_event.start_date
                 event_end_date = db_event.end_date
                 event_description = db_event.description
-                event_location = db_event.location
+                event_location = getattr(db_event, 'location', None)
 
         existing = session.exec(
             select(Ticket).where(Ticket.user_id == user_id, Ticket.event_id == event_id)
