@@ -28,6 +28,7 @@ export interface Event {
   id: number
   event_name: string
   description?: string
+  location?: string
   start_date: string
   end_date: string
   is_active: boolean
@@ -110,6 +111,7 @@ export interface UserCreatePayload {
 export interface EventPayload {
   event_name: string
   description?: string
+  location?: string
   start_date: string
   end_date: string
   is_active: boolean

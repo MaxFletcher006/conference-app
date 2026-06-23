@@ -21,6 +21,7 @@ class UserReturn(BaseModel):
 class EventModel(BaseModel):
     event_name: str
     description: Optional[str] = None
+    location: Optional[str] = None
     start_date: str
     end_date: str
     is_active: bool = False

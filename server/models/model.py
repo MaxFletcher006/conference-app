@@ -22,6 +22,7 @@ class Event(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     event_name: str = Field(index=True)
     description: str | None = Field(default=None)
+    location: str | None = Field(default=None)
     start_date: str = Field(index=True)
     end_date: str = Field(index=True)
     is_active: bool = Field(default=False)

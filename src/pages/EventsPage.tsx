@@ -11,6 +11,7 @@ import { Page, SectionHeader, Card, Btn, Input, toast, Spinner } from '../compon
 const emptyEventForm = (): EventPayload => ({
   event_name: '',
   description: '',
+  location: '',
   start_date: '',
   end_date: '',
   is_active: false,
@@ -85,6 +86,7 @@ export default function EventsPage() {
     setForm({
       event_name: e.event_name,
       description: e.description ?? '',
+      location: e.location ?? '',
       start_date: e.start_date,
       end_date: e.end_date,
       is_active: e.is_active,
@@ -247,6 +249,8 @@ export default function EventsPage() {
             />
           </div>
 
+          <Input label="Location" value={form.location ?? ''} onChange={e => set('location', e.target.value)} placeholder="Venue / address" />
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <Input label="Start Date" type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} required />
             <Input label="End Date" type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} required />
@@ -402,6 +406,7 @@ export default function EventsPage() {
                       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
                         <span style={{ color: accent }}>📅 {ev.start_date} — {ev.end_date}</span>
                         <span>🎫 ₮{ev.ticket_price.toLocaleString()}</span>
+                        {ev.location && <span>📍 {ev.location}</span>}
                         {ev.include_weekends && <span>📆 Weekends included</span>}
                       </div>
                     </div>
