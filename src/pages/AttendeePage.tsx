@@ -96,7 +96,7 @@ type Lang = 'en' | 'mn'
 export default function AttendeePage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [lang, setLang] = useState<Lang>('en')
+  const [lang, setLang] = useState<Lang>('mn')
   const t = T[lang]
 
   const [events, setEvents] = useState<Event[]>([])

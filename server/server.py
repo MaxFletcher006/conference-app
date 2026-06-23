@@ -1630,6 +1630,7 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
         event_start_date: str | None = None
         event_end_date: str | None = None
         event_description: str | None = None
+        event_location: str | None = None
         if event_id:
             db_event = session.get(Event, event_id)
             if db_event:
@@ -1639,6 +1640,7 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
                 event_start_date = db_event.start_date
                 event_end_date = db_event.end_date
                 event_description = db_event.description
+                event_location = db_event.location
 
         existing = session.exec(
             select(Ticket).where(Ticket.user_id == user_id, Ticket.event_id == event_id)
@@ -1676,7 +1678,7 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
         to=[email],
         subject=f"{ticket_name} | Ticket",
         html_body=_build_ticket_email(firstname, lastname, day_length, ticket_name, price,
-                                      event_start_date, event_end_date, event_description),
+                                      event_start_date, event_end_date, event_description, event_location),
         attachment_path=file_path,
     )
     print(f"Ticket issued and emailed to user {user_id}")
@@ -1687,7 +1689,8 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
                         price: float = 0.0,
                         start_date: str | None = None,
                         end_date: str | None = None,
-                        description: str | None = None) -> str:
+                        description: str | None = None,
+                        location: str | None = None) -> str:
     days_label = f"{day_length} Day{'s' if day_length > 1 else ''}"
     price_label = f"₮{int(price):,}" if price else "—"
     date_label = start_date or "—"
@@ -1829,8 +1832,9 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
                         </p>
 
                         <p style="margin:0 0 14px;font-size:15px;color:#e2e8f0;line-height:1.8;">
-                          <strong>Date:</strong> {date_label}<br>
-                          <strong>Ticket Price:</strong> {price_label}
+                          {f'<strong>📍 Location:</strong> {location}<br>' if location else ''}
+                          <strong>📅 Date:</strong> {date_label}<br>
+                          <strong>🎫 Ticket Price:</strong> {price_label}
                         </p>
 
                         {f'<p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;">{description}</p>' if description else ''}
