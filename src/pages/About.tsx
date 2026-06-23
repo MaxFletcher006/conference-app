@@ -47,7 +47,7 @@ export default function About() {
         </div>
       </section>
 
-      {/* Organizations */}
+      {/* Organizations
       <section style={{ padding: '96px 0', background: 'var(--bg)' }}>
         <div className="max-w-[1240px] mx-auto px-6 md:px-12">
           <h2 style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', marginBottom: 48 }}>{t.aboutOrgsTitle}</h2>
@@ -93,7 +93,7 @@ export default function About() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Board */}
       <section style={{ padding: '96px 0', background: 'var(--bg-2)', borderTop: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>

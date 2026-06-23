@@ -10,13 +10,14 @@ from starlette.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
-from models.model import User, Event, Post, Ticket, MailList, Question, Validation, Transaction, create_db_and_tables, get_session, engine
-from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel, UserUpdate, PostCreate, PostReturn, StaffTicketCreate
+from models.model import User, Event, Post, Ticket, MailList, Question, Validation, Transaction, Agenda, Banner, create_db_and_tables, get_session, engine
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel, UserUpdate, PostCreate, PostReturn, StaffTicketCreate, AgendaModel, AgendaUpdate, BannerModel, BannerReturn
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from gmail_sender import send_email
 
 import asyncio, bcrypt, io, os, hmac, hashlib, json, re
+from datetime import date as date_type
 import qrcode
 import jwt, httpx
 
@@ -99,6 +100,19 @@ def require_role(*allowed_roles: str):
             )
         return user
     return checker
+
+def compute_day_length(start_date: str, end_date: str, include_weekends: bool) -> int:
+    start = date_type.fromisoformat(start_date)
+    end = date_type.fromisoformat(end_date)
+    if start > end:
+        return 1
+    total = 0
+    current = start
+    while current <= end:
+        if include_weekends or current.weekday() < 5:
+            total += 1
+        current += timedelta(days=1)
+    return max(total, 1)
 
 @app.get("/")
 def greetings():
@@ -383,33 +397,38 @@ def delete_user(session: SessionDep, id: int, current_user: dict = Depends(requi
 @app.get("/all-events", response_model=List[Event])
 def get_events(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor", "staff", "attendee"))):
     try:
-        return session.exec(select(Event)).all()
+        return session.exec(select(Event).order_by(Event.start_date)).all()
+    except Exception as e:
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/public/events", response_model=List[Event])
+def get_public_active_events(session: SessionDep):
+    try:
+        return session.exec(select(Event).where(Event.is_active == True).order_by(Event.start_date)).all()
     except Exception as e:
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/event/{id}", response_model=Event)
-def get_event(session: SessionDep, id: int, current_user: dict = Depends(require_role("admin", "supervisor"))):
+def get_event(session: SessionDep, id: int):
     try:
         db_event = session.get(Event, id)
     except Exception as e:
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")
-        
+
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
     return db_event
 
-@app.post("/add-event", response_model=Event)
+@app.post("/create-event", response_model=Event)
 async def create_event(event: EventModel, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
     db_event = Event.model_validate(event)
     try:
         session.add(db_event)
         session.commit()
         session.refresh(db_event)
-
-        email_list = get_mail_list(session=session)
-
         return db_event
     except Exception as e:
         session.rollback()
@@ -422,23 +441,18 @@ async def update_event(event_id: int, event_data: EventModel, session: SessionDe
         db_event = session.get(Event, event_id)
         if not db_event:
             raise HTTPException(status_code=404, detail="Event not found")
-        
+
         data = event_data.model_dump(exclude_unset=True)
         for key, value in data.items():
             setattr(db_event, key, value)
-            
+
         session.add(db_event)
         session.commit()
         session.refresh(db_event)
-
-        email_list = get_mail_list(session=session)
-        await publish_event(type="updated", db_event=db_event, email_list=email_list)
-
         return db_event
-    
+
     except HTTPException:
         raise
-
     except Exception as e:
         session.rollback()
         print(f'Error: {e}')
@@ -446,13 +460,10 @@ async def update_event(event_id: int, event_data: EventModel, session: SessionDe
 
 @app.delete("/event/{event_id}")
 async def delete_event(event_id: int, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
-    try: 
+    try:
         db_event = session.get(Event, event_id)
         if not db_event:
             raise HTTPException(status_code=404, detail="Event not found")
-
-        email_list = get_mail_list(session=session)
-        await publish_event(type="cancelled", db_event=db_event, email_list=email_list)
 
         session.delete(db_event)
         session.commit()
@@ -463,6 +474,70 @@ async def delete_event(event_id: int, session: SessionDep, current_user: dict = 
         session.rollback()
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+# ---- AGENDA FUNCTIONS ---- #
+
+@app.get("/event/{event_id}/agendas", response_model=List[Agenda])
+async def get_event_agendas(event_id: int, session: SessionDep):
+    try:
+        return session.exec(select(Agenda).where(Agenda.event_id == event_id).order_by(Agenda.start_time)).all()
+    except Exception as e:
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.post("/agenda/create", response_model=Agenda)
+async def add_agenda(session: SessionDep, agenda: AgendaModel, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    db_agenda = Agenda.model_validate(agenda)
+    try:
+        session.add(db_agenda)
+        session.commit()
+        session.refresh(db_agenda)
+        return db_agenda
+    except Exception as e:
+        session.rollback()
+        print(f'Error: {e}')
+        raise HTTPException(status_code=400, detail="Agenda creation failed.")
+
+@app.put("/agenda/{agenda_id}", response_model=Agenda)
+async def update_agenda(agenda_id: int, session: SessionDep, agenda: AgendaUpdate, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    try:
+        db_agenda = session.get(Agenda, agenda_id)
+        if not db_agenda:
+            raise HTTPException(status_code=404, detail="Agenda not found")
+
+        data = agenda.model_dump(exclude_unset=True)
+        for key, value in data.items():
+            setattr(db_agenda, key, value)
+
+        session.add(db_agenda)
+        session.commit()
+        session.refresh(db_agenda)
+        return db_agenda
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.delete("/agenda/{agenda_id}")
+async def delete_agenda(agenda_id: int, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    try:
+        db_agenda = session.get(Agenda, agenda_id)
+        if not db_agenda:
+            raise HTTPException(status_code=404, detail="Agenda not found")
+
+        session.delete(db_agenda)
+        session.commit()
+        return {"status": True, "message": "Agenda deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+        
     
 # ---- TICKET FUNCTIONS ---- #
 
@@ -612,12 +687,13 @@ async def admin_issue_ticket(
     user_id: int,
     session: SessionDep,
     background_tasks: BackgroundTasks,
+    event_id: int | None = None,
     current_user: dict = Depends(require_role("admin", "supervisor")),
 ):
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    background_tasks.add_task(_issue_ticket, user_id, 1)
+    background_tasks.add_task(_issue_ticket, user_id, event_id)
     return {"message": f"Ticket will be issued and emailed to {user.email}"}
 
 @app.delete("/admin/ticket/{user_id}")
@@ -639,6 +715,10 @@ async def staff_create_ticket(
     session: SessionDep,
     current_user: dict = Depends(require_role("admin", "supervisor", "staff")),
 ):
+    db_event = session.get(Event, data.event_id)
+    if not db_event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
     existing_user = session.exec(select(User).where(User.email == data.email)).first()
 
     if existing_user:
@@ -669,21 +749,24 @@ async def staff_create_ticket(
         user_id = new_user.id
         username = f"{data.firstname} {data.lastname}"
 
-    existing_ticket = session.exec(select(Ticket).where(Ticket.user_id == user_id)).first()
+    existing_ticket = session.exec(
+        select(Ticket).where(Ticket.user_id == user_id, Ticket.event_id == data.event_id)
+    ).first()
     if existing_ticket:
-        raise HTTPException(status_code=409, detail="This attendee already has a ticket")
+        raise HTTPException(status_code=409, detail="This attendee already has a ticket for this event")
 
     if not BYL_URL or not BYL_TOKEN:
         raise HTTPException(status_code=503, detail="Payment service not configured")
 
+    amount = int(db_event.ticket_price)
     headers = {
         "Authorization": f"Bearer {BYL_TOKEN}",
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
     invoice_payload = {
-        "amount": 10000,
-        "description": f"ID:{user_id} | NAME:{username}",
+        "amount": amount,
+        "description": f"ID:{user_id} | NAME:{username} | EVENT:{data.event_id}",
         "auto_advance": True,
     }
 
@@ -704,7 +787,7 @@ async def staff_create_ticket(
     if not invoice_url:
         raise HTTPException(status_code=502, detail="Invoice URL not found in response")
 
-    return {"invoice_url": invoice_url, "email": data.email}
+    return {"invoice_url": invoice_url, "email": data.email, "amount": amount}
 
 @app.get("/tickets")
 def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin","supervisor","staff"))):
@@ -713,8 +796,11 @@ def get_total_tickets(session: SessionDep, current_user: dict = Depends(require_
 @app.get("/ticket/check")
 def check_user_ticket(session: SessionDep, current_user: dict = Depends(require_role("attendee"))):
     user_id = current_user.get("user_id")
-    exists = session.exec(select(Ticket).where(Ticket.user_id == user_id)).first() is not None
-    return {"has_ticket": exists}
+    tickets = session.exec(select(Ticket).where(Ticket.user_id == user_id)).all()
+    return {
+        "has_ticket": len(tickets) > 0,
+        "ticket_event_ids": [t.event_id for t in tickets if t.event_id is not None],
+    }
 
 @app.post("/invoice")
 async def create_invoice(data: InvoiceModel, current_user: dict = Depends(require_role("attendee"))):
@@ -728,9 +814,10 @@ async def create_invoice(data: InvoiceModel, current_user: dict = Depends(requir
         "Accept": "application/json",
         "Content-Type": "application/json"
     }
+    event_part = f" | EVENT:{data.event_id}" if data.event_id else ""
     payload = {
         "amount": data.amount,
-        "description": f"ID:{data.user_id} | NAME:{data.username}",
+        "description": f"ID:{data.user_id} | NAME:{data.username}{event_part}",
         "auto_advance": True
     }
 
@@ -783,8 +870,8 @@ async def byl_webhook(session: SessionDep, request: Request, background_tasks: B
         match_id = re.search(r"ID:(\d+)", description)
         if match_id:
             extracted_user_id = int(match_id.group(1))
-            match_days = re.search(r"DAYS:(\d+)", description)
-            day_length = 1
+            match_event = re.search(r"EVENT:(\d+)", description)
+            extracted_event_id = int(match_event.group(1)) if match_event else None
 
             invoice_id = invoice_object.get("id")
             existing_tx = session.exec(
@@ -806,7 +893,7 @@ async def byl_webhook(session: SessionDep, request: Request, background_tasks: B
                 session.commit()
                 print(f"Transaction saved for user {extracted_user_id}")
 
-                background_tasks.add_task(_issue_ticket, extracted_user_id, day_length)
+                background_tasks.add_task(_issue_ticket, extracted_user_id, extracted_event_id)
 
     return Response(content="Webhook received!", media_type="text/plain")
 
@@ -870,7 +957,133 @@ async def delete_post(post_id: int, session: SessionDep, current_user: dict = De
         session.rollback()
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-    
+
+# ---- BANNER FUNCTIONS ---- #
+
+@app.get("/public/banners", response_model=List[BannerReturn])
+def get_public_banners(session: SessionDep):
+    try:
+        banners = session.exec(select(Banner).where(Banner.is_active == True)).all()
+        result = []
+        for b in banners:
+            event = session.get(Event, b.event_id) if b.event_id else None
+            result.append(BannerReturn(
+                id=b.id,
+                event_id=b.event_id,
+                description=b.description,
+                is_active=b.is_active,
+                created_at=b.created_at,
+                event_name=event.event_name if event else None,
+                start_date=event.start_date if event else None,
+                end_date=event.end_date if event else None,
+                ticket_price=event.ticket_price if event else None,
+            ))
+        result.sort(key=lambda x: x.start_date or "")
+        return result
+    except Exception as e:
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/banners", response_model=List[BannerReturn])
+def get_all_banners(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    try:
+        banners = session.exec(select(Banner).order_by(Banner.created_at.desc())).all()
+        result = []
+        for b in banners:
+            event = session.get(Event, b.event_id) if b.event_id else None
+            result.append(BannerReturn(
+                id=b.id,
+                event_id=b.event_id,
+                description=b.description,
+                is_active=b.is_active,
+                created_at=b.created_at,
+                event_name=event.event_name if event else None,
+                start_date=event.start_date if event else None,
+                end_date=event.end_date if event else None,
+                ticket_price=event.ticket_price if event else None,
+            ))
+        return result
+    except Exception as e:
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.post("/banners", response_model=BannerReturn)
+async def create_banner(data: BannerModel, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    db_banner = Banner(
+        event_id=data.event_id,
+        description=data.description,
+        is_active=data.is_active,
+        created_at=now,
+    )
+    try:
+        session.add(db_banner)
+        session.commit()
+        session.refresh(db_banner)
+        event = session.get(Event, db_banner.event_id) if db_banner.event_id else None
+        return BannerReturn(
+            id=db_banner.id,
+            event_id=db_banner.event_id,
+            description=db_banner.description,
+            is_active=db_banner.is_active,
+            created_at=db_banner.created_at,
+            event_name=event.event_name if event else None,
+            start_date=event.start_date if event else None,
+            end_date=event.end_date if event else None,
+            ticket_price=event.ticket_price if event else None,
+        )
+    except Exception as e:
+        session.rollback()
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Error creating banner")
+
+@app.put("/banners/{banner_id}", response_model=BannerReturn)
+async def update_banner(banner_id: int, data: BannerModel, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    try:
+        db_banner = session.get(Banner, banner_id)
+        if not db_banner:
+            raise HTTPException(status_code=404, detail="Banner not found")
+        db_banner.event_id = data.event_id
+        db_banner.description = data.description
+        db_banner.is_active = data.is_active
+        session.add(db_banner)
+        session.commit()
+        session.refresh(db_banner)
+        event = session.get(Event, db_banner.event_id) if db_banner.event_id else None
+        return BannerReturn(
+            id=db_banner.id,
+            event_id=db_banner.event_id,
+            description=db_banner.description,
+            is_active=db_banner.is_active,
+            created_at=db_banner.created_at,
+            event_name=event.event_name if event else None,
+            start_date=event.start_date if event else None,
+            end_date=event.end_date if event else None,
+            ticket_price=event.ticket_price if event else None,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.delete("/banners/{banner_id}")
+async def delete_banner(banner_id: int, session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    try:
+        db_banner = session.get(Banner, banner_id)
+        if not db_banner:
+            raise HTTPException(status_code=404, detail="Banner not found")
+        session.delete(db_banner)
+        session.commit()
+        return {"message": "Banner deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        print(f'Error: {e}')
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # ---- QUESTION FUNCTIONS ---- #
 
 @app.get("/all-questions", response_model=List[QuestionModel])
@@ -1045,7 +1258,7 @@ async def mail_service(type: str, db_event: Event, email: List[EmailSchema]):
                         font-family:'Courier New',monospace;
                         color:{banner_color};
                         letter-spacing:0.12em;
-                        ">SESSION DETAILS</p>
+                        ">EVENT DETAILS</p>
 
                         <h2 style="
                         margin:0 0 16px;
@@ -1053,7 +1266,7 @@ async def mail_service(type: str, db_event: Event, email: List[EmailSchema]):
                         font-weight:700;
                         color:#ffffff;
                         line-height:1.4;
-                        ">{db_event.topic}</h2>
+                        ">{db_event.event_name}</h2>
 
                         <!-- Intro text -->
                         <p style="
@@ -1063,8 +1276,8 @@ async def mail_service(type: str, db_event: Event, email: List[EmailSchema]):
                         line-height:1.7;
                         ">{intro_text}</p>
 
-                        <!-- INFO CARDS ROW 1: Date / Time -->
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                        <!-- INFO CARDS: Date range / Ticket price -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                         <tr>
                             <td width="50%" style="padding-right:6px;">
                             <div style="
@@ -1074,35 +1287,7 @@ async def mail_service(type: str, db_event: Event, email: List[EmailSchema]):
                                 padding:16px 18px;
                             ">
                                 <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">📅 DATE</div>
-                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.date}</div>
-                            </div>
-                            </td>
-                            <td width="50%" style="padding-left:6px;">
-                            <div style="
-                                background:rgba(56,189,248,0.05);
-                                border:1px solid rgba(56,189,248,0.14);
-                                border-radius:10px;
-                                padding:16px 18px;
-                            ">
-                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">🕒 TIME</div>
-                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.start_time} – {db_event.end_time}</div>
-                            </div>
-                            </td>
-                        </tr>
-                        </table>
-
-                        <!-- INFO CARDS ROW 2: Speaker / Location -->
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
-                        <tr>
-                            <td width="50%" style="padding-right:6px;">
-                            <div style="
-                                background:rgba(167,139,250,0.05);
-                                border:1px solid rgba(167,139,250,0.14);
-                                border-radius:10px;
-                                padding:16px 18px;
-                            ">
-                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">🎤 SPEAKER</div>
-                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.speaker}</div>
+                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.start_date}{f" — {db_event.end_date}" if db_event.end_date != db_event.start_date else ""}</div>
                             </div>
                             </td>
                             <td width="50%" style="padding-left:6px;">
@@ -1112,50 +1297,15 @@ async def mail_service(type: str, db_event: Event, email: List[EmailSchema]):
                                 border-radius:10px;
                                 padding:16px 18px;
                             ">
-                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">📍 LOCATION</div>
-                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.location}</div>
+                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">🎫 TICKET PRICE</div>
+                                <div style="font-size:15px;color:#ffffff;font-weight:600;">₮{int(db_event.ticket_price):,}</div>
                             </div>
                             </td>
                         </tr>
                         </table>
 
-                        <!-- INFO CARDS ROW 3: Building / Room -->
-                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-                        <tr>
-                            <td width="50%" style="padding-right:6px;">
-                            <div style="
-                                background:rgba(251,191,36,0.05);
-                                border:1px solid rgba(251,191,36,0.14);
-                                border-radius:10px;
-                                padding:16px 18px;
-                            ">
-                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">🏛 BUILDING</div>
-                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.building}</div>
-                            </div>
-                            </td>
-                            <td width="50%" style="padding-left:6px;">
-                            <div style="
-                                background:rgba(251,191,36,0.05);
-                                border:1px solid rgba(251,191,36,0.14);
-                                border-radius:10px;
-                                padding:16px 18px;
-                            ">
-                                <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.08em;margin-bottom:6px;">🚪 ROOM</div>
-                                <div style="font-size:15px;color:#ffffff;font-weight:600;">{db_event.room}</div>
-                            </div>
-                            </td>
-                        </tr>
-                        </table>
-
-                        <!-- AGENDA -->
-                        <p style="
-                        margin:0 0 8px;
-                        font-size:13px;
-                        font-family:'Courier New',monospace;
-                        color:#38bdf8;
-                        letter-spacing:0.12em;
-                        ">SESSION AGENDA</p>
-                        <div style="
+                        <!-- Description (if any) -->
+                        {f'''<div style="
                         background:rgba(255,255,255,0.02);
                         border:1px solid rgba(255,255,255,0.07);
                         border-radius:10px;
@@ -1165,7 +1315,7 @@ async def mail_service(type: str, db_event: Event, email: List[EmailSchema]):
                         color:#94a3b8;
                         line-height:1.8;
                         white-space:pre-line;
-                        ">{db_event.agenda}</div>
+                        ">{db_event.description}</div>''' if db_event.description else ""}
 
                         <!-- NOTICE -->
                         <div style="
@@ -1435,7 +1585,7 @@ async def post_mail_service(db_post: Post, email: List[EmailSchema]):
 async def publish_post(db_post: Post, email_list: List[EmailSchema]):
     await post_mail_service(db_post=db_post, email=email_list)
 
-async def _issue_ticket(user_id: int, day_length: int):
+async def _issue_ticket(user_id: int, event_id: int | None = None):
     with Session(engine) as session:
         user = session.get(User, user_id)
         if not user:
@@ -1447,15 +1597,28 @@ async def _issue_ticket(user_id: int, day_length: int):
         lastname = user.lastname
         email = user.email
 
-        existing = session.exec(select(Ticket).where(Ticket.user_id == user_id)).first()
+        # Compute day_length and price from event
+        day_length = 1
+        price = 0.0
+        if event_id:
+            db_event = session.get(Event, event_id)
+            if db_event:
+                day_length = compute_day_length(db_event.start_date, db_event.end_date, db_event.include_weekends)
+                price = db_event.ticket_price
+
+        existing = session.exec(
+            select(Ticket).where(Ticket.user_id == user_id, Ticket.event_id == event_id)
+        ).first()
         if existing:
             ticket_uuid = existing.qr_code_data
-            print(f"Ticket already exists for user {user_id}, resending email")
+            print(f"Ticket already exists for user {user_id} event {event_id}, resending email")
         else:
             ticket_uuid = str(uuid4())
             new_ticket = Ticket(
                 user_id=user_id,
+                event_id=event_id,
                 name="Conference Pass",
+                price=price,
                 day_length=day_length,
                 used_times=0,
                 qr_code_data=ticket_uuid,

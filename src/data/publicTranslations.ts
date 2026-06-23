@@ -7,7 +7,7 @@ export const pub = {
     heroTitle:  'Mongolia Meets\nGlobal Frontier \nHigh Energy Physics',
     heroDesc:   'Science Development Accelerator NGO aims to connects Mongolian scientists with CERN and the global research community — bringing world-class science to Mongolia and showcasing Mongolian talent to the world.',
     exploreBtn: 'Explore Mongolia - CERN LHCb 2026',
-    aboutBtn:   'About NGO',
+    aboutBtn:   'About Us',
     heroCaption:'📷 Science Development Accelerator NGO representatives at CERN — Geneva, Switzerland',
     // stat strip
     statDate:       '6/8–12, 2026',
@@ -118,7 +118,7 @@ export const pub = {
     speakersCTADesc:   'The student poster session is still open for submissions. Show your research to the global HEP community.',
     speakersCTABtn:    'Submit Poster Abstract',
     // speaker detail
-    speakerBackBtn:    '← Back to Speakers',
+    speakerBackBtn:    'Back to Speakers',
     speakerSpecialty:  'Research Specialty',
     speakerBioTitle:   'Biography',
     speakerNotFound:   'Speaker not found',
@@ -130,7 +130,7 @@ export const pub = {
     quickLinks:     'Quick Links',
     contactLabel:   'Contact',
     copyright:      '© 2026 Science Development Accelerator NGO. All rights reserved.',
-    organizers:     'Organizers & Partners',
+    organizers:     'Partners',
   },
   mn: {
     // nav
@@ -185,10 +185,10 @@ export const pub = {
     // partners
     partnersLabel:  'Байгууллагуудын дэмжлэгтэйгээр',
     // cta
-    ctaTitle:       'Монголын тэргүүлэх судалгааны нэг хэсэг болоорой.',
+    ctaTitle:       'Бидэнтэй нэгдэж Монголын тэргүүлэх судалгааны нэг хэсэг болоорой.',
     ctaDesc:        'Монгол-CERN LHCb хамтын ажиллагаанд таны оролцоо чухал.',
-    sponsorBtn:     'Арга хэмжээг ивээн тэтгэх',
-    contactBtn:     'Зохион байгуулагчидтай холбогдох',
+    sponsorBtn:     'Хамтран ажиллах',
+    contactBtn:     'Бидэнтэй холбогдох',
     // about
     aboutEyebrow:    'Бидний Тухай',
     aboutTitle:      'Монголын улсын шинжлэх ухааны хөгжлийн төлөө',
@@ -260,6 +260,6 @@ export const pub = {
     quickLinks:     'Холбоосууд',
     contactLabel:   'Холбоо Барих',
     copyright:      '© 2026 Шинжлэх Ухааны Хөгжлийн Хурдасгуур ТББ. Бүх эрх хуулиар хамгаалагдсан.',
-    organizers:     'Зохион Байгуулагчид & Түншүүд',
+    organizers:     'Бидэнтэй хамтрагч байгууллагууд',
   },
 }

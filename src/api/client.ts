@@ -2,7 +2,7 @@ import axios from 'axios'
 
 export const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: false,  
+  withCredentials: false,
 })
 
 client.interceptors.request.use(config => {
@@ -26,15 +26,37 @@ export interface User {
 
 export interface Event {
   id: number
-  date: string
-  start_time: string
-  end_time: string
-  topic: string
-  agenda: string
-  speaker: string
-  location: string
-  building: string
-  room: string
+  event_name: string
+  description?: string
+  start_date: string
+  end_date: string
+  is_active: boolean
+  ticket_price: number
+  include_weekends: boolean
+}
+
+export interface Agenda {
+  agenda_id: number
+  event_id: number
+  agenda?: string
+  speaker?: string
+  location?: string
+  building?: string
+  room?: string
+  start_time?: string
+  end_time?: string
+}
+
+export interface Banner {
+  id: number
+  event_id?: number
+  description: string
+  is_active: boolean
+  created_at: string
+  event_name?: string
+  start_date?: string
+  end_date?: string
+  ticket_price?: number
 }
 
 export interface Post {
@@ -84,15 +106,40 @@ export interface UserCreatePayload {
 }
 
 export interface EventPayload {
-  date: string
-  start_time: string
-  end_time: string
-  topic: string
+  event_name: string
+  description?: string
+  start_date: string
+  end_date: string
+  is_active: boolean
+  ticket_price: number
+  include_weekends: boolean
+}
+
+export interface AgendaPayload {
+  event_id: number
   agenda: string
-  speaker: string
+  speaker?: string
   location: string
   building: string
   room: string
+  start_time: string
+  end_time: string
+}
+
+export interface AgendaUpdatePayload {
+  agenda?: string
+  speaker?: string
+  location?: string
+  building?: string
+  room?: string
+  start_time?: string
+  end_time?: string
+}
+
+export interface BannerPayload {
+  event_id?: number
+  description: string
+  is_active: boolean
 }
 
 export interface QuestionWithUser {
@@ -106,7 +153,7 @@ export interface QuestionWithUser {
 
 export interface QuestionPayload {
   user_id: number
-  event_id: number     
+  event_id: number
   question: string
   time: string
 }
@@ -137,8 +184,6 @@ export interface TicketValidation {
 }
 
 // ─── ERROR HELPER ─────────────────────────────────────────────────────────────
-// FastAPI 422 returns detail as an array of {type,loc,msg,input} objects.
-// Passing that array to React children crashes with error #31.
 export const apiErr = (err: any, fallback = 'Request failed'): string => {
   const detail = err?.response?.data?.detail
   if (Array.isArray(detail)) {
@@ -160,23 +205,39 @@ export const register = (payload: UserCreatePayload) => client.post<User>('/regi
 
 export const login = async (email: string, password: string) => {
   const data = await client.post<User & { token: string }>('/login', { email, password }).then(r => r.data)
-  localStorage.setItem('token', data.token)  // ← save token
+  localStorage.setItem('token', data.token)
   return data
 }
 export const logout = () => {
-  localStorage.removeItem('token')  // ← clear token
+  localStorage.removeItem('token')
   return client.post<{ message: string }>('/logout').then(r => r.data)
 }
 
 export const updateUser = (id: number, payload: Partial<UserCreatePayload>) => client.put<User>(`/user/${id}`, payload).then(r => r.data)
 export const deleteUser = (id: number) => client.delete<{ message: string }>(`/user/${id}`).then(r => r.data)
 
+// Events (authenticated)
 export const getAllEvents = () => client.get<Event[]>('/all-events').then(r => r.data)
+export const getPublicEvents = () => client.get<Event[]>('/public/events').then(r => r.data)
 export const getEvent = (id: number) => client.get<Event>(`/event/${id}`).then(r => r.data)
-export const createEvent = (payload: EventPayload) => client.post<Event>('/add-event', payload).then(r => r.data)
+export const createEvent = (payload: EventPayload) => client.post<Event>('/create-event', payload).then(r => r.data)
 export const updateEvent = (id: number, payload: Partial<EventPayload>) => client.put<Event>(`/event/${id}`, payload).then(r => r.data)
 export const deleteEvent = (id: number) => client.delete<{ status: boolean; message: string }>(`/event/${id}`).then(r => r.data)
 
+// Agendas
+export const getEventAgendas = (eventId: number) => client.get<Agenda[]>(`/event/${eventId}/agendas`).then(r => r.data)
+export const createAgenda = (payload: AgendaPayload) => client.post<Agenda>('/agenda/create', payload).then(r => r.data)
+export const updateAgenda = (agendaId: number, payload: AgendaUpdatePayload) => client.put<Agenda>(`/agenda/${agendaId}`, payload).then(r => r.data)
+export const deleteAgenda = (agendaId: number) => client.delete<{ status: boolean; message: string }>(`/agenda/${agendaId}`).then(r => r.data)
+
+// Banners
+export const getPublicBanners = () => client.get<Banner[]>('/public/banners').then(r => r.data)
+export const getAllBanners = () => client.get<Banner[]>('/banners').then(r => r.data)
+export const createBanner = (payload: BannerPayload) => client.post<Banner>('/banners', payload).then(r => r.data)
+export const updateBanner = (id: number, payload: BannerPayload) => client.put<Banner>(`/banners/${id}`, payload).then(r => r.data)
+export const deleteBanner = (id: number) => client.delete<{ message: string }>(`/banners/${id}`).then(r => r.data)
+
+// Tickets
 export const purchaseTicket = (payload: TicketPurchasePayload) => client.post<TicketPurchaseResult>('/purchase_ticket', payload).then(r => r.data)
 export const validateTicket = (ticketUuid: string) => client.get<TicketVerification>(`/validate/${ticketUuid}`).then(r => r.data)
 export const ticketValidation = (ticket: TicketValidation) => client.post<TicketValidation>('/ticket/validation', ticket).then(r => r.data)
@@ -225,7 +286,7 @@ export interface InvoicePayload {
   user_id: number
   username: string
   amount: number
-  days: number
+  event_id?: number
 }
 
 export interface InvoiceResult {
@@ -237,7 +298,7 @@ export const createInvoice = (payload: InvoicePayload) =>
   client.post<InvoiceResult>('/invoice', payload).then(r => r.data)
 
 export const checkUserTicket = () =>
-  client.get<{ has_ticket: boolean }>('/ticket/check').then(r => r.data)
+  client.get<{ has_ticket: boolean; ticket_event_ids: number[] }>('/ticket/check').then(r => r.data)
 
 export interface TicketAdmin {
   id: string
@@ -254,8 +315,8 @@ export interface TicketAdmin {
 export const getAllTickets = () =>
   client.get<TicketAdmin[]>('/admin/tickets').then(r => r.data)
 
-export const adminIssueTicket = (userId: number) =>
-  client.post<{ message: string }>(`/admin/ticket/issue/${userId}`).then(r => r.data)
+export const adminIssueTicket = (userId: number, eventId?: number) =>
+  client.post<{ message: string }>(`/admin/ticket/issue/${userId}${eventId ? `?event_id=${eventId}` : ''}`).then(r => r.data)
 
 export const adminDeleteTicket = (userId: number) =>
   client.delete<{ message: string }>(`/admin/ticket/${userId}`).then(r => r.data)
@@ -274,7 +335,8 @@ export interface StaffTicketPayload {
   lastname: string
   phone_number: string
   email: string
+  event_id: number
 }
 
 export const staffCreateTicket = (payload: StaffTicketPayload) =>
-  client.post<{ invoice_url?: string; email?: string; error?: string }>('/staff/ticket/create', payload).then(r => r.data)
+  client.post<{ invoice_url?: string; email?: string; amount?: number; error?: string }>('/staff/ticket/create', payload).then(r => r.data)

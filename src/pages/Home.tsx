@@ -1,20 +1,27 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { CountdownTimer } from '@/components/ui/CountdownTimer'
 import { partners } from '@/data/organizations'
 import { useLang } from '@/context/LanguageContext'
 import { pub } from '@/data/publicTranslations'
 import { HomeAgendaSection } from '@/components/HomeAgendaSection'
 import { BookDownload } from '@/components/BookDownload'
+import { getPublicBanners, Banner } from '@/api/client'
 
 export default function Home() {
   const { lang } = useLang()
   const t = pub[lang]
 
+  const [banners, setBanners] = useState<Banner[]>([])
+  useEffect(() => {
+    getPublicBanners().then(setBanners).catch(() => {})
+  }, [])
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* ── Conference Banner ── */}
-      {/*<section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+      <section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
         <img
           src="/banners/conf_banner_template.png"
           alt="Mongolia - CERN LHCb 2026 Conference"
@@ -71,7 +78,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>*/}
+      </section>
 
       {/* ── Hero ── */}
       <section style={{
@@ -106,13 +113,13 @@ export default function Home() {
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
               <a href="#event">
-                <button
+                {/* <button
                   style={{ height: 56, padding: '0 32px', fontSize: 16, fontWeight: 700, background: 'var(--blue)', color: '#ffffff', border: 'none', borderRadius: 12, cursor: 'pointer', transition: 'opacity 0.2s' }}
                   onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
                   onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                 >
                   {t.exploreBtn}
-                </button>
+                </button> */}
               </a>
               <Link to="/about">
                 <button
@@ -161,7 +168,7 @@ export default function Home() {
       </section>
 
       {/* ── Event Details ── */}
-      <section id="event" style={{ padding: '96px 0', background: 'var(--bg-2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+      {/* <section id="event" style={{ padding: '96px 0', background: 'var(--bg-2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-[1240px] mx-auto px-6 md:px-12" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 48, alignItems: 'stretch' }}>
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <h2 style={{ fontSize: 34, fontWeight: 700, color: '#ffffff', marginBottom: 18 }}>{t.eventTitle}</h2>
@@ -193,13 +200,77 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
+
+      {/* ── Event Banners ── */}
+      {banners.length > 0 && (
+        <section id="events" style={{ padding: '80px 0', background: 'var(--bg-2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+          <div className="max-w-[1240px] mx-auto px-6 md:px-12">
+            <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--blue-text)', marginBottom: 10 }}>
+              UPCOMING EVENTS
+            </span>
+            <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', fontWeight: 700, color: '#ffffff', marginBottom: 40, lineHeight: 1.25 }}>
+              {lang === 'mn' ? 'Арга хэмжээнүүд' : 'Events & Conferences'}
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
+              {banners.map(b => (
+                <div
+                  key={b.id}
+                  style={{
+                    background: 'var(--bg-3)',
+                    border: '1px solid var(--border-2)',
+                    borderRadius: 'var(--radius-xl)',
+                    padding: '28px 26px',
+                    display: 'flex', flexDirection: 'column', gap: 14,
+                    position: 'relative', overflow: 'hidden',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(82,96,217,0.45)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-2)')}
+                >
+                  {/* Glow accent */}
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #5260d9, #7c3aed)', borderRadius: '4px 4px 0 0' }} />
+
+                  {/* Event name */}
+                  {b.event_name && (
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--blue-text)' }}>
+                      {b.event_name}
+                    </div>
+                  )}
+
+                  {/* Banner description */}
+                  <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', lineHeight: 1.65, margin: 0, flex: 1 }}>
+                    {b.description}
+                  </p>
+
+                  {/* Date + price row */}
+                  <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                    {b.start_date && (
+                      <span>📅 {b.start_date}{b.end_date && b.end_date !== b.start_date ? ` — ${b.end_date}` : ''}</span>
+                    )}
+                    {b.ticket_price != null && (
+                      <span>🎫 ₮{b.ticket_price.toLocaleString()}</span>
+                    )}
+                  </div>
+
+                  <Link to="/register" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 44, padding: '0 24px', background: 'var(--blue)', color: '#ffffff', fontWeight: 700, fontSize: 14, borderRadius: 10, textDecoration: 'none', transition: 'opacity 0.2s', width: 'fit-content' }}
+                    onMouseEnter={(e: any) => (e.currentTarget.style.opacity = '0.85')}
+                    onMouseLeave={(e: any) => (e.currentTarget.style.opacity = '1')}
+                  >
+                    {lang === 'mn' ? 'Бүртгүүлэх' : 'Register Now'}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Agenda ── */}
-      <HomeAgendaSection />
+      {/*<HomeAgendaSection />*/}
 
       {/* ── Partners ── */}
-      <section style={{ padding: '64px 0', background: 'var(--bg)' }}>
+      {/* <section style={{ padding: '64px 0', background: 'var(--bg)' }}>
         <div className="max-w-[1240px] mx-auto px-6 md:px-12">
           <p style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 48 }}>
             {t.partnersLabel}
@@ -220,7 +291,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ── CTA ── */}
       <section style={{ padding: '120px 0', textAlign: 'center', background: 'var(--bg-2)', position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--border)' }}>

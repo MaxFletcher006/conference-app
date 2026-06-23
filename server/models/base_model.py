@@ -3,31 +3,64 @@ from typing import Optional
 from models.model import User, Validation
 
 class UserModel(BaseModel):
-    firstname: str 
-    lastname: str 
+    firstname: str
+    lastname: str
     email: EmailStr
-    phone_number: str 
-    password: str 
-    role: str 
+    phone_number: str
+    password: str
+    role: str
 
 class UserReturn(BaseModel):
     id: int
-    firstname: str 
-    lastname: str 
+    firstname: str
+    lastname: str
     email: EmailStr
     phone_number: str
-    role: str 
+    role: str
 
 class EventModel(BaseModel):
-    date: str 
-    start_time: str 
-    end_time: str 
-    topic: str 
+    event_name: str
+    description: Optional[str] = None
+    start_date: str
+    end_date: str
+    is_active: bool = False
+    ticket_price: float
+    include_weekends: bool = False
+
+class AgendaModel(BaseModel):
+    event_id: int
     agenda: str
-    speaker: str
-    location: str 
-    building: str 
-    room: str 
+    speaker: Optional[str] = None
+    location: str
+    building: str
+    room: str
+    start_time: str
+    end_time: str
+
+class AgendaUpdate(BaseModel):
+    agenda: Optional[str] = None
+    speaker: Optional[str] = None
+    location: Optional[str] = None
+    building: Optional[str] = None
+    room: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+
+class BannerModel(BaseModel):
+    event_id: Optional[int] = None
+    description: str
+    is_active: bool = False
+
+class BannerReturn(BaseModel):
+    id: int
+    event_id: Optional[int] = None
+    description: str
+    is_active: bool
+    created_at: str
+    event_name: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    ticket_price: Optional[float] = None
 
 class PostCreate(BaseModel):
     header: str
@@ -43,10 +76,10 @@ class PostReturn(BaseModel):
     staff_only: bool
 
 class QuestionModel(BaseModel):
-    user_id: int 
-    event_id: int 
-    question: str 
-    time: str 
+    user_id: int
+    event_id: int
+    question: str
+    time: str
 
 class QuestionWithUser(BaseModel):
     id: int
@@ -57,15 +90,16 @@ class QuestionWithUser(BaseModel):
     fullname: str
 
 class UserQuestion(BaseModel):
-    user_id: int 
+    user_id: int
 
 class EmailSchema(BaseModel):
     email: EmailStr
 
 class TicketPurchaseModel(BaseModel):
-    user_id: int 
-    day: int 
+    user_id: int
+    day: int
     email: EmailStr
+    price: float
 
 class LoginModel(BaseModel):
     email: EmailStr
@@ -75,8 +109,8 @@ class ForgetEmail(BaseModel):
     email: str
 
 class PasswordReset(BaseModel):
-    token: str 
-    new_password: str 
+    token: str
+    new_password: str
 
 class TicketVerification(BaseModel):
     ticket_uuid: str
@@ -96,7 +130,7 @@ class InvoiceModel(BaseModel):
     user_id: int
     username: str
     amount: int
-    days: int
+    event_id: Optional[int] = None
 
 class UserUpdate(BaseModel):
     firstname: Optional[str] = None
@@ -111,3 +145,4 @@ class StaffTicketCreate(BaseModel):
     lastname: str
     phone_number: str
     email: EmailStr
+    event_id: int

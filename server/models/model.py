@@ -15,20 +15,36 @@ class User(SQLModel, table=True):
     lastname: str = Field(index=True)
     email: str = Field(index=True, unique=True, exclude=True)
     phone_number: str = Field(index=True)
-    password: str 
+    password: str
     role: str = Field(index=True)
 
 class Event(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    date: str | None = Field(index=True)
-    start_time: str | None = Field(index=True)
-    end_time: str | None = Field(index=True)
-    topic: str | None=Field(index=True)
-    agenda: str | None=Field(default=None, index=True)
-    speaker: str | None = Field(index=True)
-    location: str | None = Field(index=True)
-    building: str | None = Field(index=True)
-    room: str | None = Field(index=True)
+    event_name: str = Field(index=True)
+    description: str | None = Field(default=None)
+    start_date: str = Field(index=True)
+    end_date: str = Field(index=True)
+    is_active: bool = Field(default=False)
+    ticket_price: float
+    include_weekends: bool = Field(default=False)
+
+class Agenda(SQLModel, table=True):
+    agenda_id: int | None = Field(default=None, primary_key=True)
+    event_id: int | None = Field(default=None, foreign_key="event.id", ondelete="CASCADE")
+    agenda: str | None = Field(default=None, index=True)
+    speaker: str | None = Field(default=None)
+    location: str | None = Field(default=None, index=True)
+    building: str | None = Field(default=None, index=True)
+    room: str | None = Field(default=None, index=True)
+    start_time: str | None = Field(default=None)
+    end_time: str | None = Field(default=None)
+
+class Banner(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    event_id: int | None = Field(default=None, foreign_key="event.id", ondelete="CASCADE")
+    description: str
+    is_active: bool = Field(default=False)
+    created_at: str
 
 class Post(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -41,7 +57,9 @@ class Post(SQLModel, table=True):
 class Ticket(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     user_id: int | None = Field(default=None, foreign_key="user.id", index=True, ondelete="CASCADE")
+    event_id: int | None = Field(default=None, foreign_key="event.id", index=True, ondelete="SET NULL")
     name: str
+    price: float = Field(default=0.0)
     day_length: int
     used_times: int
     qr_code_data: str = Field(unique=True)
@@ -60,7 +78,6 @@ class MailList(SQLModel, table=True):
         foreign_key="user.id", 
         ondelete="CASCADE"
     )
-    
     email: str = Field(index=True)
 
 class Validation(SQLModel, table=True):
@@ -79,6 +96,7 @@ class Transaction(SQLModel, table=True):
     description: str = Field(index=True)
     url: str = Field(index=True)
     
+
 
 engine = create_engine(DB_URL, pool_pre_ping=True, pool_recycle=1800)
 

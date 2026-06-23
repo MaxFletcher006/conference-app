@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import {
   getAllEvents, addQuestion, getQuestionsByUser,
   createInvoice, checkUserTicket, getAllPosts,
-  Event, Question, Post, apiErr,
+  getEventAgendas,
+  Event, Question, Post, Agenda, apiErr,
 } from '../api/client'
 
 import { useAuth } from '../context/AuthContext'
-import { Btn, Input, Select, Modal, toast, Spinner } from '../components/UI'
-
-
-const PRICE_PER_DAY = Number(import.meta.env.VITE_TICKET_PRICE) || 10000;
+import { Btn, Select, Modal, toast, Spinner } from '../components/UI'
 
 // ── Translations ──────────────────────────────────────────────────────────────
 
@@ -26,15 +24,20 @@ const T = {
     askDesc:         'Submit a question to a speaker at any event',
     myQ:             'My Questions',
     myQDesc:         'View all questions you have submitted so far',
-    noEvents:        '— No events scheduled yet —',
+    noEvents:        '— No active events at this time —',
     today:           'TODAY',
-    // ticket modal
+    // event selection modal
+    chooseEventTitle:'Choose an Event',
+    chooseEventDesc: 'Select the event you want to attend and purchase a ticket for.',
+    viewSessions:    'View Sessions',
+    hideSessions:    'Hide Sessions',
+    noSessions:      '— No sessions listed yet —',
+    buyFor:          'Buy Ticket',
+    // ticket confirm modal
     ticketTitle:     'Purchase Ticket',
     ticketSentTo:    'A QR-code ticket will be sent to',
-    daysLabel:       'Days of attendance',
-    day: (n: number) => n === 1 ? '1 day' : `${n} days`,
     cancel:          'Cancel',
-    purchase:        'Purchase',
+    purchase:        'Proceed to Payment',
     // question modal
     qModalTitle:     'Ask a Question',
     selectEvent:     'Select event',
@@ -47,7 +50,6 @@ const T = {
     noQYet:          "You haven't submitted any questions yet.",
     close:           'Close',
     // invoice
-    totalPrice:      (n: number) => `Total: ₮${(n * PRICE_PER_DAY).toLocaleString()}`,
     invoiceToast:    'Payment link opened — complete the payment to receive your ticket by email.',
     // public lecture
     publicLecture:   'Public Lecture',
@@ -77,15 +79,20 @@ const T = {
     askDesc:         'Илтгэгчдэд тавих асуултаа илгээгээрэй',
     myQ:             'Миний Асуултууд',
     myQDesc:         'Өөрийн тавьсан бүх асуултуудыг харах',
-    noEvents:        '— Арга хэмжээ бүртгэгдээгүй байна —',
+    noEvents:        '— Идэвхтэй арга хэмжээ байхгүй байна —',
     today:           'ӨНӨӨДӨР',
-    // ticket modal
+    // event selection modal
+    chooseEventTitle:'Арга хэмжээ сонгох',
+    chooseEventDesc: 'Оролцохыг хүсч буй арга хэмжээгээ сонгоод тасалбараа худалдан аваарай.',
+    viewSessions:    'Хөтөлбөр харах',
+    hideSessions:    'Хөтөлбөр нуух',
+    noSessions:      '— Хөтөлбөр бүртгэгдээгүй байна —',
+    buyFor:          'Тасалбар авах',
+    // ticket confirm modal
     ticketTitle:     'Тасалбар Авах',
     ticketSentTo:    'QR-кодтой тасалбар дараах хаяг руу илгээгдэнэ:',
-    daysLabel:       'Оролцох өдрийн тоо',
-    day: (n: number) => `${n} өдөр`,
     cancel:          'Цуцлах',
-    purchase:        'Авах',
+    purchase:        'Төлбөр хийх',
     // question modal
     qModalTitle:     'Асуулт Тавих',
     selectEvent:     'Арга хэмжээ сонгох',
@@ -98,7 +105,6 @@ const T = {
     noQYet:          'Та одоогоор асуулт илгээгээгүй байна.',
     close:           'Хаах',
     // invoice
-    totalPrice:      (n: number) => `Нийт: ₮${(n * PRICE_PER_DAY).toLocaleString()}`,
     invoiceToast:    'Төлбөрийн линк нээгдлээ — төлбөрөө хийснээр тасалбар и-мэйл рүү таны илгээгдэнэ.',
     // public lecture
     publicLecture:   'Олон Нийтийн Лекц',
@@ -154,10 +160,23 @@ export default function AttendeePage() {
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState<Post[]>([])
 
+  // Ticket state
+  const [ticketEventIds, setTicketEventIds] = useState<number[]>([])
+  const [hasAnyTicket, setHasAnyTicket] = useState(false)
+
+  // Event selection modal (choose which event to buy ticket for)
+  const [eventSelectModal, setEventSelectModal] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [expandedAgendaEventId, setExpandedAgendaEventId] = useState<number | null>(null)
+  const [agendaMap, setAgendaMap] = useState<Record<number, Agenda[]>>({})
+  const [loadingAgendas, setLoadingAgendas] = useState(false)
+
+  // Ticket confirm modal
   const [ticketModal, setTicketModal] = useState(false)
   const [purchasingTicket, setPurchasingTicket] = useState(false)
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null)
 
+  // Question state
   const [questionModal, setQuestionModal] = useState(false)
   const [eventId, setEventId] = useState('')
   const [questionText, setQuestionText] = useState('')
@@ -167,16 +186,18 @@ export default function AttendeePage() {
   const [myQuestions, setMyQuestions] = useState<Question[]>([])
   const [loadingQuestions, setLoadingQuestions] = useState(false)
 
-  const [hasTicket, setHasTicket] = useState(false)
   const [showWelcome, setShowWelcome] = useState(true)
 
   useEffect(() => {
     getAllEvents()
-      .then(setEvents)
+      .then(all => setEvents(all.filter(e => e.is_active)))
       .catch(() => {})
       .finally(() => setLoading(false))
     checkUserTicket()
-      .then(({ has_ticket }) => setHasTicket(has_ticket))
+      .then(({ has_ticket, ticket_event_ids }) => {
+        setHasAnyTicket(has_ticket)
+        setTicketEventIds(ticket_event_ids)
+      })
       .catch(() => {})
     getAllPosts()
       .then(setPosts)
@@ -193,30 +214,34 @@ export default function AttendeePage() {
 
   const handleLogout = async () => { await logout(); navigate('/login') }
 
-  const handleOpenTicketModal = async () => {
-    try {
-      const { has_ticket } = await checkUserTicket()
-      if (has_ticket) {
-        toast(lang === 'mn'
-          ? 'Та аль хэдийн тасалбар авсан байна. И-мэйлээ шалгана уу.'
-          : 'You already have a ticket. Please check your email.', 'err')
-        return
-      }
-    } catch {}
+  const handleOpenBuyTicket = () => {
+    setSelectedEvent(null)
+    setInvoiceUrl(null)
+    setEventSelectModal(true)
+  }
+
+  const handleSelectEventForTicket = (ev: Event) => {
+    if (ticketEventIds.includes(ev.id)) {
+      toast(lang === 'mn'
+        ? 'Та энэ арга хэмжээний тасалбарыг аль хэдийн авсан байна.'
+        : 'You already have a ticket for this event. Check your email.', 'err')
+      return
+    }
+    setSelectedEvent(ev)
+    setEventSelectModal(false)
     setTicketModal(true)
   }
 
   const handlePurchaseTicket = async (e: FormEvent) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || !selectedEvent) return
     setPurchasingTicket(true)
     try {
-      const days = 1
       const result = await createInvoice({
         user_id: user.id,
         username: `${user.firstname} ${user.lastname}`,
-        amount: days * PRICE_PER_DAY,
-        days,
+        amount: Math.round(selectedEvent.ticket_price),
+        event_id: selectedEvent.id,
       })
       if (result.invoice_url) {
         setInvoiceUrl(result.invoice_url)
@@ -230,7 +255,7 @@ export default function AttendeePage() {
   }
 
   const handleOpenQuestionModal = () => {
-    if (!hasTicket) { toast(t.noTicketToast, 'err'); return }
+    if (!hasAnyTicket) { toast(t.noTicketToast, 'err'); return }
     setQuestionModal(true)
   }
 
@@ -260,7 +285,24 @@ export default function AttendeePage() {
   }
 
   const handleOpenMyQuestions = () => { setMyQuestionsModal(true); fetchMyQuestions() }
-  const getEventTopic = (evId: number) => events.find(e => e.id === evId)?.topic ?? `Event #${evId}`
+  const getEventName = (evId: number) => events.find(e => e.id === evId)?.event_name ?? `Event #${evId}`
+
+  const toggleAgendaView = async (eventId: number) => {
+    if (expandedAgendaEventId === eventId) {
+      setExpandedAgendaEventId(null)
+      return
+    }
+    setExpandedAgendaEventId(eventId)
+    if (!agendaMap[eventId]) {
+      setLoadingAgendas(true)
+      try {
+        const list = await getEventAgendas(eventId)
+        setAgendaMap(prev => ({ ...prev, [eventId]: list }))
+      } catch {}
+      setLoadingAgendas(false)
+    }
+  }
+
   const todayStr = new Date().toISOString().split('T')[0]
 
   return (
@@ -289,7 +331,6 @@ export default function AttendeePage() {
             display: 'flex', flexDirection: 'column', gap: 20,
             boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
           }}>
-            {/* Badge */}
             <div style={{ textAlign: 'center' }}>
               <span style={{
                 display: 'inline-block',
@@ -303,68 +344,30 @@ export default function AttendeePage() {
               </span>
             </div>
 
-            {/* Title */}
             <div>
-              <h2 style={{
-                margin: 0, fontSize: 20, fontWeight: 700,
-                color: '#ffffff', lineHeight: 1.4, textAlign: 'center',
-              }}>
-               Тавтай морил 👋
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#ffffff', lineHeight: 1.4, textAlign: 'center' }}>
+                Тавтай морил 👋
               </h2>
             </div>
 
-            {/* Info blocks */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-              {/* Ticket required */}
-              <div style={{
-                background: 'rgba(251,191,36,0.07)',
-                border: '1px solid rgba(251,191,36,0.22)',
-                borderLeft: '3px solid var(--yellow)',
-                borderRadius: '0 8px 8px 0',
-                padding: '12px 14px',
-                fontSize: 14, color: '#fef3c7', lineHeight: 1.7,
-              }}>
+              <div style={{ background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.22)', borderLeft: '3px solid var(--yellow)', borderRadius: '0 8px 8px 0', padding: '12px 14px', fontSize: 14, color: '#fef3c7', lineHeight: 1.7 }}>
                 2026 оны 06 сарын 09-ны 16:00 цагийн Олон нийтийн лекц нь 10,000 ₮-ийн төлбөртэй тул лекцэнд оролцохын тулд эхлээд тасалбараа худалдан авах ёстойг анхаараарай.
               </div>
-
-              {/* How to buy */}
-              <div style={{
-                background: 'rgba(82,96,217,0.07)',
-                border: '1px solid rgba(82,96,217,0.2)',
-                borderLeft: '3px solid var(--blue)',
-                borderRadius: '0 8px 8px 0',
-                padding: '12px 14px',
-                fontSize: 14, color: '#e0e7ff', lineHeight: 1.7,
-              }}>
-                Тасалбар худалдан авахыг хүсвэл "Тасалбар Авах / Purchase Ticket" товчин дээр дарж, төлбөрийн цонхонд төлбөрөө хийснээр тасалбар таны и-мэйл хаяг руу илгээгдэнэ.
+              <div style={{ background: 'rgba(82,96,217,0.07)', border: '1px solid rgba(82,96,217,0.2)', borderLeft: '3px solid var(--blue)', borderRadius: '0 8px 8px 0', padding: '12px 14px', fontSize: 14, color: '#e0e7ff', lineHeight: 1.7 }}>
+                Тасалбар худалдан авахыг хүсвэл "Тасалбар Авах / Purchase Ticket" товчин дээр дарж, арга хэмжээгээ сонгоод төлбөрийн цонхонд төлбөрөө хийснээр тасалбар таны и-мэйл хаяг руу илгээгдэнэ.
               </div>
-
-              {/* Spam notice */}
-              <div style={{
-                background: 'rgba(74,222,128,0.06)',
-                border: '1px solid rgba(74,222,128,0.18)',
-                borderLeft: '3px solid var(--green)',
-                borderRadius: '0 8px 8px 0',
-                padding: '12px 14px',
-                fontSize: 14, color: '#d1fae5', lineHeight: 1.7,
-              }}>
+              <div style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.18)', borderLeft: '3px solid var(--green)', borderRadius: '0 8px 8px 0', padding: '12px 14px', fontSize: 14, color: '#d1fae5', lineHeight: 1.7 }}>
                 Тасалбар таны и-мэйлийн спам фолдер луу орсон байж болзошгүй тул тасалбар ирээгүй байвал эхлээд спам фолдероо шалгаарай.
               </div>
-
-              {/* Contact */}
               <div style={{ fontSize: 14, color: 'var(--text-3)', lineHeight: 1.7, textAlign: 'center' }}>
                 Тасалбар болон вэбтэй холбоотой асуулт гарвал:{' '}
-                <a
-                  href="mailto:cernmongolia2026@gmail.com"
-                  style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
-                >
+                <a href="mailto:cernmongolia2026@gmail.com" style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
                   cernmongolia2026@gmail.com
                 </a>
               </div>
             </div>
 
-            {/* Continue button */}
             <button
               onClick={() => setShowWelcome(false)}
               style={{
@@ -391,9 +394,7 @@ export default function AttendeePage() {
         background: 'rgba(8,8,16,0.85)', backdropFilter: 'blur(20px)',
         padding: '0 24px', height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        position: 'relative',
       }}>
-        {/* Language toggle */}
         <div style={{ display: 'flex', borderRadius: 8, border: '1px solid var(--border-2)', overflow: 'hidden' }}>
           {(['en', 'mn'] as Lang[]).map((l) => (
             <button
@@ -413,7 +414,6 @@ export default function AttendeePage() {
           ))}
         </div>
 
-        {/* Name — centered absolutely */}
         <span style={{
           position: 'absolute', left: '50%', transform: 'translateX(-50%)',
           fontSize: 14, color: 'var(--text-3)', fontFamily: 'var(--font-mono)',
@@ -422,7 +422,6 @@ export default function AttendeePage() {
           {user?.firstname} {user?.lastname}
         </span>
 
-        {/* Sign out */}
         <button
           onClick={handleLogout}
           style={{
@@ -450,9 +449,9 @@ export default function AttendeePage() {
 
         {/* Action cards */}
         <div className="action-card-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 48 }}>
-          {/*<ActionCard icon="🎫" title={t.buyTicket} desc={t.buyDesc} color="var(--blue)"   dimColor="var(--blue-dim)"   onClick={handleOpenTicketModal} />*/}
-          <ActionCard icon="💬" title={t.askQ}      desc={t.askDesc}  color="var(--purple)" dimColor="var(--purple-dim)" onClick={handleOpenQuestionModal} />
-          <ActionCard icon="📋" title={t.myQ}       desc={t.myQDesc}  color="var(--green)"  dimColor="var(--green-dim)"  onClick={handleOpenMyQuestions} />
+          <ActionCard icon="🎫" title={t.buyTicket} desc={t.buyDesc} color="var(--blue)" dimColor="var(--blue-dim)" onClick={handleOpenBuyTicket} />
+          <ActionCard icon="💬" title={t.askQ} desc={t.askDesc} color="var(--purple)" dimColor="var(--purple-dim)" onClick={handleOpenQuestionModal} />
+          <ActionCard icon="📋" title={t.myQ} desc={t.myQDesc} color="var(--green)" dimColor="var(--green-dim)" onClick={handleOpenMyQuestions} />
         </div>
 
         {/* Ticket support notice */}
@@ -465,10 +464,7 @@ export default function AttendeePage() {
         }}>
           <span style={{ fontSize: 16 }}>✉️</span>
           <span>{t.ticketSupport}</span>
-          <a
-            href="mailto:cernmongolia2026@gmail.com"
-            style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)', textDecoration: 'none' }}
-          >
+          <a href="mailto:cernmongolia2026@gmail.com" style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)', textDecoration: 'none' }}>
             cernmongolia2026@gmail.com
           </a>
         </div>
@@ -478,40 +474,15 @@ export default function AttendeePage() {
           <section style={{ marginBottom: 48 }}>
             <div style={{ display: 'flex', alignItems: 'stretch', gap: 14, marginBottom: 16 }}>
               <div style={{ width: 3, borderRadius: 2, background: 'var(--purple)', flexShrink: 0 }} />
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: 13,
-                color: 'var(--purple)', letterSpacing: '0.15em',
-                textTransform: 'uppercase', alignSelf: 'center',
-              }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--purple)', letterSpacing: '0.15em', textTransform: 'uppercase', alignSelf: 'center' }}>
                 {t.announcements}
               </div>
             </div>
-            <div className="announcements-grid" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {posts.map(p => (
-                <div
-                  key={p.id}
-                  style={{
-                    background: 'var(--bg-2)',
-                    border: '1px solid rgba(124,58,237,0.22)',
-                    borderLeft: '3px solid var(--purple)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '16px 18px',
-                    display: 'flex', flexDirection: 'column', gap: 8,
-                  }}
-                >
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#ffffff', lineHeight: 1.4 }}>
-                    {p.header}
-                  </div>
-                  <div style={{
-                    fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6,
-                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                  }}>
-                    {p.body}
-                  </div>
+                <div key={p.id} style={{ background: 'var(--bg-2)', border: '1px solid rgba(124,58,237,0.22)', borderLeft: '3px solid var(--purple)', borderRadius: 'var(--radius-lg)', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#ffffff', lineHeight: 1.4 }}>{p.header}</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{p.body}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
                     🕒 {new Date(p.time).toLocaleDateString(lang === 'mn' ? 'mn-MN' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </div>
@@ -521,49 +492,124 @@ export default function AttendeePage() {
           </section>
         )}
 
-        {/* Events */}
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner size={32} /></div>
-        ) : events.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-3)', fontSize: 16, fontFamily: 'var(--font-mono)' }}>
-            {t.noEvents}
+        {/* Active Events */}
+        <section style={{ marginBottom: 48 }}>
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 14, marginBottom: 20 }}>
+            <div style={{ width: 3, borderRadius: 2, background: 'var(--blue)', flexShrink: 0 }} />
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--blue)', letterSpacing: '0.15em', textTransform: 'uppercase', alignSelf: 'center' }}>
+              EVENTS
+            </div>
           </div>
-        ) : (
-          groupByDate(events).map(({ date, items }) => {
-            const isToday = date === todayStr
-            const isPast  = date < todayStr
-            const d = new Date(date + 'T00:00:00')
-            const weekday  = t.weekdays[d.getDay()]
-            const formatted = lang === 'mn'
-              ? `${d.getFullYear()} оны ${d.getMonth() + 1}-р сарын ${d.getDate()}`
-              : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            const accent = isToday ? 'var(--yellow)' : isPast ? 'var(--text-3)' : 'var(--blue)'
 
-            return (
-              <section key={date} style={{ marginBottom: 44 }}>
-                <div style={{ display: 'flex', alignItems: 'stretch', gap: 14, marginBottom: 16 }}>
-                  <div style={{ width: 3, borderRadius: 2, background: accent, flexShrink: 0 }} />
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: isToday ? 'var(--yellow)' : isPast ? 'var(--text-3)' : '#ffffff', letterSpacing: '-0.01em' }}>
-                        {weekday}
-                      </span>
-                      {isToday && (
-                        <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--yellow-dim)', color: 'var(--yellow)', borderRadius: 4, padding: '2px 8px', letterSpacing: '0.08em' }}>
-                          {t.today}
-                        </span>
-                      )}
+          {loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner size={32} /></div>
+          ) : events.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: 16, fontFamily: 'var(--font-mono)' }}>
+              {t.noEvents}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {events.map(ev => {
+                const hasTicket = ticketEventIds.includes(ev.id)
+                const isPast = ev.end_date < todayStr
+                const isOngoing = ev.start_date <= todayStr && ev.end_date >= todayStr
+                const isExpanded = expandedAgendaEventId === ev.id
+                const accent = isOngoing ? 'var(--yellow)' : isPast ? 'var(--text-3)' : 'var(--blue)'
+
+                return (
+                  <div key={ev.id} style={{
+                    background: 'var(--bg-2)',
+                    border: `1px solid ${hasTicket ? 'var(--green)33' : isPast ? 'var(--border)' : 'var(--border-2)'}`,
+                    borderRadius: 'var(--radius-lg)', overflow: 'hidden',
+                    opacity: isPast ? 0.6 : 1, transition: 'all 0.2s',
+                  }}>
+                    <div style={{ padding: '20px 22px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 17, fontWeight: 700, color: '#ffffff', marginBottom: 6 }}>{ev.event_name}</div>
+                          {ev.description && (
+                            <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: 10 }}>{ev.description}</div>
+                          )}
+                          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                            <span style={{ color: accent }}>📅 {ev.start_date}{ev.end_date !== ev.start_date ? ` — ${ev.end_date}` : ''}</span>
+                            <span>🎫 ₮{ev.ticket_price.toLocaleString()}</span>
+                            {isOngoing && <span style={{ color: 'var(--yellow)', background: 'var(--yellow-dim)', borderRadius: 4, padding: '1px 7px' }}>ONGOING</span>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                          <button
+                            onClick={() => toggleAgendaView(ev.id)}
+                            style={{
+                              padding: '7px 12px', fontSize: 13, background: 'transparent',
+                              border: '1px solid var(--border-2)', borderRadius: 'var(--radius)',
+                              color: 'var(--text-2)', cursor: 'pointer', transition: 'all 0.15s',
+                            }}
+                          >
+                            {isExpanded ? t.hideSessions : t.viewSessions}
+                          </button>
+                          {!hasTicket && !isPast && (
+                            <button
+                              onClick={() => handleSelectEventForTicket(ev)}
+                              style={{
+                                padding: '7px 14px', fontSize: 13, fontWeight: 700,
+                                background: 'var(--blue)', border: 'none',
+                                borderRadius: 'var(--radius)', color: '#ffffff', cursor: 'pointer',
+                                transition: 'opacity 0.15s',
+                              }}
+                              onMouseOver={e => (e.currentTarget.style.opacity = '0.85')}
+                              onMouseOut={e => (e.currentTarget.style.opacity = '1')}
+                            >
+                              {t.buyFor}
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 15, color: '#ffffff', fontFamily: 'var(--font-mono)', marginTop: 2 }}>{formatted}</div>
+
+                    {/* Ticket badge */}
+                    {hasTicket && (
+                      <div style={{
+                        background: 'var(--green-dim)', borderTop: '1px solid var(--green)33',
+                        padding: '8px 22px', display: 'flex', alignItems: 'center', gap: 8,
+                        fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600,
+                        color: 'var(--green)', letterSpacing: '0.06em',
+                      }}>
+                        {t.ticketPurchased}
+                      </div>
+                    )}
+
+                    {/* Agendas */}
+                    {isExpanded && (
+                      <div style={{ borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)', padding: '16px 22px' }}>
+                        {(loadingAgendas && expandedAgendaEventId === ev.id && !agendaMap[ev.id]) ? (
+                          <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><Spinner size={20} /></div>
+                        ) : !agendaMap[ev.id] || agendaMap[ev.id].length === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-3)', fontSize: 14, fontFamily: 'var(--font-mono)' }}>
+                            {t.noSessions}
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {agendaMap[ev.id].map(a => (
+                              <div key={a.agenda_id} style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '12px 16px' }}>
+                                <div style={{ fontSize: 14, fontWeight: 600, color: '#ffffff', marginBottom: 4 }}>{a.agenda}</div>
+                                {a.speaker && <div style={{ fontSize: 13, color: 'var(--blue)', marginBottom: 4 }}>🎤 {a.speaker}</div>}
+                                <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                                  {a.start_time && a.end_time && <span>🕒 {a.start_time}–{a.end_time}</span>}
+                                  {a.location && <span>📍 {a.location}</span>}
+                                  {a.building && <span>🏛 {a.building}{a.room ? `, Room ${a.room}` : ''}</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {items.map(e => <EventRow key={e.id} event={e} variant={isToday ? 'today' : isPast ? 'past' : 'upcoming'} events={events} hasTicket={hasTicket} ticketLabel={t.ticketPurchased} />)}
-                </div>
-              </section>
-            )
-          })
-        )}
+                )
+              })}
+            </div>
+          )}
+        </section>
 
         {/* ── Public Lecture ── */}
         <section style={{ marginBottom: 48 }}>
@@ -584,71 +630,36 @@ export default function AttendeePage() {
             </div>
           </div>
 
-          {/* English warning */}
-          <div
-              style={{
-                marginTop: 14,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                background: 'rgba(59,130,246,0.10)',
-                border: '1px solid rgba(59,130,246,0.22)',
-                borderRadius: 10,
-                padding: '10px 14px',
-                fontSize: 14,
-                color: '#dbeafe',
-                lineHeight: 1.6,
-                flexWrap: 'wrap',
-                marginBottom: '30px',
-              }}
-            >
-              <span style={{ fontSize: 16 }}>🌐</span>
+          <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(59,130,246,0.10)', border: '1px solid rgba(59,130,246,0.22)', borderRadius: 10, padding: '10px 14px', fontSize: 14, color: '#dbeafe', lineHeight: 1.6, flexWrap: 'wrap', marginBottom: '30px' }}>
+            <span style={{ fontSize: 16 }}>🌐</span>
+            <span>
+              {lang === 'mn'
+                ? 'Бүх илтгэл, хэлэлцүүлэг Англи хэл дээр явагдана гэдгийг анхаарна уу.'
+                : 'Please noted all lectures and panel discussions will be conducted in English.'}
+            </span>
+          </div>
 
-              <span>
-                {lang === 'mn'
-                  ? 'Бүх илтгэл, хэлэлцүүлэг Англи хэл дээр явагдана гэдгийг анхаарна уу.'
-                  : 'Please noted all lectures and panel discussions will be conducted in English.'}
-              </span>
-            </div>
-
-          {/* Programme table */}
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
-              {t.programme}
-            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>{t.programme}</div>
             <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
               {PROGRAMME.map((row, i) => (
-                <div key={i} style={{
-                  display: 'flex', gap: 16, padding: '12px 20px',
-                  borderBottom: i < PROGRAMME.length - 1 ? '1px solid var(--border)' : 'none',
-                  background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
-                }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--blue)', whiteSpace: 'nowrap', minWidth: 110, paddingTop: 1 }}>
-                    {row.time}
-                  </div>
+                <div key={i} style={{ display: 'flex', gap: 16, padding: '12px 20px', borderBottom: i < PROGRAMME.length - 1 ? '1px solid var(--border)' : 'none', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--blue)', whiteSpace: 'nowrap', minWidth: 110, paddingTop: 1 }}>{row.time}</div>
                   <div style={{ fontSize: 14, color: '#ffffff', lineHeight: 1.6 }}>{row.item}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Speakers */}
           <div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>
-              {t.speakers}
-            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 10 }}>{t.speakers}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
               {SPEAKERS.map((s, i) => (
-                <div key={i} style={{
-                  background: 'var(--bg-2)', border: '1px solid var(--border-2)',
-                  borderRadius: 'var(--radius)', padding: '12px 16px',
-                }}>
+                <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius)', padding: '12px 16px' }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#ffffff', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     {s.name}
                     {s.moderator && (
-                      <span style={{ fontSize: 11, color: 'var(--yellow)', fontFamily: 'var(--font-mono)', background: 'var(--yellow-dim)', borderRadius: 4, padding: '1px 6px', letterSpacing: '0.06em' }}>
-                        {t.moderator}
-                      </span>
+                      <span style={{ fontSize: 11, color: 'var(--yellow)', fontFamily: 'var(--font-mono)', background: 'var(--yellow-dim)', borderRadius: 4, padding: '1px 6px', letterSpacing: '0.06em' }}>{t.moderator}</span>
                     )}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}>{s.affiliation}</div>
@@ -659,22 +670,63 @@ export default function AttendeePage() {
         </section>
       </div>
 
-      {/* ── Ticket modal ── */}
-      {ticketModal && (
+      {/* ── Event selection modal ── */}
+      {eventSelectModal && (
+        <Modal title={t.chooseEventTitle} onClose={() => setEventSelectModal(false)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6 }}>{t.chooseEventDesc}</p>
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}><Spinner size={24} /></div>
+            ) : events.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-3)', fontSize: 14, fontFamily: 'var(--font-mono)' }}>{t.noEvents}</div>
+            ) : (
+              events.map(ev => {
+                const hasTicket = ticketEventIds.includes(ev.id)
+                const isPast = ev.end_date < todayStr
+                return (
+                  <div key={ev.id} style={{ background: 'var(--bg-3)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+                    <div style={{ padding: '14px 16px' }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: '#ffffff', marginBottom: 4 }}>{ev.event_name}</div>
+                      {ev.description && <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5, marginBottom: 8 }}>{ev.description}</div>}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                        <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                          📅 {ev.start_date}{ev.end_date !== ev.start_date ? ` — ${ev.end_date}` : ''} &nbsp;·&nbsp; 🎫 ₮{ev.ticket_price.toLocaleString()}
+                        </div>
+                        {hasTicket ? (
+                          <span style={{ fontSize: 12, color: 'var(--green)', fontFamily: 'var(--font-mono)', background: 'var(--green-dim)', borderRadius: 4, padding: '3px 8px' }}>✓ Purchased</span>
+                        ) : isPast ? (
+                          <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>Past event</span>
+                        ) : (
+                          <button
+                            onClick={() => handleSelectEventForTicket(ev)}
+                            style={{ padding: '6px 14px', fontSize: 13, fontWeight: 700, background: 'var(--blue)', border: 'none', borderRadius: 'var(--radius)', color: '#ffffff', cursor: 'pointer' }}
+                          >
+                            {t.buyFor}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+              <Btn variant="ghost" onClick={() => setEventSelectModal(false)}>{t.cancel}</Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Ticket confirm modal ── */}
+      {ticketModal && selectedEvent && (
         <Modal title={t.ticketTitle} onClose={() => { setTicketModal(false); setInvoiceUrl(null) }}>
           {invoiceUrl ? (
-            /* ── Payment link ready — use <a> tag so mobile doesn't block it ── */
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ fontSize: 15, color: '#ffffff', lineHeight: 1.6, margin: 0 }}>
                 {t.ticketSentTo}{' '}
                 <span style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)' }}>{user?.email}</span>
               </p>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.22)',
-                borderRadius: 8, padding: '9px 13px',
-                fontSize: 14, color: '#fef08a', lineHeight: 1.5,
-              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.22)', borderRadius: 8, padding: '9px 13px', fontSize: 14, color: '#fef08a', lineHeight: 1.5 }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>📂</span>
                 <span>{t.spamNotice}</span>
               </div>
@@ -683,45 +735,33 @@ export default function AttendeePage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => { setTicketModal(false); setInvoiceUrl(null); toast(t.invoiceToast) }}
-                style={{
-                  display: 'block', textAlign: 'center',
-                  padding: '14px 0',
-                  background: 'linear-gradient(135deg,#15803d,#16a34a)',
-                  border: '1px solid rgba(74,222,128,0.3)',
-                  borderRadius: 'var(--radius)', color: '#fff',
-                  fontSize: 15, fontWeight: 700,
-                  textDecoration: 'none', letterSpacing: '0.02em',
-                }}
+                style={{ display: 'block', textAlign: 'center', padding: '14px 0', background: 'linear-gradient(135deg,#15803d,#16a34a)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: 'var(--radius)', color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', letterSpacing: '0.02em' }}
               >
-                {t.purchase} — {t.totalPrice(1)}
+                {t.purchase} — ₮{selectedEvent.ticket_price.toLocaleString()}
               </a>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Btn variant="ghost" onClick={() => { setTicketModal(false); setInvoiceUrl(null) }}>{t.cancel}</Btn>
               </div>
             </div>
           ) : (
-            /* ── Form to confirm purchase ── */
             <form onSubmit={handlePurchaseTicket} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <p style={{ fontSize: 16, color: '#ffffff', lineHeight: 1.6 }}>
+              <div style={{ background: 'var(--bg-3)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius)', padding: '14px 16px' }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#ffffff', marginBottom: 4 }}>{selectedEvent.event_name}</div>
+                {selectedEvent.description && <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5, marginBottom: 8 }}>{selectedEvent.description}</div>}
+                <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                  📅 {selectedEvent.start_date}{selectedEvent.end_date !== selectedEvent.start_date ? ` — ${selectedEvent.end_date}` : ''}
+                </div>
+              </div>
+              <p style={{ fontSize: 15, color: '#ffffff', lineHeight: 1.6, margin: 0 }}>
                 {t.ticketSentTo}{' '}
                 <span style={{ color: 'var(--blue)', fontFamily: 'var(--font-mono)' }}>{user?.email}</span>
               </p>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.22)',
-                borderRadius: 8, padding: '9px 13px',
-                fontSize: 14, color: '#fef08a', lineHeight: 1.5,
-              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.22)', borderRadius: 8, padding: '9px 13px', fontSize: 14, color: '#fef08a', lineHeight: 1.5 }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>📂</span>
                 <span>{t.spamNotice}</span>
               </div>
-              <div style={{
-                background: 'var(--bg-3)', border: '1px solid var(--border-2)',
-                borderRadius: 'var(--radius)', padding: '12px 16px',
-                fontFamily: 'var(--font-mono)', fontSize: 16,
-                color: 'var(--blue)', letterSpacing: '0.05em',
-              }}>
-                {t.totalPrice(1)}
+              <div style={{ background: 'var(--bg-3)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius)', padding: '12px 16px', fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--blue)', letterSpacing: '0.05em' }}>
+                ₮{selectedEvent.ticket_price.toLocaleString()}
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
                 <Btn variant="ghost" type="button" onClick={() => setTicketModal(false)}>{t.cancel}</Btn>
@@ -742,24 +782,17 @@ export default function AttendeePage() {
               onChange={e => setEventId(e.target.value)}
               options={[
                 { value: '', label: t.chooseEvent },
-                ...events.map(ev => ({ value: String(ev.id), label: `${ev.date} · ${ev.topic}` })),
+                ...events.map(ev => ({ value: String(ev.id), label: ev.event_name })),
               ]}
             />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 15, color: '#ffffff', fontWeight: 600, letterSpacing: '0.04em' }}>
-                {t.qLabel}
-              </label>
+              <label style={{ fontSize: 15, color: '#ffffff', fontWeight: 600, letterSpacing: '0.04em' }}>{t.qLabel}</label>
               <textarea
                 value={questionText}
                 onChange={e => setQuestionText(e.target.value)}
                 required rows={4}
                 placeholder={t.qPlaceholder}
-                style={{
-                  background: 'var(--bg-3)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)', padding: '10px 14px',
-                  color: '#ffffff', fontSize: 15, resize: 'vertical',
-                  fontFamily: 'var(--font-sans)', outline: 'none', transition: 'border-color 0.2s',
-                }}
+                style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px', color: '#ffffff', fontSize: 15, resize: 'vertical', fontFamily: 'var(--font-sans)', outline: 'none', transition: 'border-color 0.2s' }}
                 onFocus={e => (e.target.style.borderColor = 'var(--border-3)')}
                 onBlur={e => (e.target.style.borderColor = 'var(--border)')}
               />
@@ -788,7 +821,7 @@ export default function AttendeePage() {
                 {myQuestions.map((q, i) => (
                   <div key={i} style={{ background: 'var(--bg-3)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ fontSize: 15, fontFamily: 'var(--font-mono)', color: 'var(--blue)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                      {getEventTopic(q.event_id)}
+                      {getEventName(q.event_id)}
                     </div>
                     <p style={{ margin: 0, fontSize: 15, color: '#ffffff', lineHeight: 1.6 }}>{q.question}</p>
                     {q.time && (
@@ -812,17 +845,6 @@ export default function AttendeePage() {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function groupByDate(events: Event[]): { date: string; items: Event[] }[] {
-  const map = new Map<string, Event[]>()
-  for (const e of events) {
-    if (!map.has(e.date)) map.set(e.date, [])
-    map.get(e.date)!.push(e)
-  }
-  return Array.from(map.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, items]) => ({ date, items }))
-}
-
 function ActionCard({ icon, title, desc, color, dimColor, onClick }: {
   icon: string; title: string; desc: string; color: string; dimColor: string; onClick: () => void
 }) {
@@ -843,55 +865,5 @@ function ActionCard({ icon, title, desc, color, dimColor, onClick }: {
       <div style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>{title}</div>
       <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{desc}</div>
     </button>
-  )
-}
-
-function EventRow({ event: e, variant, hasTicket, ticketLabel }: { event: Event; variant: 'today' | 'upcoming' | 'past'; events: Event[]; hasTicket: boolean; ticketLabel: string }) {
-  const accentColor = variant === 'today' ? 'var(--yellow)' : variant === 'upcoming' ? 'var(--blue)' : 'var(--text-3)'
-  const isPast = variant === 'past'
-  return (
-    <div style={{
-      background: 'var(--bg-2)', border: `1px solid ${hasTicket ? 'var(--green)33' : isPast ? 'var(--border)' : 'var(--border-2)'}`,
-      borderRadius: 'var(--radius-lg)', overflow: 'hidden', opacity: isPast ? 0.55 : 1, transition: 'all 0.2s',
-    }}>
-      <div style={{ padding: '18px 22px' }}>
-        <div className="event-row-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 5, color: isPast ? 'var(--text-2)' : '#ffffff' }}>{e.topic}</div>
-            {e.agenda && <div style={{ fontSize: 15, color: '#ffffff', marginBottom: 8, lineHeight: 1.5 }}>{e.agenda}</div>}
-            {e.speaker && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8, background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 10px' }}>
-                <span style={{ fontSize: 13 }}>🎤</span>
-                <span style={{ fontSize: 14, color: accentColor, fontFamily: 'var(--font-mono)' }}>{e.speaker}</span>
-              </div>
-            )}
-            <div style={{ fontSize: 15, color: '#ffffff', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <span>📍 {e.location}</span>
-              <span>🏛 {e.building}, Room {e.room}</span>
-            </div>
-          </div>
-          <div className="event-row-time" style={{ marginLeft: 24, textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 600, color: accentColor, marginBottom: 4 }}>{e.start_time} – {e.end_time}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, color: '#ffffff' }}>{e.date}</div>
-            {variant === 'today' && (
-              <div style={{ marginTop: 6, display: 'inline-block', background: 'var(--yellow-dim)', color: 'var(--yellow)', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
-                TODAY
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      {hasTicket && (
-        <div style={{
-          background: 'var(--green-dim)', borderTop: '1px solid var(--green)33',
-          padding: '8px 22px',
-          display: 'flex', alignItems: 'center', gap: 8,
-          fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600,
-          color: 'var(--green)', letterSpacing: '0.06em',
-        }}>
-          {ticketLabel}
-        </div>
-      )}
-    </div>
   )
 }

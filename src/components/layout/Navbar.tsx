@@ -8,7 +8,7 @@ const navHrefs = [
   { key: 'home', href: '/' },
   { key: 'about', href: '/about' },
   { key: 'partners', href: '/partners' },
-  { key: 'speakers', href: '/speakers' },
+  //{ key: 'speakers', href: '/speakers' },
   { key: 'contact', href: '/contact' },
 ] as const
 
