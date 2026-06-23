@@ -69,13 +69,6 @@ export default function Sidebar() {
         top: 0, left: 0, bottom: 0,
         overflow: 'hidden',
       }}>
-        {/* Logo */}
-        <div style={{ padding: '24px 16px 20px', borderBottom: '1px solid var(--border)' }}>
-          <div className="sidebar-brand" style={{ fontFamily: 'var(--font-mono)', fontSize: 20, color: '#ffffff', marginBottom: 2, fontWeight: '200', textAlign: 'center' }}>
-            MONGOLIA - CERN LHCb 2026
-          </div>
-        </div>
-
         {/* User info */}
         <div style={{ padding: '16px 16px', borderBottom: '1px solid var(--border)' }}>
           <div className="sidebar-name" style={{ fontSize: 20, fontWeight: 500, color: '#ffffff', marginBottom: 2, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

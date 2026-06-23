@@ -52,6 +52,7 @@ export interface Banner {
   id: number
   event_id?: number
   description: string
+  image_url?: string
   is_active: boolean
   created_at: string
   event_name?: string
@@ -142,6 +143,7 @@ export interface AgendaUpdatePayload {
 export interface BannerPayload {
   event_id?: number
   description: string
+  image_url?: string
   is_active: boolean
 }
 

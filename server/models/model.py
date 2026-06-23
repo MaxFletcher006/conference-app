@@ -44,6 +44,7 @@ class Banner(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     event_id: int | None = Field(default=None, foreign_key="event.id", ondelete="CASCADE")
     description: str
+    image_url: str | None = Field(default=None)
     is_active: bool = Field(default=False)
     created_at: str
 

@@ -17,68 +17,55 @@ export default function Home() {
     getPublicBanners().then(setBanners).catch(() => {})
   }, [])
 
+  const heroBanner = banners.find(b => b.image_url)
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* ── Conference Banner ── */}
-      {/* <section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
-        <img
-          src="/banners/conf_banner_template.png"
-          alt="Mongolia - CERN LHCb 2026 Conference"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center bottom' }}
-        />
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'rgba(8,8,16,0.45)',
-        }} />
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'linear-gradient(to right, rgba(8,8,16,0.75) 0%, rgba(8,8,16,0.4) 60%, transparent 100%)',
-        }} />
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'linear-gradient(to bottom, transparent 50%, var(--bg) 100%)',
-        }} />
+      {heroBanner && (
+        <section className="min-h-[300px] sm:min-h-[420px] md:min-h-[560px] lg:min-h-[680px]" style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+          <img
+            src={heroBanner.image_url!}
+            alt={heroBanner.event_name ?? 'Conference Banner'}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center bottom' }}
+          />
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'rgba(8,8,16,0.45)' }} />
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to right, rgba(8,8,16,0.75) 0%, rgba(8,8,16,0.4) 60%, transparent 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to bottom, transparent 50%, var(--bg) 100%)' }} />
 
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
-          <div className="max-w-[1240px] mx-auto px-6 md:px-12 w-full">
-            <div style={{ maxWidth: 580 }}>
-              <span style={{
-                display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
-                letterSpacing: '0.15em', textTransform: 'uppercase', color: '#a5b0ff',
-                marginBottom: 'clamp(8px, 2vw, 18px)',
-              }}>
-                {t.bannerEyebrow}
-              </span>
-              <h1 style={{
-                fontSize: 'clamp(1.45rem, 4.8vw, 3.6rem)', fontWeight: 800,
-                color: '#ffffff', lineHeight: 1.15, marginBottom: 'clamp(8px, 2vw, 18px)',
-                letterSpacing: '-0.02em', whiteSpace: 'pre-line',
-              }}>
-                {t.eventTitle}
-              </h1>
-              <p className="hidden sm:block" style={{ fontSize: 15, color: 'rgba(255,255,255,0.65)', marginBottom: 'clamp(16px, 3vw, 36px)', lineHeight: 1.6 }}>
-                {t.eventDetails[1].text}&nbsp;·&nbsp;{t.eventDetails[0].text}
-              </p>
-              <Link to="/register" className="block sm:inline-block">
-                <button
-                  className="w-full sm:w-auto"
-                  style={{
-                    height: 'clamp(42px, 6vw, 52px)', padding: '0 clamp(20px, 4vw, 36px)',
-                    fontSize: 15, fontWeight: 700,
-                    background: '#5260d9', color: '#ffffff', border: 'none',
-                    borderRadius: 12, cursor: 'pointer', transition: 'opacity 0.2s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                >
-                  {t.registerBtn}
-                </button>
-              </Link>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
+            <div className="max-w-[1240px] mx-auto px-6 md:px-12 w-full">
+              <div style={{ maxWidth: 580 }}>
+                {heroBanner.event_name && (
+                  <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#a5b0ff', marginBottom: 'clamp(8px, 2vw, 18px)' }}>
+                    {heroBanner.event_name}
+                  </span>
+                )}
+                <p className="hidden sm:block" style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', marginBottom: 'clamp(16px, 3vw, 36px)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                  {heroBanner.description}
+                </p>
+                {(heroBanner.start_date || heroBanner.ticket_price != null) && (
+                  <div style={{ display: 'flex', gap: 20, marginBottom: 'clamp(16px, 3vw, 36px)', fontSize: 14, color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-mono)' }}>
+                    {heroBanner.start_date && <span>📅 {heroBanner.start_date}{heroBanner.end_date && heroBanner.end_date !== heroBanner.start_date ? ` — ${heroBanner.end_date}` : ''}</span>}
+                    {heroBanner.ticket_price != null && <span>🎫 ₮{heroBanner.ticket_price.toLocaleString()}</span>}
+                  </div>
+                )}
+                <Link to="/register" className="block sm:inline-block">
+                  <button
+                    className="w-full sm:w-auto"
+                    style={{ height: 'clamp(42px, 6vw, 52px)', padding: '0 clamp(20px, 4vw, 36px)', fontSize: 15, fontWeight: 700, background: '#5260d9', color: '#ffffff', border: 'none', borderRadius: 12, cursor: 'pointer', transition: 'opacity 0.2s' }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                  >
+                    {t.registerBtn}
+                  </button>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section> */}
+        </section>
+      )}
 
       {/* ── Hero ── */}
       <section style={{

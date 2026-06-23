@@ -51,12 +51,14 @@ class AgendaUpdate(BaseModel):
 class BannerModel(BaseModel):
     event_id: Optional[int] = None
     description: str
+    image_url: Optional[str] = None
     is_active: bool = False
 
 class BannerReturn(BaseModel):
     id: int
     event_id: Optional[int] = None
     description: str
+    image_url: Optional[str] = None
     is_active: bool
     created_at: str
     event_name: Optional[str] = None

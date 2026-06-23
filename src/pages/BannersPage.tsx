@@ -6,9 +6,9 @@ import {
   Banner, BannerPayload, Event, apiErr,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { Page, SectionHeader, Card, Btn, toast, Spinner } from '../components/UI'
+import { Page, SectionHeader, Card, Btn, Input, toast, Spinner } from '../components/UI'
 
-const emptyForm = (): BannerPayload => ({ event_id: undefined, description: '', is_active: false })
+const emptyForm = (): BannerPayload => ({ event_id: undefined, description: '', image_url: '', is_active: false })
 
 const overlayStyle: React.CSSProperties = {
   position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -52,7 +52,7 @@ export default function BannersPage() {
   const openCreate = () => { setEditing(null); setForm(emptyForm()); setShowModal(true) }
   const openEdit = (b: Banner) => {
     setEditing(b)
-    setForm({ event_id: b.event_id, description: b.description, is_active: b.is_active })
+    setForm({ event_id: b.event_id, description: b.description, image_url: b.image_url ?? '', is_active: b.is_active })
     setShowModal(true)
   }
 
@@ -93,7 +93,7 @@ export default function BannersPage() {
   const handleToggleActive = async (b: Banner) => {
     setToggling(b.id)
     try {
-      const updated = await updateBanner(b.id, { event_id: b.event_id, description: b.description, is_active: !b.is_active })
+      const updated = await updateBanner(b.id, { event_id: b.event_id, description: b.description, image_url: b.image_url, is_active: !b.is_active })
       setBanners(prev => prev.map(x => x.id === updated.id ? updated : x))
       toast(updated.is_active ? 'Banner activated' : 'Banner deactivated')
     } catch {
@@ -118,6 +118,26 @@ export default function BannersPage() {
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Image URL */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <Input
+              label="Banner Photo URL"
+              value={form.image_url ?? ''}
+              onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
+              placeholder="https://..."
+            />
+            {form.image_url && (
+              <img
+                src={form.image_url}
+                alt="preview"
+                style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }}
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                onLoad={e => { (e.target as HTMLImageElement).style.display = 'block' }}
+              />
+            )}
+            <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Paste a public image URL (Google Drive, Imgur, etc.)</div>
+          </div>
+
           {/* Event selector */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 13, color: 'var(--text-2)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>LINKED EVENT (OPTIONAL)</label>
