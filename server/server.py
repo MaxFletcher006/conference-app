@@ -444,32 +444,19 @@ async def public_event_register(data: PublicEventRegisterCreate, session: Sessio
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
 
+    # Block duplicate registrations (only paid users are in EventUsers)
     existing = session.exec(
         select(EventUsers).where(EventUsers.email == data.email, EventUsers.event_id == data.event_id)
     ).first()
     if existing:
         raise HTTPException(status_code=409, detail="This email is already registered for this event")
 
-    new_eu = EventUsers(
-        firstname=data.firstname,
-        lastname=data.lastname,
-        phone_number=data.phone_number,
-        email=data.email,
-        event_id=data.event_id,
-    )
-    session.add(new_eu)
-    try:
-        session.commit()
-        session.refresh(new_eu)
-    except IntegrityError:
-        session.rollback()
-        raise HTTPException(status_code=409, detail="Email already registered")
-
     if not BYL_URL or not BYL_TOKEN:
         raise HTTPException(status_code=503, detail="Payment service not configured")
 
     amount = int(db_event.ticket_price)
-    username = f"{data.firstname} {data.lastname}"
+    # Encode registration info in description — EventUsers created after payment confirmed
+    description = f"PUBLIC|FN:{data.firstname}|LN:{data.lastname}|PH:{data.phone_number}|EM:{data.email}|EV:{data.event_id}"
     headers = {
         "Authorization": f"Bearer {BYL_TOKEN}",
         "Accept": "application/json",
@@ -477,7 +464,7 @@ async def public_event_register(data: PublicEventRegisterCreate, session: Sessio
     }
     invoice_payload = {
         "amount": amount,
-        "description": f"EU_ID:{new_eu.user_id} | NAME:{username} | EVENT:{data.event_id}",
+        "description": description,
         "auto_advance": True,
     }
 
@@ -970,9 +957,32 @@ async def byl_webhook(session: SessionDep, request: Request, background_tasks: B
     description = invoice_object.get("description", "")
 
     if event_type == "invoice.paid" and status == "paid":
-        match_eu = re.search(r"EU_ID:(\d+)", description)
-        if match_eu:
-            # EventUser (public registration) flow
+        if description.startswith("PUBLIC|"):
+            # New flow: create EventUsers AFTER payment, then issue ticket
+            m = re.match(r"PUBLIC\|FN:(.+?)\|LN:(.+?)\|PH:(.+?)\|EM:(.+?)\|EV:(\d+)", description)
+            if m:
+                reg_firstname = m.group(1)
+                reg_lastname  = m.group(2)
+                reg_phone     = m.group(3)
+                reg_email     = m.group(4)
+                reg_event_id  = int(m.group(5))
+
+                existing_eu = session.exec(
+                    select(EventUsers).where(EventUsers.email == reg_email, EventUsers.event_id == reg_event_id)
+                ).first()
+                if existing_eu:
+                    print(f"EventUser already exists for {reg_email}, skipping")
+                else:
+                    background_tasks.add_task(
+                        _create_eu_and_issue_ticket,
+                        reg_firstname, reg_lastname, reg_phone, reg_email, reg_event_id
+                    )
+            else:
+                print(f"Could not parse PUBLIC description: {description}")
+
+        elif re.search(r"EU_ID:(\d+)", description):
+            # Legacy flow kept for backward compatibility
+            match_eu = re.search(r"EU_ID:(\d+)", description)
             extracted_eu_id = int(match_eu.group(1))
             match_event = re.search(r"EVENT:(\d+)", description)
             extracted_event_id = int(match_event.group(1)) if match_event else None
@@ -1794,6 +1804,41 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
         attachment_path=file_path,
     )
     print(f"Ticket issued and emailed to user {user_id}")
+
+
+async def _create_eu_and_issue_ticket(
+    firstname: str, lastname: str, phone_number: str, email: str, event_id: int
+):
+    with Session(engine) as session:
+        existing = session.exec(
+            select(EventUsers).where(EventUsers.email == email, EventUsers.event_id == event_id)
+        ).first()
+        if existing:
+            eu_id = existing.user_id
+            print(f"EventUser already exists for {email}, reusing eu_id={eu_id}")
+        else:
+            new_eu = EventUsers(
+                firstname=firstname,
+                lastname=lastname,
+                phone_number=phone_number,
+                email=email,
+                event_id=event_id,
+            )
+            session.add(new_eu)
+            try:
+                session.commit()
+                session.refresh(new_eu)
+                eu_id = new_eu.user_id
+                print(f"Created EventUser {eu_id} for {email}")
+            except IntegrityError:
+                session.rollback()
+                fallback = session.exec(select(EventUsers).where(EventUsers.email == email)).first()
+                eu_id = fallback.user_id if fallback else None
+                if not eu_id:
+                    print(f"Failed to create EventUser for {email}")
+                    return
+
+    await _issue_event_ticket(eu_id, event_id)
 
 
 async def _issue_event_ticket(event_user_id: int, event_id: int | None = None):

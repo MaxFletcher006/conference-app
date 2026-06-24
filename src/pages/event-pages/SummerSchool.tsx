@@ -65,7 +65,6 @@ export default function SummerSchool() {
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null)
   const [invoiceEmail, setInvoiceEmail] = useState('')
   const [invoiceAmount, setInvoiceAmount] = useState(TICKET_PRICE_DISPLAY)
-  const [showSuccess, setShowSuccess] = useState(false)
   const [eventId, setEventId] = useState<number | null>(null)
   const [eventLoading, setEventLoading] = useState(true)
   const [eventError, setEventError] = useState(false)
@@ -113,10 +112,6 @@ export default function SummerSchool() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handlePay = () => {
-    setShowSuccess(true)
   }
 
   const dayData = agendaDays[activeDay]
@@ -323,7 +318,7 @@ export default function SummerSchool() {
                 </h3>
                 <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center'}}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em'}}>
-                    {TICKET_PRICE_DISPLAY.toLocaleString()}₮
+                    {invoiceAmount.toLocaleString()}₮
                   </span>
                 </div>
               </div>
@@ -453,10 +448,7 @@ export default function SummerSchool() {
                     </div>
 
                     <a
-                      href={invoiceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={handlePay}
+                      href={invoiceUrl!}
                       style={{
                         display: 'block',
                         textAlign: 'center',
@@ -489,47 +481,6 @@ export default function SummerSchool() {
         </div>
       </div>
 
-      {/* ── Success popup ── */}
-      {showSuccess && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => setShowSuccess(false)}
-        >
-          <div
-            style={{ background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-xl)', padding: 'clamp(28px,5vw,48px) clamp(24px,4vw,40px)', width: '100%', maxWidth: 440, textAlign: 'center', position: 'relative', overflow: 'hidden' }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Accent line */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,#4ade80,#22c55e)' }} />
-
-            {/* Icon */}
-            <div style={{ width: 68, height: 68, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.25)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: 28 }}>
-              ✓
-            </div>
-
-            <h3 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 10, lineHeight: 1.2 }}>
-              Амжилттай боллоо!
-            </h3>
-
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, marginBottom: 6 }}>
-              Төлбөр хийгдсэний дараа таны тасалбар
-            </p>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: '#818cf8', marginBottom: 6, wordBreak: 'break-all' }}>
-              {invoiceEmail}
-            </p>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, marginBottom: 28 }}>
-              и-мэйл хаяг руу автоматаар илгээгдэнэ.<br />И-мэйлийн inbox болон spam хавтсаа шалгана уу.
-            </p>
-
-            <button
-              onClick={() => setShowSuccess(false)}
-              style={{ padding: '12px 40px', background: 'var(--blue)', border: 'none', borderRadius: 'var(--radius)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em' }}
-            >
-              Хаах
-            </button>
-          </div>
-        </div>
-      )}
 
     </div>
   )
