@@ -325,6 +325,20 @@ export interface TicketAdmin {
 export const getAllTickets = () =>
   client.get<TicketAdmin[]>('/admin/tickets').then(r => r.data)
 
+export interface EventUserAdmin {
+  user_id: number
+  firstname: string
+  lastname: string
+  email: string
+  phone_number: string
+  event_id: number
+  event_name: string | null
+  has_ticket: boolean
+}
+
+export const getEventUsers = () =>
+  client.get<EventUserAdmin[]>('/admin/event-users').then(r => r.data)
+
 export interface EventTicketAdmin {
   ticket_id: string
   user_id: number

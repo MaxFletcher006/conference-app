@@ -8,6 +8,8 @@ const navItems = {
   admin: [
     { to: '/dashboard', label: 'Overview' },
     { to: '/dashboard/users', label: 'Users' },
+    { to: '/dashboard/event-users', label: 'Event Users' },
+    { to: '/dashboard/event-tickets', label: 'Event Tickets' },
     { to: '/dashboard/events', label: 'Events' },
     { to: '/dashboard/posts', label: 'Posts' },
     { to: '/dashboard/questions', label: 'Questions' },
@@ -18,6 +20,8 @@ const navItems = {
   supervisor: [
     { to: '/dashboard', label: 'Overview' },
     { to: '/dashboard/users', label: 'Users' },
+    { to: '/dashboard/event-users', label: 'Event Users' },
+    { to: '/dashboard/event-tickets', label: 'Event Tickets' },
     { to: '/dashboard/events', label: 'Events' },
     { to: '/dashboard/posts', label: 'Posts' },
     { to: '/dashboard/questions', label: 'Questions' },

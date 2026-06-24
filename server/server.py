@@ -794,6 +794,30 @@ def get_all_tickets(session: SessionDep, current_user: dict = Depends(require_ro
         })
     return result
 
+@app.get("/admin/event-users")
+def get_all_event_users(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    users = session.exec(select(EventUsers)).all()
+    result = []
+    for u in users:
+        event_name = None
+        if u.event_id:
+            row = session.execute(text("SELECT event_name FROM event WHERE id = :id"), {"id": u.event_id}).first()
+            event_name = row[0] if row else None
+        has_ticket = session.exec(
+            select(EventTickets).where(EventTickets.user_id == u.user_id)
+        ).first() is not None
+        result.append({
+            "user_id": u.user_id,
+            "firstname": u.firstname,
+            "lastname": u.lastname,
+            "email": u.email,
+            "phone_number": u.phone_number,
+            "event_id": u.event_id,
+            "event_name": event_name,
+            "has_ticket": has_ticket,
+        })
+    return result
+
 @app.get("/admin/event-tickets")
 def get_all_event_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
     tickets = session.exec(select(EventTickets)).all()
