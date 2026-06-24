@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import select, Session
 from typing import Annotated, List
 from contextlib import asynccontextmanager
-from sqlalchemy import func, text
+from sqlalchemy import func, text, inspect as sa_inspect
 from sqlalchemy.exc import IntegrityError
 #from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from starlette.responses import JSONResponse
@@ -62,9 +62,29 @@ def get_current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return decode_session_cookie(token)
 
+def _run_migrations():
+    inspector = sa_inspect(engine)
+    tables = inspector.get_table_names()
+
+    with engine.connect() as conn:
+        # event table: add include_weekends if missing
+        if 'event' in tables:
+            event_cols = {c['name'] for c in inspector.get_columns('event')}
+            if 'include_weekends' not in event_cols:
+                conn.execute(text("ALTER TABLE event ADD COLUMN include_weekends BOOLEAN NOT NULL DEFAULT FALSE"))
+                print("Migration: added include_weekends to event")
+            if 'location' not in event_cols:
+                conn.execute(text("ALTER TABLE event ADD COLUMN location VARCHAR"))
+                print("Migration: added location to event")
+            if 'description' not in event_cols:
+                conn.execute(text("ALTER TABLE event ADD COLUMN description VARCHAR"))
+                print("Migration: added description to event")
+        conn.commit()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
+    _run_migrations()
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -421,8 +441,8 @@ def get_public_all_events(session: SessionDep):
 @app.post("/public/event-register")
 async def public_event_register(data: PublicEventRegisterCreate, session: SessionDep):
     db_event = session.get(Event, data.event_id)
-    if not db_event or not db_event.is_active:
-        raise HTTPException(status_code=404, detail="Event not found or not active")
+    if not db_event:
+        raise HTTPException(status_code=404, detail="Event not found")
 
     existing = session.exec(
         select(EventUsers).where(EventUsers.email == data.email, EventUsers.event_id == data.event_id)
@@ -1867,8 +1887,7 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
     if end_date and end_date != start_date:
         date_label += f" — {end_date}"
 
-    return f'''html
-        <!DOCTYPE html>
+    return f'''<!DOCTYPE html>
         <html lang="mn">
         <head>
         <meta charset="UTF-8">

@@ -3,6 +3,7 @@ import { agendaDays } from '@/data/agenda'
 import { speakers } from '@/data/speakers'
 import { publicEventRegister, getPublicAllEvents, apiErr } from '@/api/client'
 import { SpeakerCard } from '@/components/ui/SpeakerCard'
+import { Spinner } from '@/components/UI'
 
 // ── Lecture descriptions ──────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ const LECTURERS = [
   },
 ]
 
-const TICKET_PRICE_DISPLAY = 70000
+const TICKET_PRICE_DISPLAY = 100
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,8 @@ export default function SummerSchool() {
   const [invoiceAmount, setInvoiceAmount] = useState(TICKET_PRICE_DISPLAY)
   const [showSuccess, setShowSuccess] = useState(false)
   const [eventId, setEventId] = useState<number | null>(null)
-  const [registrationOpen, setRegistrationOpen] = useState<boolean | null>(null)
+  const [eventLoading, setEventLoading] = useState(true)
+  const [eventError, setEventError] = useState(false)
 
   useEffect(() => {
     getPublicAllEvents().then(events => {
@@ -76,13 +78,14 @@ export default function SummerSchool() {
         e.event_name?.toLowerCase().includes('summer')
       )
       if (ss) {
-        setRegistrationOpen(ss.is_active)
-        if (ss.is_active) setEventId(ss.id)
+        setEventId(ss.id)
         if (ss.ticket_price) setInvoiceAmount(ss.ticket_price)
       } else {
-        setRegistrationOpen(false)
+        console.warn('Summer school event not found. Available events:', events.map(e => ({ id: e.id, name: e.event_name, start: e.start_date })))
+        setEventError(true)
       }
-    }).catch(() => { setRegistrationOpen(false) })
+    }).catch((e) => { console.error('Failed to load events:', e); setEventError(true) })
+      .finally(() => setEventLoading(false))
   }, [])
 
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -329,13 +332,22 @@ export default function SummerSchool() {
               <div style={{ padding: '20px 24px' }}>
                 {!invoiceUrl ? (
                   /* ── Registration form ── */
-                  registrationOpen === false ? (
+                  eventLoading ? (
+                    <div style={{ padding: '32px 0', display: 'flex', justifyContent: 'center' }}>
+                      <Spinner size={28} />
+                    </div>
+                  ) : eventError ? (
                     <div style={{ padding: '20px 0', textAlign: 'center' }}>
-                      <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-                      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: 0 }}>
-                        Бүртгэл одоогоор нээлтгүй байна.<br />
-                        Удахгүй нээгдэх болно.
+                      <div style={{ fontSize: 28, marginBottom: 10 }}>⚠️</div>
+                      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, margin: '0 0 14px' }}>
+                        Серверт холбогдоход алдаа гарлаа.<br />Хуудсыг дахин ачааллана уу.
                       </p>
+                      <button
+                        onClick={() => window.location.reload()}
+                        style={{ padding: '8px 20px', background: 'var(--blue)', border: 'none', borderRadius: 'var(--radius)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Дахин оролдох
+                      </button>
                     </div>
                   ) : (
                   <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

@@ -32,7 +32,7 @@ class EventUsers(SQLModel, table=True):
     firstname: str = Field(index=True)
     lastname: str = Field(index=True)
     phone_number: str = Field(index=True)
-    email: str = Field(index=True, unique=True, exclude=True)
+    email: str = Field(index=True, exclude=True)
     event_id: int = Field(index=True, foreign_key="event.id", ondelete="CASCADE") 
 
 class EventTickets(SQLModel, table=True):
