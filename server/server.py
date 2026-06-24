@@ -79,6 +79,14 @@ def _run_migrations():
             if 'description' not in event_cols:
                 conn.execute(text("ALTER TABLE event ADD COLUMN description VARCHAR"))
                 print("Migration: added description to event")
+        if 'eventtickets' in tables:
+            et_cols = {c['name'] for c in inspector.get_columns('eventtickets')}
+            if 'day_length' not in et_cols:
+                conn.execute(text("ALTER TABLE eventtickets ADD COLUMN day_length INTEGER NOT NULL DEFAULT 1"))
+                print("Migration: added day_length to eventtickets")
+            if 'used_times' not in et_cols:
+                conn.execute(text("ALTER TABLE eventtickets ADD COLUMN used_times INTEGER NOT NULL DEFAULT 0"))
+                print("Migration: added used_times to eventtickets")
         conn.commit()
 
 @asynccontextmanager
@@ -620,20 +628,41 @@ async def delete_agenda(agenda_id: int, session: SessionDep, current_user: dict 
 
 @app.get("/validate/{ticket_uuid}", response_model=TicketVerification)
 def validate_ticket(
-    session: SessionDep, 
-    ticket_uuid: str, 
+    session: SessionDep,
+    ticket_uuid: str,
     current_user: dict = Depends(require_role("admin", "supervisor", "staff"))
 ):
     try:
+        # Check EventTickets first
+        et = session.exec(select(EventTickets).where(EventTickets.qr_code_data == ticket_uuid)).first()
+        if et:
+            eu = session.get(EventUsers, et.user_id)
+            if not eu:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid ticket or user not found")
+            if et.used_times >= et.day_length:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ticket expired: no entries remaining")
+            et.used_times += 1
+            session.add(et)
+            session.commit()
+            session.refresh(et)
+            return TicketVerification(
+                ticket_uuid=et.qr_code_data,
+                username=f"{eu.firstname} {eu.lastname}",
+                user_id=et.user_id,
+                entry_day=et.day_length,
+                used_times=et.used_times,
+            )
+
+        # Fall back to legacy Ticket table
         statement = select(Ticket, User).where(Ticket.qr_code_data == ticket_uuid).join(User, Ticket.user_id == User.id)
         result = session.exec(statement).first()
 
         if not result:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, 
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Invalid ticket or user not found"
             )
-        
+
         db_ticket, attendee = result
 
         if db_ticket.used_times >= db_ticket.day_length:
@@ -660,7 +689,7 @@ def validate_ticket(
     except Exception as e:
         print(f"Database error during ticket validation: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
 
@@ -762,6 +791,31 @@ def get_all_tickets(session: SessionDep, current_user: dict = Depends(require_ro
             "firstname": user.firstname if user else "Unknown",
             "lastname": user.lastname if user else "Unknown",
             "email": user.email if user else "",
+        })
+    return result
+
+@app.get("/admin/event-tickets")
+def get_all_event_tickets(session: SessionDep, current_user: dict = Depends(require_role("admin", "supervisor"))):
+    tickets = session.exec(select(EventTickets)).all()
+    result = []
+    for t in tickets:
+        eu = session.get(EventUsers, t.user_id)
+        event_name = None
+        if t.event_id:
+            row = session.execute(text("SELECT event_name FROM event WHERE id = :id"), {"id": t.event_id}).first()
+            event_name = row[0] if row else None
+        result.append({
+            "ticket_id": t.ticket_id,
+            "user_id": t.user_id,
+            "event_id": t.event_id,
+            "event_name": event_name,
+            "ticket_price": t.ticket_price,
+            "qr_code_data": t.qr_code_data,
+            "day_length": t.day_length,
+            "used_times": t.used_times,
+            "firstname": eu.firstname if eu else "Unknown",
+            "lastname": eu.lastname if eu else "Unknown",
+            "email": eu.email if eu else "",
         })
     return result
 
@@ -1892,6 +1946,7 @@ async def _issue_event_ticket(event_user_id: int, event_id: int | None = None):
                 event_id=event_id,
                 ticket_price=price,
                 qr_code_data=ticket_uuid,
+                day_length=day_length,
             )
             session.add(new_ticket)
             session.commit()

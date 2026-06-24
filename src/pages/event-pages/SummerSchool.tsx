@@ -165,6 +165,7 @@ export default function SummerSchool() {
                 <br />
 
                 Зуны сургууль нь өглөө 10:00 цагаас орой 16:00 цагийн хооронд явагдах болно.
+                Хэрэв танд тасалбар авахтай холбоотой асуудал гарвал cernmongolia2026@gmail.com хаягаар холбогдоорой.
               </h2>
             </section>
 
@@ -315,6 +316,7 @@ export default function SummerSchool() {
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,#5260d9,#7c3aed)' }} />
                 <h3 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0, lineHeight: 1.3, textAlign: 'center' }}>
                   Зуны сургуульд оролцох
+                  Хэрэв танд тасалбар авахтай холбоотой асуудал гарвал cernmongolia2026@gmail.com хаягаар холбогдоорой.
                 </h3>
                 <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center'}}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em'}}>
@@ -422,7 +424,7 @@ export default function SummerSchool() {
                         letterSpacing: '0.02em',
                       }}
                     >
-                      {loading ? 'Боловсруулж байна...' : 'Төлбөрийн линк авах'}
+                      {loading ? 'Боловсруулж байна...' : 'Төлбөр төлөх'}
                     </button>
 
                     <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', margin: 0, lineHeight: 1.5 }}>

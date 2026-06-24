@@ -41,6 +41,8 @@ class EventTickets(SQLModel, table=True):
     event_id: int | None = Field(default=None, foreign_key="event.id", index=True, ondelete="SET NULL")
     ticket_price: float = Field(default=0.0)
     qr_code_data: str = Field(unique=True)
+    day_length: int = Field(default=1)
+    used_times: int = Field(default=0)
 
 class Agenda(SQLModel, table=True):
     agenda_id: int | None = Field(default=None, primary_key=True)

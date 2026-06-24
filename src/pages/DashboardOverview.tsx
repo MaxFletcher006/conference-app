@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAllUsers, getAllEvents, getAllQuestions, User, Event, Question, getTotalTickets, getTicketSummary, getValidations } from '../api/client'
+import { getAllUsers, getAllEvents, getAllQuestions, User, Event, Question, getTotalTickets, getTicketSummary, getValidations, getEventTickets, EventTicketAdmin } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { Page, StatCard, SectionHeader, Badge, Card, Table } from '../components/UI'
 
@@ -86,20 +86,22 @@ export default function DashboardOverview() {
   const [totalTickets, setTotalTickets] = useState<number>(0)
   const [ticketedUserIds, setTicketedUserIds] = useState<Set<number>>(new Set())
   const [validations, setValidations] = useState<any[]>([])
+  const [eventTickets, setEventTickets] = useState<EventTicketAdmin[]>([])
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
         if (user?.role === 'admin' || user?.role === 'supervisor') {
-          const [u, e, q, t, ts] = await Promise.all([
+          const [u, e, q, t, ts, et] = await Promise.all([
             getAllUsers(), getAllEvents(), getAllQuestions(),
-            getTotalTickets(), getTicketSummary()
+            getTotalTickets(), getTicketSummary(), getEventTickets()
           ])
           setUsers(u)
           setEvents(e)
           setQuestions(q)
           setTotalTickets(t)
           setTicketedUserIds(new Set(ts.user_ids))
+          setEventTickets(et)
           getValidations().then(setValidations).catch(() => {})
         } else if (user?.role === 'staff') {
           const [e, q] = await Promise.all([getAllEvents(), getAllQuestions()])
@@ -152,7 +154,7 @@ export default function DashboardOverview() {
                 <StatCard label="Attendees" value={roleCount('attendee')} />
                 <StatCard label="Staff" value={roleCount('staff')} accent="var(--blue)" />
                 <StatCard label="Supervisors" value={roleCount('supervisor')} accent="var(--green)" />
-                <StatCard label="Total Tickets" value={totalTickets} accent="var(--green)" />
+                <StatCard label="Event Tickets" value={eventTickets.length} accent="var(--green)" />
               </div>
             </>
           )}
@@ -193,6 +195,36 @@ export default function DashboardOverview() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 36 }}>
                 {pastEvents.map(e => <EventRow key={e.id} event={e} variant="past" />)}
               </div>
+            </>
+          )}
+
+          {/* Event Tickets */}
+          {(user?.role === 'admin' || user?.role === 'supervisor') && eventTickets.length > 0 && (
+            <>
+              <SectionHeader title="Event Tickets" />
+              <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 36 }}>
+                <div className="table-wrapper" style={{ maxHeight: 420, overflowY: 'auto' }}>
+                  <Table
+                    headers={['Attendee', 'Email', 'Event', 'Days', 'Used', 'Status']}
+                    rows={eventTickets.map(t => [
+                      <span style={{ fontWeight: 600, fontSize: 16, color: '#ffffff' }}>{t.firstname} {t.lastname}</span>,
+                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 14 }}>{t.email}</span>,
+                      <span style={{ color: 'var(--text-2)', fontSize: 15 }}>{t.event_name ?? '—'}</span>,
+                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 15 }}>{t.day_length}</span>,
+                      <span style={{ color: '#ffffff', fontFamily: 'var(--font-mono)', fontSize: 15 }}>{t.used_times}</span>,
+                      <span style={{
+                        display: 'inline-block', fontSize: 12, fontFamily: 'var(--font-mono)',
+                        letterSpacing: '0.06em', padding: '3px 10px', borderRadius: 6,
+                        background: t.used_times >= t.day_length ? 'rgba(220,38,38,0.1)' : 'rgba(52,211,153,0.1)',
+                        border: `1px solid ${t.used_times >= t.day_length ? 'rgba(220,38,38,0.25)' : 'rgba(52,211,153,0.25)'}`,
+                        color: t.used_times >= t.day_length ? '#ef4444' : 'var(--green)',
+                      }}>
+                        {t.used_times >= t.day_length ? 'Expired' : 'Active'}
+                      </span>,
+                    ])}
+                  />
+                </div>
+              </Card>
             </>
           )}
 
