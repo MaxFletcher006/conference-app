@@ -1847,6 +1847,10 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
         ).first()
         if existing:
             ticket_uuid = existing.qr_code_data
+            if existing.day_length != day_length:
+                existing.day_length = day_length
+                session.add(existing)
+                session.commit()
             print(f"Ticket already exists for user {user_id} event {event_id}, resending email")
         else:
             ticket_uuid = str(uuid4())
@@ -1962,6 +1966,10 @@ async def _issue_event_ticket(event_user_id: int, event_id: int | None = None):
 
         if existing:
             ticket_uuid = existing.qr_code_data
+            if existing.day_length != day_length:
+                existing.day_length = day_length
+                session.add(existing)
+                session.commit()
             print(f"EventTicket already exists for eu {event_user_id} event {event_id}, resending email")
         else:
             ticket_uuid = str(uuid4())

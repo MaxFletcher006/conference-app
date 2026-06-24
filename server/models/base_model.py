@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 from typing import Optional
 from models.model import User, Validation
 
@@ -27,6 +27,12 @@ class EventModel(BaseModel):
     is_active: bool = False
     ticket_price: float
     include_weekends: bool = False
+
+    @model_validator(mode='after')
+    def end_date_not_before_start(self):
+        if self.end_date < self.start_date:
+            raise ValueError('end_date must be on or after start_date')
+        return self
 
 class AgendaModel(BaseModel):
     event_id: int
