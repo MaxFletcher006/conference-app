@@ -30,7 +30,7 @@ const LECTURERS = [
   },
 ]
 
-const TICKET_PRICE_DISPLAY = 100
+const TICKET_PRICE_DISPLAY = 70000
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
