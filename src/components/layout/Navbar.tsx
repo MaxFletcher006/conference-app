@@ -12,6 +12,8 @@ const navHrefs = [
   { key: 'contact', href: '/contact' },
 ] as const
 
+const summerSchoolHref = { href: '/summer-school', label: 'Зуны Сургууль' }
+
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { pathname } = useLocation()
@@ -68,6 +70,17 @@ export function Navbar() {
                 {t[item.key]}
               </Link>
             ))}
+            <Link
+              to={summerSchoolHref.href}
+              style={{ fontSize: 15 }}
+              className={`font-medium whitespace-nowrap transition-colors ${
+                pathname.startsWith(summerSchoolHref.href)
+                  ? 'text-grey'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              {summerSchoolHref.label}
+            </Link>
           </div>
 
           {/* Right side */}
@@ -107,13 +120,13 @@ export function Navbar() {
               ))}
             </div>
 
-            <Link
+            {/* <Link
               to="/register"
               className="hidden md:inline-flex items-center bg-[#080a5e] hover:bg-indigo-dark text-white font-semibold px-4 py-2 rounded-xl transition-colors whitespace-nowrap"
               style={{ fontSize: 15, color: '#fff' }}
             >
               {t.register}
-            </Link>
+            </Link> */}
 
             <button
               className="md:hidden p-2 rounded-md text-white/70 hover:text-white transition-colors"
@@ -154,6 +167,14 @@ export function Navbar() {
                   {t[item.key]}
                 </Link>
               ))}
+              <Link
+                to={summerSchoolHref.href}
+                className="font-medium text-white/70 hover:text-white py-2.5 transition-colors"
+                style={{ fontSize: 15, borderBottom: '1px solid var(--border)' }}
+                onClick={() => setMobileOpen(false)}
+              >
+                {summerSchoolHref.label}
+              </Link>
 
               <Link
                 to="/register"

@@ -350,3 +350,14 @@ export interface StaffTicketPayload {
 
 export const staffCreateTicket = (payload: StaffTicketPayload) =>
   client.post<{ invoice_url?: string; email?: string; amount?: number; error?: string }>('/staff/ticket/create', payload).then(r => r.data)
+
+export interface PublicEventRegisterPayload {
+  firstname: string
+  lastname: string
+  phone_number: string
+  email: string
+  event_id: number
+}
+
+export const publicEventRegister = (payload: PublicEventRegisterPayload) =>
+  client.post<{ invoice_url?: string; email?: string; amount?: number; error?: string }>('/public/event-register', payload).then(r => r.data)

@@ -36,7 +36,7 @@ export default function Home() {
               <p style={{ fontSize: 'clamp(14px, 2.5vw, 20px)', color: 'rgba(255,255,255,0.65)', marginBottom: 'clamp(16px, 3vw, 36px)', lineHeight: 1.6 }}>
                 Шинжлэх Ухааны Академийн Физик Технологийн Хүрээлэн Европын Цөмийн Судалгааны Байгууллага (CERN)-ийн LHCb Хамтын ажиллагаанд хамтрагч гишүүнээр элссэнтэй холбоотойгоор Онолын физикийн зуны сургууль 2026 оны 6 сарын 29-нөөс 2026 оны 7 сарын 2-ны өдрүүдэд зохион байгуулагдах гэж байна. 
               </p>
-              <Link to="/register" className="block sm:inline-block">
+              <Link to="/summer-school" className="block sm:inline-block">
                 <button
                   className="w-full sm:w-auto"
                   style={{ height: 'clamp(42px, 6vw, 52px)', padding: '0 clamp(20px, 4vw, 36px)', fontSize: 15, fontWeight: 700, background: '#5260d9', color: '#ffffff', border: 'none', borderRadius: 12, cursor: 'pointer', transition: 'opacity 0.2s' }}
@@ -84,7 +84,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Events ── */}
+      {/* ── Events ──
       <section id="events" style={{ padding: '80px 0', background: 'var(--bg-2)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-[1240px] mx-auto px-6 md:px-12">
           <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', fontWeight: 700, color: '#ffffff', marginBottom: 40, lineHeight: 1.25, textAlign: 'center' }}>
@@ -130,7 +130,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ── Mission ── */}
       <section style={{ padding: '96px 0', background: 'var(--bg)' }}>

@@ -13,6 +13,7 @@ import Speakers from './pages/Speakers'
 import SpeakerDetail from './pages/SpeakerDetail'
 import Contact from './pages/Contact'
 import Partners from './pages/Partners'
+import SummerSchool from './pages/event-pages/SummerSchool'
 
 // Auth pages (no LHCB layout)
 import Login from './pages/Login'
@@ -91,6 +92,7 @@ function PublicLayout() {
           <Route path="/speakers/:slug"    element={<SpeakerDetail />} />
           <Route path="/contact"           element={<Contact />} />
           <Route path="/partners"          element={<Partners />} />
+          <Route path="/summer-school"     element={<SummerSchool />} />
         </Routes>
       </main>
       <Footer />

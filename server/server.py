@@ -10,8 +10,8 @@ from starlette.responses import JSONResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dotenv import load_dotenv
 
-from models.model import User, Event, Post, Ticket, MailList, Question, Validation, Transaction, Agenda, Banner, create_db_and_tables, get_session, engine
-from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel, UserUpdate, PostCreate, PostReturn, StaffTicketCreate, AgendaModel, AgendaUpdate, BannerModel, BannerReturn
+from models.model import User, Event, Post, Ticket, MailList, Question, Validation, Transaction, Agenda, Banner, EventUsers, EventTickets, create_db_and_tables, get_session, engine
+from models.base_model import UserModel, EventModel, UserReturn, QuestionModel, EmailSchema, LoginModel, PasswordReset, ForgetEmail, QuestionWithUser, TicketVerification, TicketValidation, InvoiceModel, UserUpdate, PostCreate, PostReturn, StaffTicketCreate, AgendaModel, AgendaUpdate, BannerModel, BannerReturn, PublicEventRegisterCreate
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from gmail_sender import send_email
@@ -417,6 +417,68 @@ def get_public_all_events(session: SessionDep):
     except Exception as e:
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.post("/public/event-register")
+async def public_event_register(data: PublicEventRegisterCreate, session: SessionDep):
+    db_event = session.get(Event, data.event_id)
+    if not db_event or not db_event.is_active:
+        raise HTTPException(status_code=404, detail="Event not found or not active")
+
+    existing = session.exec(
+        select(EventUsers).where(EventUsers.email == data.email, EventUsers.event_id == data.event_id)
+    ).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="This email is already registered for this event")
+
+    new_eu = EventUsers(
+        firstname=data.firstname,
+        lastname=data.lastname,
+        phone_number=data.phone_number,
+        email=data.email,
+        event_id=data.event_id,
+    )
+    session.add(new_eu)
+    try:
+        session.commit()
+        session.refresh(new_eu)
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Email already registered")
+
+    if not BYL_URL or not BYL_TOKEN:
+        raise HTTPException(status_code=503, detail="Payment service not configured")
+
+    amount = int(db_event.ticket_price)
+    username = f"{data.firstname} {data.lastname}"
+    headers = {
+        "Authorization": f"Bearer {BYL_TOKEN}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    invoice_payload = {
+        "amount": amount,
+        "description": f"EU_ID:{new_eu.user_id} | NAME:{username} | EVENT:{data.event_id}",
+        "auto_advance": True,
+    }
+
+    try:
+        async with httpx.AsyncClient() as http:
+            response = await http.post(
+                f"{BYL_URL}/api/v1/projects/{BYL_PROJECT_ID}/invoices",
+                headers=headers,
+                json=invoice_payload,
+            )
+            if not response.is_success:
+                raise HTTPException(status_code=502, detail="Failed to create invoice")
+            result = response.json()
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=502, detail=f"Payment service unreachable: {str(e)}")
+
+    invoice_url = result.get("data", {}).get("url")
+    if not invoice_url:
+        raise HTTPException(status_code=502, detail="Invoice URL not found in response")
+
+    return {"invoice_url": invoice_url, "email": data.email, "amount": amount}
 
 @app.get("/event/{id}", response_model=Event)
 def get_event(session: SessionDep, id: int):
@@ -888,33 +950,53 @@ async def byl_webhook(session: SessionDep, request: Request, background_tasks: B
     description = invoice_object.get("description", "")
 
     if event_type == "invoice.paid" and status == "paid":
-        match_id = re.search(r"ID:(\d+)", description)
-        if match_id:
-            extracted_user_id = int(match_id.group(1))
+        match_eu = re.search(r"EU_ID:(\d+)", description)
+        if match_eu:
+            # EventUser (public registration) flow
+            extracted_eu_id = int(match_eu.group(1))
             match_event = re.search(r"EVENT:(\d+)", description)
             extracted_event_id = int(match_event.group(1)) if match_event else None
 
-            invoice_id = invoice_object.get("id")
-            existing_tx = session.exec(
-                select(Transaction).where(Transaction.transaction_id == invoice_id)
+            existing_et = session.exec(
+                select(EventTickets).where(
+                    EventTickets.user_id == extracted_eu_id,
+                    EventTickets.event_id == extracted_event_id,
+                )
             ).first()
 
-            if existing_tx:
-                print(f"Duplicate webhook for transaction {invoice_id}, skipping")
+            if existing_et:
+                print(f"EventTicket already exists for eu {extracted_eu_id}, skipping")
             else:
-                new_transaction = Transaction(
-                    user_id=extracted_user_id,
-                    amount=invoice_object.get("amount"),
-                    transaction_id=invoice_id,
-                    created_at=invoice_object.get("created_at"),
-                    description=description,
-                    url=invoice_object.get("url"),
-                )
-                session.add(new_transaction)
-                session.commit()
-                print(f"Transaction saved for user {extracted_user_id}")
+                background_tasks.add_task(_issue_event_ticket, extracted_eu_id, extracted_event_id)
 
-                background_tasks.add_task(_issue_ticket, extracted_user_id, extracted_event_id)
+        else:
+            match_id = re.search(r"ID:(\d+)", description)
+            if match_id:
+                extracted_user_id = int(match_id.group(1))
+                match_event = re.search(r"EVENT:(\d+)", description)
+                extracted_event_id = int(match_event.group(1)) if match_event else None
+
+                invoice_id = invoice_object.get("id")
+                existing_tx = session.exec(
+                    select(Transaction).where(Transaction.transaction_id == invoice_id)
+                ).first()
+
+                if existing_tx:
+                    print(f"Duplicate webhook for transaction {invoice_id}, skipping")
+                else:
+                    new_transaction = Transaction(
+                        user_id=extracted_user_id,
+                        amount=invoice_object.get("amount"),
+                        transaction_id=invoice_id,
+                        created_at=invoice_object.get("created_at"),
+                        description=description,
+                        url=invoice_object.get("url"),
+                    )
+                    session.add(new_transaction)
+                    session.commit()
+                    print(f"Transaction saved for user {extracted_user_id}")
+
+                    background_tasks.add_task(_issue_ticket, extracted_user_id, extracted_event_id)
 
     return Response(content="Webhook received!", media_type="text/plain")
 
@@ -1694,6 +1776,84 @@ async def _issue_ticket(user_id: int, event_id: int | None = None):
     print(f"Ticket issued and emailed to user {user_id}")
 
 
+async def _issue_event_ticket(event_user_id: int, event_id: int | None = None):
+    with Session(engine) as session:
+        eu = session.get(EventUsers, event_user_id)
+        if not eu:
+            print(f"EventUser {event_user_id} not found, cannot issue ticket")
+            return
+
+        firstname = eu.firstname
+        lastname = eu.lastname
+        email = eu.email
+
+        price = 0.0
+        ticket_name = "Summer School Pass"
+        event_start_date = None
+        event_end_date = None
+        event_description = None
+        event_location = None
+        day_length = 4
+
+        if event_id:
+            row = session.execute(
+                text("SELECT event_name, description, start_date, end_date, ticket_price, include_weekends FROM event WHERE id = :id"),
+                {"id": event_id}
+            ).first()
+            if row:
+                ticket_name = row[0]
+                event_description = row[1]
+                event_start_date = row[2]
+                event_end_date = row[3]
+                price = float(row[4])
+                day_length = compute_day_length(row[2], row[3], row[5])
+                try:
+                    loc_row = session.execute(text("SELECT location FROM event WHERE id = :id"), {"id": event_id}).first()
+                    event_location = loc_row[0] if loc_row else None
+                except Exception:
+                    event_location = None
+
+        existing = session.exec(
+            select(EventTickets).where(EventTickets.user_id == event_user_id, EventTickets.event_id == event_id)
+        ).first()
+
+        if existing:
+            ticket_uuid = existing.qr_code_data
+            print(f"EventTicket already exists for eu {event_user_id} event {event_id}, resending email")
+        else:
+            ticket_uuid = str(uuid4())
+            new_ticket = EventTickets(
+                user_id=event_user_id,
+                event_id=event_id,
+                ticket_price=price,
+                qr_code_data=ticket_uuid,
+            )
+            session.add(new_ticket)
+            session.commit()
+
+    FRONT_URL = os.getenv("FRONT_URL", "")
+    qr_buffer = await asyncio.to_thread(generate_qr_buffer, f"{FRONT_URL}/validate/{ticket_uuid}")
+
+    UPLOAD_DIR = "tickets"
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    file_path = os.path.join(UPLOAD_DIR, f"ticket_{firstname}.png")
+
+    def _write():
+        with open(file_path, "wb") as f:
+            f.write(qr_buffer.getvalue())
+
+    await asyncio.to_thread(_write)
+
+    await send_email(
+        to=[email],
+        subject=f"{ticket_name} | Ticket",
+        html_body=_build_ticket_email(firstname, lastname, day_length, ticket_name, price,
+                                      event_start_date, event_end_date, event_description, event_location),
+        attachment_path=file_path,
+    )
+    print(f"EventTicket issued and emailed to eu {event_user_id}")
+
+
 def _build_ticket_email(firstname: str, lastname: str, day_length: int,
                         event_name: str = "Conference Pass",
                         price: float = 0.0,
@@ -1707,208 +1867,353 @@ def _build_ticket_email(firstname: str, lastname: str, day_length: int,
     if end_date and end_date != start_date:
         date_label += f" — {end_date}"
 
-    return f"""<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
+    return f'''html
+        <!DOCTYPE html>
+        <html lang="mn">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Онолын Физикийн Зуны Сургууль 2026</title>
+        </head>
 
-<body style="margin:0;padding:0;background-color:#060911;font-family:'Segoe UI',Arial,sans-serif;">
+        <body style="margin:0;padding:0;background:#f8fafc;font-family:'Segoe UI',Arial,sans-serif;">
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#060911;padding:40px 0;">
-  <tr>
-    <td align="center">
-
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;">
-
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 0;">
         <tr>
-          <td align="center" style="padding-bottom:24px;">
-            <span style="display:inline-block;font-family:'Courier New',monospace;font-size:13px;letter-spacing:0.15em;color:#38bdf8;border:1px solid rgba(56,189,248,0.3);background:rgba(56,189,248,0.07);padding:6px 16px;border-radius:4px;">
-              {event_name.upper()}
-            </span>
-          </td>
+        <td align="center">
+
+        <table width="650" cellpadding="0" cellspacing="0" style="max-width:650px;width:100%;">
+
+        <!-- Badge -->
+        <tr>
+        <td align="center" style="padding-bottom:24px;">
+        <span style="
+        display:inline-block;
+        background:#dbeafe;
+        border:1px solid #93c5fd;
+        color:#1d4ed8;
+        padding:8px 18px;
+        border-radius:999px;
+        font-size:13px;
+        font-weight:600;
+        letter-spacing:0.08em;">
+        ОНОЛЫН ФИЗИКИЙН ЗУНЫ СУРГУУЛЬ 2026
+        </span>
+        </td>
         </tr>
 
+        <!-- Main Card -->
         <tr>
-          <td style="background:rgba(6,10,22,0.95);border:1px solid rgba(56,189,248,0.16);border-radius:16px;overflow:hidden;">
+        <td style="
+        background:#ffffff;
+        border:1px solid #e2e8f0;
+        border-radius:20px;
+        overflow:hidden;
+        box-shadow:0 10px 30px rgba(15,23,42,0.08);
+        ">
 
-            <!-- HEADER -->
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="background:linear-gradient(135deg,#0f172a 0%,#0c1a3a 50%,#0f172a 100%);padding:40px 40px 36px;border-bottom:1px solid rgba(56,189,248,0.16);text-align:center;">
+        <!-- Header -->
+        <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+        <td style="
+        background:linear-gradient(135deg,#2563eb 0%,#3b82f6 50%,#60a5fa 100%);
+        padding:48px 40px;
+        text-align:center;
+        ">
 
-                  <div style="width:12px;height:12px;border-radius:50%;background:#38bdf8;box-shadow:0 0 20px 6px rgba(56,189,248,0.6);margin:0 auto 20px;display:block;"></div>
+        <div style="
+        width:72px;
+        height:72px;
+        line-height:72px;
+        margin:0 auto 18px;
+        background:rgba(255,255,255,0.15);
+        border-radius:50%;
+        font-size:34px;">
+        ⚛️
+        </div>
 
-                  <h1 style="margin:0 0 10px;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;line-height:1.2;">
-                    {event_name}
-                  </h1>
+        <h1 style="
+        margin:0 0 12px;
+        font-size:32px;
+        font-weight:700;
+        color:#ffffff;
+        line-height:1.2;">
+        Онолын Физикийн<br>
+        Зуны Сургууль 2026
+        </h1>
 
-                  <p style="margin:0;font-size:14px;color:#94a3b8;font-family:'Courier New',monospace;letter-spacing:0.08em;">
-                    TICKET CONFIRMED · {date_label.upper()}
-                  </p>
+        <p style="
+        margin:0;
+        font-size:14px;
+        color:#dbeafe;
+        letter-spacing:0.08em;
+        font-weight:600;">
+        БҮРТГЭЛ АМЖИЛТТАЙ БАТАЛГААЖЛАА
+        </p>
 
-                </td>
-              </tr>
-            </table>
+        </td>
+        </tr>
+        </table>
 
-            <!-- BODY -->
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:36px 40px;">
+        <!-- Body -->
+        <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+        <td style="padding:40px;">
 
-                  <p style="margin:0 0 8px;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.12em;">
-                    PARTICIPANT
-                  </p>
+        <p style="
+        margin:0 0 10px;
+        font-size:13px;
+        font-weight:700;
+        color:#2563eb;
+        letter-spacing:0.08em;">
+        ОРОЛЦОГЧ
+        </p>
 
-                  <h2 style="margin:0 0 24px;font-size:22px;font-weight:700;color:#ffffff;">
-                    {firstname} {lastname}
-                  </h2>
+        <h2 style="
+        margin:0 0 24px;
+        font-size:28px;
+        color:#0f172a;">
+        {firstname} {lastname}
+        </h2>
 
-                  <p style="margin:0 0 28px;font-size:15px;color:#94a3b8;line-height:1.7;">
-                    Your ticket for <strong style="color:#ffffff;">{event_name}</strong> has been successfully generated.
-                    Please find your QR code attached to this email and present it
-                    at the entrance for verification.
-                  </p>
+        <p style="
+        margin:0 0 28px;
+        font-size:15px;
+        line-height:1.8;
+        color:#475569;">
+        Танд <strong>Онолын Физикийн Зуны Сургууль 2026</strong>-д
+        амжилттай бүртгүүлсэнд баяр хүргэе.
 
-                  <!-- INFO CARDS -->
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-                    <tr>
+        Таны оролцооны QR код бүхий тасалбар энэхүү и-мэйлд хавсаргагдсан байгаа.
+        Арга хэмжээний үеэр бүртгэлийн ширээнд QR кодоо үзүүлэн нэвтрэнэ үү.
+        </p>
 
-                      <td width="33%" style="padding-right:8px;">
-                        <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.14);border-radius:10px;padding:16px;text-align:center;">
-                          <div style="font-size:20px;margin-bottom:6px;">🎟️</div>
-                          <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">
-                            TYPE
-                          </div>
-                          <div style="font-size:13px;color:#ffffff;font-weight:600;margin-top:4px;">
-                            {event_name}
-                          </div>
-                        </div>
-                      </td>
+        <!-- Cards -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:30px;">
+        <tr>
 
-                      <td width="33%" style="padding:0 4px;">
-                        <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.14);border-radius:10px;padding:16px;text-align:center;">
-                          <div style="font-size:20px;margin-bottom:6px;">📅</div>
-                          <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">
-                            DURATION
-                          </div>
-                          <div style="font-size:13px;color:#ffffff;font-weight:600;margin-top:4px;">
-                            {days_label}
-                          </div>
-                        </div>
-                      </td>
+        <td width="33%" style="padding-right:8px;">
+        <div style="
+        background:#eff6ff;
+        border:1px solid #bfdbfe;
+        border-radius:12px;
+        padding:18px;
+        text-align:center;">
+        <div style="font-size:24px;">🎓</div>
+        <div style="font-size:11px;color:#64748b;margin-top:8px;">
+        АРГА ХЭМЖЭЭ
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-top:4px;">
+        Зуны Сургууль
+        </div>
+        </div>
+        </td>
 
-                      <td width="33%" style="padding-left:8px;">
-                        <div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.14);border-radius:10px;padding:16px;text-align:center;">
-                          <div style="font-size:20px;margin-bottom:6px;">✅</div>
-                          <div style="font-size:11px;color:#64748b;font-family:'Courier New',monospace;letter-spacing:0.06em;">
-                            STATUS
-                          </div>
-                          <div style="font-size:13px;color:#34d399;font-weight:600;margin-top:4px;">
-                            Confirmed
-                          </div>
-                        </div>
-                      </td>
+        <td width="33%" style="padding:0 4px;">
+        <div style="
+        background:#eff6ff;
+        border:1px solid #bfdbfe;
+        border-radius:12px;
+        padding:18px;
+        text-align:center;">
+        <div style="font-size:24px;">📅</div>
+        <div style="font-size:11px;color:#64748b;margin-top:8px;">
+        ХУГАЦАА
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-top:4px;">
+        4 Өдөр
+        </div>
+        </div>
+        </td>
 
-                    </tr>
-                  </table>
+        <td width="33%" style="padding-left:8px;">
+        <div style="
+        background:#ecfdf5;
+        border:1px solid #a7f3d0;
+        border-radius:12px;
+        padding:18px;
+        text-align:center;">
+        <div style="font-size:24px;">✅</div>
+        <div style="font-size:11px;color:#64748b;margin-top:8px;">
+        ТӨЛӨВ
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#059669;margin-top:4px;">
+        Баталгаажсан
+        </div>
+        </div>
+        </td>
 
-                  <!-- IMPORTANT -->
-                  <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.18);border-left:3px solid #38bdf8;border-radius:0 10px 10px 0;padding:16px 20px;margin-bottom:28px;">
+        </tr>
+        </table>
 
-                    <p style="margin:0 0 6px;font-size:13px;font-family:'Courier New',monospace;color:#38bdf8;letter-spacing:0.08em;">
-                      📌 IMPORTANT
-                    </p>
+        <!-- Important -->
+        <div style="
+        background:#eff6ff;
+        border-left:4px solid #2563eb;
+        border-radius:0 12px 12px 0;
+        padding:18px 22px;
+        margin-bottom:28px;">
 
-                    <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6;">
-                      Each QR code ticket is valid for the number of days selected
-                      at purchase. The QR code will be scanned once per day at the entrance.
-                    </p>
+        <p style="
+        margin:0 0 8px;
+        font-size:13px;
+        font-weight:700;
+        color:#2563eb;">
+        📌 САНУУЛГА
+        </p>
 
-                  </div>
+        <p style="
+        margin:0;
+        font-size:14px;
+        line-height:1.7;
+        color:#475569;">
+        Таны QR код нь энэхүү арга хэмжээний албан ёсны нэвтрэх тасалбар болно.
+        Оролцогчдыг өдөр бүр бүртгэх үед QR кодыг уншуулна.
+        Иймд QR кодоо утсандаа хадгалах эсвэл хэвлэж авчрахыг зөвлөж байна.
+        </p>
 
-                  <!-- EVENT INFO -->
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-                    <tr>
-                      <td style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.18);border-radius:12px;padding:22px;">
+        </div>
 
-                        <p style="margin:0 0 12px;font-size:13px;font-family:'Courier New',monospace;color:#f59e0b;letter-spacing:0.08em;">
-                          📍 EVENT INFORMATION
-                        </p>
+        <!-- Event Info -->
+        <div style="
+        background:#fff7ed;
+        border:1px solid #fed7aa;
+        border-radius:14px;
+        padding:24px;
+        margin-bottom:28px;">
 
-                        <p style="margin:0 0 8px;font-size:16px;color:#ffffff;font-weight:700;line-height:1.4;">
-                          {event_name}
-                        </p>
+        <p style="
+        margin:0 0 14px;
+        font-size:13px;
+        font-weight:700;
+        color:#ea580c;">
+        📍 АРГА ХЭМЖЭЭНИЙ МЭДЭЭЛЭЛ
+        </p>
 
-                        <p style="margin:0 0 14px;font-size:15px;color:#e2e8f0;line-height:1.8;">
-                          <strong>📅 Date:</strong> {date_label}<br>
-                          <strong>🎫 Ticket Price:</strong> {price_label}
-                        </p>
+        <p style="
+        margin:0 0 14px;
+        font-size:18px;
+        font-weight:700;
+        color:#0f172a;">
+        Онолын Физикийн Зуны Сургууль 2026
+        </p>
 
-                        {f'<p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.7;">{description}</p>' if description else ''}
+        <p style="
+        margin:0;
+        font-size:15px;
+        line-height:2;
+        color:#334155;">
 
-                      </td>
-                    </tr>
-                  </table>
+        <strong>📅 Огноо:</strong>
+        2026.06.29 – 2026.07.02
+        <br>
 
-                  <!-- QR INFO -->
-                  <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:18px 20px;margin-bottom:28px;text-align:center;">
+        <strong>🕙 Цаг:</strong>
+        Өдөр бүр 10:00 – 16:00
+        <br>
 
-                    <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">
-                      🔗 Your QR code ticket is attached as a
-                      <strong style="color:#94a3b8;">PNG image</strong>.
-                      Download and save it to your phone for easy access at the venue.
-                    </p>
+        <strong>📍 Байршил:</strong>
+        Монгол Улсын Их Сургууль,
+        I байр, 301 тоот
+        <br>
 
-                  </div>
+        <strong>🏛 Зохион байгуулагч:</strong>
+        Шинжлэх Ухааны Академийн
+        Физик Технологийн Хүрээлэн
+        </p>
 
-                  <p style="margin:0;font-size:14px;color:#64748b;line-height:1.7;">
-                    We look forward to seeing you at the event.<br>
-                    <span style="color:#94a3b8;font-weight:600;">
-                      {event_name} — Organizing Team
-                    </span>
-                  </p>
+        </div>
 
-                </td>
-              </tr>
-            </table>
+        <!-- Description -->
+        <div style="
+        background:#f8fafc;
+        border:1px solid #e2e8f0;
+        border-radius:12px;
+        padding:20px;
+        margin-bottom:28px;">
 
-            <!-- GRADIENT LINE -->
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:0 40px;">
-                  <div style="height:2px;border-radius:2px;background:linear-gradient(90deg,#38bdf8,#f472b6,#34d399);opacity:0.3;"></div>
-                </td>
-              </tr>
-            </table>
+        <p style="
+        margin:0;
+        font-size:14px;
+        line-height:1.8;
+        color:#475569;">
+        Шинжлэх Ухааны Академийн Физик Технологийн Хүрээлэн нь
+        CERN-ийн LHCb хамтын ажиллагаанд хамтрагч гишүүнээр элссэнтэй
+        холбогдуулан энэхүү зуны сургуулийг зохион байгуулж байна.
 
-            <!-- FOOTER -->
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:24px 40px;text-align:center;">
+        Оролцогчид онолын физик, бөөмийн физик болон орчин үеийн
+        шинжлэх ухааны чиглэлээр лекц, хэлэлцүүлэгт хамрагдах боломжтой.
+        </p>
 
-                  <p style="margin:0;font-size:12px;font-family:'Courier New',monospace;color:#334155;letter-spacing:0.06em;">
-                    AUTOMATED NOTIFICATION — DO NOT REPLY<br>
-                    © {event_name.upper()}
-                  </p>
+        </div>
 
-                </td>
-              </tr>
-            </table>
+        <!-- QR Info -->
+        <div style="
+        background:#f0fdf4;
+        border:1px solid #bbf7d0;
+        border-radius:12px;
+        padding:20px;
+        text-align:center;
+        margin-bottom:28px;">
 
-          </td>
+        <p style="
+        margin:0;
+        font-size:14px;
+        line-height:1.7;
+        color:#166534;">
+        🔗 Таны хувийн QR код бүхий тасалбар энэхүү и-мэйлд
+        <strong>PNG файл</strong> хэлбэрээр хавсаргагдсан байна.
+        Арга хэмжээний үеэр QR кодоо үзүүлж бүртгүүлнэ үү.
+        </p>
+
+        </div>
+
+        <p style="
+        margin:0;
+        font-size:15px;
+        line-height:1.8;
+        color:#475569;">
+        <br><br>
+        </p>
+
+        </td>
+        </tr>
+        </table>
+
+        <!-- Footer -->
+        <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+        <td style="
+        padding:24px;
+        text-align:center;
+        background:#f8fafc;
+        border-top:1px solid #e2e8f0;">
+
+        <p style="
+        margin:0;
+        font-size:12px;
+        color:#94a3b8;
+        line-height:1.8;">
+        Энэхүү и-мэйл автоматаар илгээгдсэн болно.<br>
+        © Онолын Физикийн Зуны Сургууль 2026
+        </p>
+
+        </td>
+        </tr>
+        </table>
+
+        </td>
         </tr>
 
-      </table>
+        </table>
 
-    </td>
-  </tr>
-</table>
+        </td>
+        </tr>
+        </table>
 
-</body>
-</html>
-"""
+        </body>
+        </html>
+        '''
 
 def generate_qr_buffer(data: str):
     qr = qrcode.QRCode(

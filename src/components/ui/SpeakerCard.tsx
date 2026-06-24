@@ -1,25 +1,16 @@
 import { Link } from 'react-router-dom'
 import type { Speaker } from '@/data/speakers'
 
-export function SpeakerCard({ speaker }: { speaker: Speaker }) {
+const cardStyle: React.CSSProperties = {
+  display: 'flex', gap: 20, padding: 20,
+  background: 'var(--bg-2)', border: '1px solid var(--border-2)',
+  borderRadius: 'var(--radius-lg)', textDecoration: 'none',
+  transition: 'all 0.2s',
+}
+
+function CardBody({ speaker }: { speaker: Speaker }) {
   return (
-    <Link
-      to={`/speakers/${speaker.slug}`}
-      style={{
-        display: 'flex', gap: 20, padding: 20,
-        background: 'var(--bg-2)', border: '1px solid var(--border-2)',
-        borderRadius: 'var(--radius-lg)', textDecoration: 'none',
-        transition: 'all 0.2s',
-      }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(74,144,248,0.4)'
-        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-2)'
-        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-      }}
-    >
+    <>
       <div style={{
         width: 96, height: 96, flexShrink: 0,
         borderRadius: 'var(--radius)',
@@ -41,6 +32,33 @@ export function SpeakerCard({ speaker }: { speaker: Speaker }) {
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontWeight: 500, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{speaker.institution}</p>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{speaker.specialty}</p>
       </div>
+    </>
+  )
+}
+
+export function SpeakerCard({ speaker, noLink }: { speaker: Speaker; noLink?: boolean }) {
+  if (noLink) {
+    return (
+      <div style={{ ...cardStyle, cursor: 'default' }}>
+        <CardBody speaker={speaker} />
+      </div>
+    )
+  }
+
+  return (
+    <Link
+      to={`/speakers/${speaker.slug}`}
+      style={cardStyle}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(74,144,248,0.4)'
+        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-2)'
+        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+      }}
+    >
+      <CardBody speaker={speaker} />
     </Link>
   )
 }

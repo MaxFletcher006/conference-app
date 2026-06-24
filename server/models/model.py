@@ -9,15 +9,6 @@ from dotenv import load_dotenv
 load_dotenv()
 DB_URL = os.getenv('DATABASE_URL')
 
-class User(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    firstname: str = Field(index=True)
-    lastname: str = Field(index=True)
-    email: str = Field(index=True, unique=True, exclude=True)
-    phone_number: str = Field(index=True)
-    password: str
-    role: str = Field(index=True)
-
 class Event(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     event_name: str = Field(index=True)
@@ -28,6 +19,28 @@ class Event(SQLModel, table=True):
     is_active: bool = Field(default=False)
     ticket_price: float
     include_weekends: bool = Field(default=False)
+
+class Speakers(SQLModel, table=True):
+    speaker_id: int | None = Field(default=None, primary_key=True)
+    fullname: str = Field(index=True)
+    description: str = Field(index=True)
+    event_id: int = Field(index=True, foreign_key="event.id", ondelete="CASCADE")
+    is_moderator: bool = Field(default=False) 
+
+class EventUsers(SQLModel, table=True):
+    user_id: int | None = Field(default=None, primary_key=True) 
+    firstname: str = Field(index=True)
+    lastname: str = Field(index=True)
+    phone_number: str = Field(index=True)
+    email: str = Field(index=True, unique=True, exclude=True)
+    event_id: int = Field(index=True, foreign_key="event.id", ondelete="CASCADE") 
+
+class EventTickets(SQLModel, table=True):
+    ticket_id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    user_id: int | None = Field(default=None, foreign_key="eventusers.user_id", index=True, ondelete="CASCADE")
+    event_id: int | None = Field(default=None, foreign_key="event.id", index=True, ondelete="SET NULL")
+    ticket_price: float = Field(default=0.0)
+    qr_code_data: str = Field(unique=True)
 
 class Agenda(SQLModel, table=True):
     agenda_id: int | None = Field(default=None, primary_key=True)
@@ -40,6 +53,16 @@ class Agenda(SQLModel, table=True):
     date: str | None = Field(default=None, index=True)
     start_time: str | None = Field(default=None)
     end_time: str | None = Field(default=None)
+
+# ==== NO MORE USED ==== #
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    firstname: str = Field(index=True)
+    lastname: str = Field(index=True)
+    email: str = Field(index=True, unique=True, exclude=True)
+    phone_number: str = Field(index=True)
+    password: str
+    role: str = Field(index=True)
 
 class Banner(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -99,12 +122,9 @@ class Transaction(SQLModel, table=True):
     description: str = Field(index=True)
     url: str = Field(index=True)
     
-class Speakers(SQLModel, table=True):
-    speaker_id: int | None = Field(default=None, primary_key=True)
-    fullname: str = Field(index=True)
-    description: str = Field(index=True)
-    event_id: int = Field(index=True, foreign_key="event.id", ondelete="CASCADE")
-    is_moderator: bool = Field(default=False) 
+
+
+
 
 engine = create_engine(DB_URL, pool_pre_ping=True, pool_recycle=1800)
 

@@ -151,3 +151,10 @@ class StaffTicketCreate(BaseModel):
     phone_number: str
     email: EmailStr
     event_id: int
+
+class PublicEventRegisterCreate(BaseModel):
+    firstname: str
+    lastname: str
+    phone_number: str
+    email: EmailStr
+    event_id: int
