@@ -30,6 +30,49 @@ const LECTURERS = [
   },
 ]
 
+const SCHEDULE = [
+  {
+    date: '6-р сарын 29',
+    rows: [
+      { time: '09:30–09:50', activity: 'Нээлтийн үг, танилцуулга', isBreak: false },
+      { time: '10:00–11:30', activity: 'Лекц 1: Проф. Ц. Гантөмөр (Кубитээс эгэл бөөмийн физик рүү)', isBreak: false },
+      { time: '11:30–12:00', activity: 'Цайны завсарлага', isBreak: true },
+      { time: '12:00–13:30', activity: 'Лекц 1: Др. Ц. Энхбат (Эгэл бөөмийн физик: Онол ба симуляц)', isBreak: false },
+      { time: '14:30–16:00', activity: 'Лекц 1: Др. Б. Баасансүрэн (Их энергийн физик, өгөгдөл боловсруулалт ба машин сургалт)', isBreak: false },
+    ],
+  },
+  {
+    date: '6-р сарын 30',
+    rows: [
+      { time: '10:00–11:30', activity: 'Лекц 2: Проф. Ц. Гантөмөр', isBreak: false },
+      { time: '11:30–12:00', activity: 'Цайны завсарлага', isBreak: true },
+      { time: '12:00–13:30', activity: 'Лекц 2: Др. Ц. Энхбат', isBreak: false },
+      { time: '13:30–14:30', activity: 'Үдийн завсарлага', isBreak: true },
+      { time: '14:30–16:00', activity: 'Лекц 2: Др. Б. Баасансүрэн', isBreak: false },
+    ],
+  },
+  {
+    date: '7-р сарын 1',
+    rows: [
+      { time: '10:00–11:30', activity: 'Лекц 3: Проф. Ц. Гантөмөр', isBreak: false },
+      { time: '11:30–12:00', activity: 'Цайны завсарлага', isBreak: true },
+      { time: '12:00–13:30', activity: 'Лекц 3: Др. Ц. Энхбат', isBreak: false },
+      { time: '13:30–14:30', activity: 'Үдийн завсарлага', isBreak: true },
+      { time: '14:30–16:00', activity: 'Лекц 3: Др. Б. Баасансүрэн', isBreak: false },
+    ],
+  },
+  {
+    date: '7-р сарын 2',
+    rows: [
+      { time: '10:00–11:30', activity: 'Лекц 4: Проф. Ц. Гантөмөр', isBreak: false },
+      { time: '11:30–12:00', activity: 'Цайны завсарлага', isBreak: true },
+      { time: '12:00–13:30', activity: 'Лекц 4: Др. Ц. Энхбат', isBreak: false },
+      { time: '13:30–14:30', activity: 'Үдийн завсарлага', isBreak: true },
+      { time: '14:30–16:00', activity: 'Лекц 4: Др. Б. Баасансүрэн', isBreak: false },
+    ],
+  },
+]
+
 const TICKET_PRICE_DISPLAY = 70000
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -181,6 +224,48 @@ export default function SummerSchool() {
                 {speakers.map(s => (
                   <SpeakerCard key={s.slug} speaker={s} noLink />
                 ))}
+              </div>
+            </section>
+
+            {/* ── Schedule table ── */}
+            <section>
+              <h2 style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.6rem)', fontWeight: 700, color: '#fff', marginBottom: 20, lineHeight: 1.3 }}>
+                  Зуны сургуулийн хуваарь
+              </h2>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                  <thead>
+                    <tr>
+                      {['Огноо', 'Цаг', 'Үйл ажиллагаа'].map(h => (
+                        <th key={h} style={{ padding: '10px 14px', background: 'rgba(129,140,248,0.15)', border: '1px solid var(--border-2)', color: '#818cf8', fontWeight: 700, textAlign: 'left', whiteSpace: 'nowrap' }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {SCHEDULE.map(day =>
+                      day.rows.map((row, ri) => (
+                        <tr key={`${day.date}-${ri}`}>
+                          {ri === 0 && (
+                            <td
+                              rowSpan={day.rows.length}
+                              style={{ padding: '10px 14px', border: '1px solid var(--border-2)', fontWeight: 700, color: '#fff', verticalAlign: 'middle', whiteSpace: 'nowrap', background: 'var(--bg-2)' }}
+                            >
+                              {day.date}
+                            </td>
+                          )}
+                          <td style={{ padding: '10px 14px', border: '1px solid var(--border-2)', fontFamily: 'var(--font-mono)', fontSize: 13, whiteSpace: 'nowrap', color: row.isBreak ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.75)', background: row.isBreak ? 'rgba(255,255,255,0.02)' : 'var(--bg-2)' }}>
+                            {row.time}
+                          </td>
+                          <td style={{ padding: '10px 14px', border: '1px solid var(--border-2)', color: row.isBreak ? 'rgba(255,255,255,0.35)' : '#fff', background: row.isBreak ? 'rgba(255,255,255,0.02)' : 'var(--bg-2)', lineHeight: 1.5 }}>
+                            {row.activity}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </section>
 
